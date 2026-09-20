@@ -10,6 +10,12 @@ La regeneración usa Node ≥22.12; abrir el simulador no requiere Node.
 Los controles continuos tienen paso 0.01 y avisan de cambios pendientes de reinicio.
 
 Consulta la [evaluación para artículo y tesis](docs/research_readiness.md).
+
+### Comprender antes de ampliar
+
+- [Significado de las variables](docs/variable_contract.md): definiciones operativas y qué falta medir en la sociedad.
+- [Protocolo experimental breve](docs/experimental_protocol.md): distinguir polo–grupo de mera amplificación individual. Plan pendiente de ejecución, sin resultados inventados.
+- En el simulador, selecciona una persona y pulsa **Avanzar 1 ronda y explicar** bajo los indicadores. Registra su cálculo real: vecinos, fuerzas, umbral, ruido y límites. No altera las reglas ni añade sorteos.
 `node experiments/web_sensitivity.cjs` reproduce el diagnóstico local de 78
 ejecuciones. No constituye validación empírica ni sensibilidad global.
 

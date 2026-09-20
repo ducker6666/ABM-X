@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ABM de polarización con auditor interno</title>
-    <link rel="stylesheet" href="styles.css?v=ui-2" />
+    <link rel="stylesheet" href="styles.css?v=explain-1" />
   </head>
   <body>
     <main class="app">
@@ -12,8 +12,8 @@
         <div class="panel-header">
           <h1>ABM de polarización</h1>
           <p>
-            Las cantidades estructurales usan unidades reales. Las fuerzas,
-            radios, probabilidades, umbrales y coeficientes usan escala 0.0-1.0.
+            Población y rondas son recuentos del modelo, no unidades sociales calibradas.
+            Los demás controles usan una escala de 0 a 1; su significado se explica en la guía.
           </p>
           <nav class="doc-nav"><a href="index.html" aria-current="page">Simulador</a><a href="formula.html">Teoría</a><a href="guide.html">Guía</a></nav>
           <div class="run-controls">
@@ -64,6 +64,13 @@
           <div><span>ε seleccionado</span><strong id="epsilonStat">off</strong></div>
         </div>
 
+        <section class="movement-inspector" aria-labelledby="movementTitle">
+          <h3 id="movementTitle">Explícame este movimiento</h3>
+          <p>Selecciona una persona pulsando en el mapa o con «Agente destacado». Este botón pausa y calcula una sola ronda para toda la población, explicando a la persona seleccionada.</p>
+          <button id="explainBtn">Avanzar 1 ronda y explicar</button>
+          <div id="movementDetails"></div>
+        </section>
+
         <section class="visual-legend">
           <h3>Leyenda visual rápida</h3>
           <div><b>Puntos negros</b><span>agentes; su color no predefine bando.</span></div>
@@ -78,6 +85,6 @@
       </section>
     </main>
 
-    <script src="app.js?v=ui-2"></script>
+    <script src="app.js?v=explain-1"></script>
   </body>
 </html>

@@ -7,7 +7,7 @@ const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8');
 const context = vm.createContext({document: {getElementById: () => ({getContext: () => ({})})}});
 vm.runInContext(source.split('document.getElementById("startBtn").addEventListener')[0] +
-  '\nglobalThis.engine={state,PARAMS,cfg,mulberry32,poleForce,poleDistanceMembership,jdjFromFrequencyTable,eventAmp,maybeEvents,detectClusters,step,historyStart,drawLineChart};', context);
+  '\nglobalThis.engine={state,PARAMS,cfg,mulberry32,poleForce,poleDistanceMembership,jdjFromFrequencyTable,eventAmp,maybeEvents,detectClusters,step,historyStart,drawLineChart,renderMovementExplanation};', context);
 const e = context.engine;
 for (const p of e.PARAMS) e.state.controls.set(p.id, {input: {value: String(p.value)}});
 const defaults = e.cfg();
@@ -185,5 +185,46 @@ test('Gráfico JDJ: valores mayores que 1 no se recortan al dibujar',()=>{
     {get:(o,k)=>k in o?o[k]:()=>{}});
   setup([]);e.drawLineChart(canvas,[2,2,2],'t','JDJ','#000',{autoZoom:true});
   assert.ok(labels.includes('2.00'));
+});
+test('Inspector: vecinos, suma y ejemplo numérico real',()=>{
+  const m=setup([agent(.4,.5,{anchorX:.3,lambda:.1,mu:.6,alpha:.1}),agent(.6,.5)]);
+  e.step(); const r=m.movement;
+  assert.equal(r.agent,1); assert.equal(r.t,0);
+  assert.equal(JSON.stringify(r.neighbors),'[2]');
+  near(r.total[0],.19); near(r.directed[0],.00855);
+  near(r.to[0],.40855); near(r.to[0],m.agents[0].x);
+  for(let k=0;k<2;k++) near(r.forces.reduce((s,row)=>s+row[k+1],0),r.total[k]);
+});
+test('Inspector: ruido bajo umbral, límite y borde se explican por separado',()=>{
+  let m=setup([agent(.5,.5,{alpha:1})],{noise:.7});
+  e.step(); let r=m.movement;
+  near(r.directed[0],0); near(r.to[0],r.from[0]+r.noise[0]);
+  m=setup([agent(.99,.5,{anchorX:10,lambda:1})]);
+  e.step(); r=m.movement;
+  assert.ok(r.factor<1); near(r.limited[0],.05);
+  near(r.beforeClip[0],1.04); near(r.to[0],1);
+});
+test('Inspector: captura inmutable y selección sin efectos sobre los sorteos',()=>{
+  const run=highlighted=>{
+    const m=setup([agent(.4,.5),agent(.6,.5)],{noise:.8,poleStrength:.7});
+    m.highlighted=highlighted;e.step();const snapshot=JSON.stringify(m.movement);
+    const old=m.movement;e.step();assert.equal(JSON.stringify(old),snapshot);
+    return {positions:m.agents.map(a=>[a.x,a.y]),nextRandom:e.state.rng(),trace:m.movement};
+  };
+  const a=run(0),b=run(1),none=run(-1);
+  assert.equal(JSON.stringify(a.positions),JSON.stringify(b.positions));
+  assert.equal(JSON.stringify(a.positions),JSON.stringify(none.positions));
+  assert.equal(a.nextRandom,b.nextRandom);assert.equal(a.nextRandom,none.nextRandom);
+  assert.equal(b.trace.agent,2);assert.equal(none.trace,undefined);
+});
+test('Inspector: no muestra el cálculo de otra persona ni tras reiniciar',()=>{
+  const box={};context.document.getElementById=()=>box;
+  const m=setup([agent(.4,.5),agent(.6,.5)]);
+  e.step();e.renderMovementExplanation();
+  assert.ok(box.innerHTML.includes('Agente 1 · ronda 0 → 1'));
+  m.highlighted=1;e.renderMovementExplanation();
+  assert.ok(box.textContent.includes('Agente 2 seleccionado'));
+  setup([agent(.5,.5)]);e.renderMovementExplanation();
+  assert.ok(box.textContent.includes('Agente 1 seleccionado'));
 });
 console.log(`${passed} pruebas del motor web superadas.`);

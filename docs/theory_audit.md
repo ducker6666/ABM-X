@@ -67,3 +67,10 @@ Limitaciones conservadas y explicadas: radios gaussianos sin corte; atributos
 individuales requieren reiniciar; el auditor no exige separación; el historial
 recorta a 900 muestras y su eje temporal original no muestra exactamente la
 ventana desplazada; el calendario de eventos es sintético, no un editor de datos.
+# Inspector y protocolo (20 de septiembre de 2026)
+
+Se añade «Explícame este movimiento» al motor web, sin cambiar ecuaciones ni configuración por defecto. Captura, para el agente seleccionado, los vecinos y vectores realmente usados, la prueba de umbral, los sorteos de ruido, el límite de desplazamiento y el recorte de coordenadas. La fotografía conserva los valores del paso; cambiar controles después no la recalcula.
+
+Verificación de esta entrega: 31 pruebas del motor web, 23 pruebas Python históricas y 16 ecuaciones MathML verificadas. Las pruebas Python no implican equivalencia entre los motores. Comparación adicional contra el commit anterior `26c210e`: semillas 1, 7, 123 y 999; 60 agentes, 100 rondas; mínimo de cluster 3, intervalo nominal de eventos 8, duración 15, ruido y otras fuerzas activas. Posiciones, eventos, series de fuerzas/JDJ/eventos, contador del auditor, siguiente fecha de evento y siguiente sorteo coinciden exactamente. Esta comprobación cubre esos escenarios, no constituye una demostración exhaustiva.
+
+Se publican [definiciones operativas](variable_contract.md) y un [protocolo experimental pendiente](experimental_protocol.md). El nuevo control de ganancia es una propuesta para un experimento posterior, no una dinámica ya implementada ni una fórmula atribuida a la literatura.

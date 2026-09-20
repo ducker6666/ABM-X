@@ -536,6 +536,9 @@ function step() {
 
   for (let i = 0; i < agents.length; i++) {
     const a = agents[i];
+    // Registro del cálculo real, sin recalcular fuerzas ni consumir sorteos.
+    const explain = i === (m.highlighted ?? 0);
+    const neighbors = explain ? [] : null;
     a.previousX = a.x; a.previousY = a.y;
     const radicality = hypot(a.x - 0.5, a.y - 0.5) / Math.sqrt(0.5);
     // Hipótesis geométrica propia: ε=ε0(1-cierre*r)(1-inercia*M), acotada.
@@ -551,7 +554,10 @@ function step() {
       if (j === i) continue;
       const b = agents[j];
       const d = hypot(a.x - b.x, a.y - b.y);
-      if (d <= a.eps) { localX += b.x; localY += b.y; count++; }
+      if (d <= a.eps) {
+        localX += b.x; localY += b.y; count++;
+        if (explain) neighbors.push(j + 1);
+      }
     }
     if (count) { localX = localX / count - a.x; localY = localY / count - a.y; }
 
@@ -616,10 +622,14 @@ function step() {
       moveX = c.dt * a.mu * totalX;
       moveY = c.dt * a.mu * totalY;
     }
+    const directed = explain ? [moveX, moveY] : null;
+    let noiseX = 0, noiseY = 0;
     if (c.noise > 0) {
       const noiseScale = 0.012 * c.noise;
-      moveX += normal(0, noiseScale);
-      moveY += normal(0, noiseScale);
+      noiseX = normal(0, noiseScale);
+      noiseY = normal(0, noiseScale);
+      moveX += noiseX;
+      moveY += noiseY;
     }
     const stepLen = hypot(moveX, moveY);
     if (stepLen > c.maxMove) {
@@ -627,6 +637,29 @@ function step() {
       moveY *= c.maxMove / stepLen;
     }
     nextPositions.push([clamp(a.x + moveX, 0, 1), clamp(a.y + moveY, 0, 1)]);
+    if (explain) {
+      // Arrays nuevos: los pasos posteriores no deben alterar esta fotografía.
+      m.movement = {
+        agent: i + 1, t: m.t, from: [a.x, a.y], to: [...nextPositions[i]],
+        eps0: a.eps0, eps: a.eps, radicality, mass: massInertia,
+        closure: c.radicalToleranceLoss, inertia: c.massToleranceLoss,
+        neighbors, group: ownCluster ? {size: ownCluster.size, center: [ownCluster.x, ownCluster.y]} : null,
+        forces: [
+          ["Vecinos parecidos", localX, localY],
+          ["Polo sobre la persona", pf.x, pf.y],
+          ["Aporte polo–grupo", poleX - pf.x, poleY - pf.y],
+          ["Eventos y reactancia (neto)", eventX, eventY],
+          ["Atracción de grupos", clusterX, clusterY],
+          ["Auditor hacia el centro", centerX, centerY],
+          ["Anclaje inicial", anchorX, anchorY]
+        ],
+        total: [totalX, totalY], norm: forceNorm, alpha: a.alpha,
+        dt: c.dt, mu: a.mu, directed, noise: [noiseX, noiseY],
+        noiseScale: 0.012 * c.noise, stepLen, maxMove: c.maxMove,
+        factor: stepLen > c.maxMove ? c.maxMove / stepLen : 1,
+        limited: [moveX, moveY], beforeClip: [a.x + moveX, a.y + moveY]
+      };
+    }
 
     forceMeans.local += hypot(localX, localY);
     forceMeans.pole += hypot(poleX, poleY);
@@ -673,7 +706,65 @@ function drawCanvasLabel(text, x, y, options = {}) {
   ctx.fillText(text, bx + padX, by - 5);
   ctx.restore();
 }
+let lastExplanationKey = null;
+let lastExplanationTrace = null;
+function renderMovementExplanation() {
+  const box = document.getElementById("movementDetails");
+  const m = state.model;
+  if (!box || !m) return;
+  const r = m.movement;
+  const selected = (m.highlighted ?? 0) + 1;
+  const key = `${selected}:${state.pendingReset}`;
+  if (lastExplanationTrace === r && lastExplanationKey === key) return;
+  lastExplanationTrace = r;
+  lastExplanationKey = key;
+  if (!r || r.agent !== selected) {
+    box.textContent = `Agente ${selected} seleccionado. Pulsa «Avanzar 1 ronda y explicar» para registrar su siguiente movimiento. No se inventa un ejemplo ni se reutiliza el cálculo de otra persona.`;
+    return;
+  }
+  const f = n => n.toFixed(6);
+  const v = p => `(${f(p[0])}; ${f(p[1])})`;
+  const moved = [r.to[0] - r.from[0], r.to[1] - r.from[1]];
+  const direction = (n, positive, negative) => Math.abs(n) < 1e-12 ? "sin cambio" : n > 0 ? positive : negative;
+  // Solo texto fijo y números internos; no se insertan entradas del usuario.
+  box.innerHTML = `
+    <h4>Agente ${r.agent} · ronda ${r.t} → ${r.t + 1}</h4>
+    <p><b>De ${v(r.from)} a ${v(r.to)}.</b> En x: ${direction(moved[0], "derecha", "izquierda")}; en y: ${direction(moved[1], "arriba", "abajo")}.</p>
+    <p class="control-notice">Fotografía del último paso calculado para esta persona. Los controles actuales pueden haber cambiado después. Se muestran 6 decimales; el motor no redondea estos cálculos.${state.pendingReset ? " Hay atributos pendientes de reiniciar." : ""}</p>
+    <details open><summary>1. ¿A quién escuchó?</summary>
+      <p>Su tolerancia inicial ${f(r.eps0)} se ajustó así: ε = limitar[${f(r.eps0)} × (1 − ${f(r.closure)} × ${f(r.radicality)}) × (1 − ${f(r.inertia)} × ${f(r.mass)}), 0.01, 1] = <b>${f(r.eps)}</b>.</p>
+      <p>Escuchó a ${r.neighbors.length} vecinos a distancia euclídea ≤ ε. Se promedian sus posiciones y se resta la posición propia.${r.group ? ` Grupo propio: ${r.group.size} personas, centro ${v(r.group.center)}, masa ${f(r.mass)}.` : " No se le asignó un grupo."}</p>
+      <details><summary>Identificadores de los vecinos</summary><p>${r.neighbors.join(", ") || "Ninguno: la fuerza local es cero."}</p></details>
+    </details>
+    <details open><summary>2. ¿Qué empujó y hacia dónde?</summary>
+      <p>Cada fila es una aportación antes de velocidad, ruido y límites. x positiva: derecha; y positiva: arriba. Un valor negativo apunta al lado contrario. Se suman por coordenada, no sus magnitudes.</p>
+      <div class="trace-scroll"><table class="legend-table"><thead><tr><th>Aportación</th><th>x</th><th>y</th></tr></thead><tbody>
+      ${r.forces.map(([name,x,y]) => `<tr><td>${name}</td><td>${f(x)}</td><td>${f(y)}</td></tr>`).join("")}
+      <tr><th>Total F</th><th>${f(r.total[0])}</th><th>${f(r.total[1])}</th></tr></tbody></table></div>
+      <p>«Polo–grupo» es el añadido calculado en el centro del grupo; no incluye de nuevo la fuerza polar individual. Eventos muestra el saldo de atracción y reactancia, no su magnitud por separado.</p>
+    </details>
+    <details open><summary>3. De fuerzas a movimiento</summary>
+      <ol><li><b>Umbral:</b> longitud de F = ${f(r.norm)}; α = ${f(r.alpha)}. ${r.norm > r.alpha ? "Supera α: hay respuesta dirigida." : "No supera α: respuesta dirigida cero; aún puede haber ruido."}</li>
+      <li><b>Respuesta dirigida:</b> ${r.norm > r.alpha ? `${f(r.dt)} × ${f(r.mu)} × ${v(r.total)}` : "(0; 0)"} = ${v(r.directed)}. dt es el paso numérico y μ la susceptibilidad individual.</li>
+      <li><b>Ruido sorteado:</b> ${v(r.noise)}, con desviación ${f(r.noiseScale)} por eje. Sumado a la respuesta: ${v([r.directed[0]+r.noise[0],r.directed[1]+r.noise[1]])}.</li>
+      <li><b>Límite por ronda:</b> longitud ${f(r.stepLen)}, máximo ${f(r.maxMove)}. Multiplicador ${f(r.factor)} → desplazamiento ${v(r.limited)}.</li>
+      <li><b>Nueva posición:</b> ${v(r.from)} + ${v(r.limited)} = ${v(r.beforeClip)}. Tras limitar cada coordenada a [0, 1]: <b>${v(r.to)}</b>.</li></ol>
+      <p>Desplazamiento realmente realizado: ${v(moved)}. Todas las personas leen el mismo estado inicial de la ronda y se actualizan juntas.</p>
+    </details>
+    <p><a href="formula.html#final">Ecuaciones y ejemplo sencillo</a> · <a href="guide.html#significados">Qué significan estas cantidades</a>. Esta explicación verifica operaciones; no demuestra que sean leyes sociales.</p>`;
+}
+
+function explainOneStep() {
+  state.running = false;
+  state.accumulator = 0;
+  updateConfig();
+  if (state.model.t < state.model.cfg.steps) step();
+  else document.getElementById("configNotice").textContent = "Se alcanzó el máximo de rondas. Auméntalo para continuar o reinicia.";
+  draw();
+}
+
 function draw() {
+  renderMovementExplanation();
   if (!state.model) return;
   drawMain();
   drawLineChart(polCtx, state.model.historyPol, "X = t", "Y = JDJ", "#1f77b4", { autoZoom: true });
@@ -972,6 +1063,7 @@ function tick(ts) {
 }
 document.getElementById("startBtn").addEventListener("click", () => { updateConfig(); state.running = true; });
 document.getElementById("pauseBtn").addEventListener("click", () => { state.running = false; });
+document.getElementById("explainBtn").addEventListener("click", explainOneStep);
 document.getElementById("resetBtn").addEventListener("click", () => { state.running = false; state.accumulator = 0; resetModel(); });
 mainCanvas.style.cursor = "crosshair";
 mainCanvas.addEventListener("click", selectAgentFromCanvas);
