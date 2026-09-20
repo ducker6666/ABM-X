@@ -1,5 +1,16 @@
 # Registro de decisiones científicas
 
+## 2026-09-20 — Recuperación auditable del modelo integrado
+
+- La web deja de organizarse visualmente por fases y recupera una opción integrada como vista predeterminada.
+- “Gravedad de clusters” significa suma normalizada de influencia individual: un grupo pesa por su número de voces, no por una ley física.
+- Atracción, reactancia y norma común siguen la función de afinidad de Zhang, Hu y Zhang (2025); su extensión a vectores 2D está declarada.
+- La resistencia por radicalidad sigue el compromiso de Duggins (2017). No se cambia el umbral epsilon con una fórmula no publicada.
+- El ruido local sigue a Pineda, Toral y Hernández-García (2013); la pérdida de atención usa un decaimiento exponencial basado en Schweitzer et al. (2020).
+- El auditor usa JDJ proyectado y dispersión. JDJ por sí solo puede dar riesgo medio a un consenso central; exigir dispersión impide intervenir en ese caso.
+- La activación JDJ del recentrado y la suma completa de mecanismos son reglas operativas del proyecto, no teorías publicadas como conjunto.
+- Se inspeccionaron los 25 PDF locales de `PhD Tesis` (24 trabajos únicos; el capítulo de Markov está duplicado por idioma). `web/guide.html` registra su uso.
+
 ## 2026-09-20 — Reinicio sobre el modelo original
 
 ### Se conserva

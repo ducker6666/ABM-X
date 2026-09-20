@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ABM X · Guía de lectura</title>
+  <link rel="stylesheet" href="styles.css?v=integrated-1" />
+</head>
+<body class="document-body">
+  <header class="site-header">
+    <a class="brand" href="index.html"><span>ABM X</span><small>Laboratorio de opinión</small></a>
+    <nav aria-label="Navegación principal">
+      <a href="index.html"><b>1</b> Simulador</a>
+      <a href="formula.html"><b>2</b> Fórmulas</a>
+      <a class="active" href="guide.html"><b>3</b> Guía</a>
+    </nav>
+    <span class="version-pill">Lectura sencilla · límites claros</span>
+  </header>
+
+  <main class="guide-page">
+    <section class="guide-hero">
+      <p class="eyebrow">PÁGINA 3 · CONTEXTO PARA EL LECTOR</p>
+      <h1>Cómo entender este laboratorio</h1>
+      <p class="guide-subtitle">Una guía breve para saber qué representa la simulación, cómo usarla y qué conclusiones no permite.</p>
+      <div class="callout safe"><strong>Idea principal:</strong> el programa no predice por sí solo lo que hará una sociedad. Permite comprobar qué consecuencias producen unas reglas explícitas y comparar esas consecuencias con datos.</div>
+    </section>
+
+    <section class="guide-section two-column-text">
+      <div>
+        <span class="guide-kicker">EN UN MINUTO</span>
+        <h2>Qué estás viendo</h2>
+        <p>Cada punto es una persona simulada. Su posición resume dos actitudes. Las líneas finas muestran contactos de red; A y B son fuentes persistentes o acontecimientos; los anillos con <code>n=...</code> muestran cuántos puntos forman un grupo visual.</p>
+      </div>
+      <div>
+        <span class="guide-kicker">PREGUNTA GENERAL</span>
+        <h2>Para qué sirve</h2>
+        <p>Sirve para estudiar cómo cambian consenso, fragmentación y bipolarización cuando varían la red, la tolerancia, la influencia de grupos, la reactancia, la atención, la obstinación y una intervención de recentrado.</p>
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <span class="guide-kicker">USO RECOMENDADO</span>
+      <h2>Cinco pasos para no engañarse con una animación bonita</h2>
+      <div class="method-flow five-steps">
+        <div><span>1</span><b>Fija la semilla</b><p>La misma semilla reproduce posiciones, red y agentes inmóviles.</p></div>
+        <div><span>2</span><b>Cambia una cosa</b><p>Modifica un mecanismo cada vez para reconocer su efecto.</p></div>
+        <div><span>3</span><b>Repite</b><p>Usa muchas semillas; una sola ejecución no es evidencia.</p></div>
+        <div><span>4</span><b>Compara controles</b><p>Ejecuta HK, Deffuant y FJ además del modelo integrado.</p></div>
+        <div><span>5</span><b>Contrasta datos</b><p>Solo entonces pregunta si una configuración describe un caso real.</p></div>
+      </div>
+    </section>
+
+    <section class="guide-section">
+      <span class="guide-kicker">LOS NUEVE MECANISMOS</span>
+      <h2>Explicados sin jerga</h2>
+      <div class="mechanism-grid">
+        <article><b>1 · Masa de grupos</b><p>Un grupo influye más cuando contiene más voces. No hay gravedad física.</p></article>
+        <article><b>2 · Autoatracción</b><p>Las personas suficientemente parecidas tienden a aproximar sus posiciones.</p></article>
+        <article><b>3 · Polo–masa</b><p>Una fuente fija pesa como varias voces y atrae solo dentro de la tolerancia.</p></article>
+        <article><b>4 · Recentrado</b><p>Una intervención visible acerca gradualmente posiciones al centro; no ocurre de forma automática.</p></article>
+        <article><b>5 · Auditor JDJ</b><p>Observa JDJ y dispersión. Si ambos superan sus límites, enciende el recentrado.</p></article>
+        <article><b>6 · Atención y contraste</b><p>Las señales pierden fuerza; una exposición muy discrepante puede causar reactancia.</p></article>
+        <article><b>7 · Ruido e inmovilidad</b><p>Algunas opiniones cambian un poco al azar y una fracción permanece obstinada.</p></article>
+        <article><b>8 · Compromiso radical</b><p>Las posiciones más extremas responden menos. No se inventa una nueva tolerancia.</p></article>
+        <article><b>9 · Simultaneidad</b><p>Las contribuciones se calculan por separado y luego se suman con un orden fijo.</p></article>
+      </div>
+      <p class="fine-print">La explicación matemática, el ejemplo numérico y la fuente de cada punto están en la página «Fórmulas».</p>
+    </section>
+
+    <section class="guide-section">
+      <span class="guide-kicker">LECTURA DE RESULTADOS</span>
+      <h2>Qué significa cada indicador</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Indicador</th><th>Lectura útil</th><th>Advertencia</th></tr></thead>
+        <tbody>
+          <tr><td>Clusters</td><td>Número de componentes bajo un umbral visible.</td><td>Cambia si cambia el umbral; no es una verdad única sobre “grupos sociales”.</td></tr>
+          <tr><td>Dispersión</td><td>Cuánto se extiende la nube alrededor de su centro.</td><td>No distingue por sí sola uno, dos o muchos grupos.</td></tr>
+          <tr><td>JDJ A–B</td><td>Riesgo de bipolarización a lo largo del eje entre A y B.</td><td>Pierde la separación perpendicular y nunca debe leerse solo.</td></tr>
+          <tr><td>Seguidores</td><td>Personas prácticamente coincidentes con un polo.</td><td>Es un criterio estricto; RMSD informa cercanía gradual.</td></tr>
+          <tr><td>Movimiento medio</td><td>Tamaño medio del cambio en la última ronda.</td><td>Movimiento pequeño no equivale necesariamente a equilibrio estable.</td></tr>
+          <tr><td>Auditor</td><td>Indica si la regla de intervención está activa.</td><td>Es una decisión normativa programada, no un descubrimiento causal.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="guide-section limitation-section">
+      <span class="guide-kicker">LÍMITES</span>
+      <h2>Qué no se puede afirmar todavía</h2>
+      <ul>
+        <li>Que los valores predeterminados sean parámetros reales de una población.</li>
+        <li>Que dos dimensiones abstractas correspondan a actitudes concretas sin un instrumento de medida.</li>
+        <li>Que reactancia, fatiga o recentrado tengan igual intensidad en todas las personas.</li>
+        <li>Que una red Watts–Strogatz represente una plataforma o comunidad observada.</li>
+        <li>Que activar el auditor cause en la realidad el mismo resultado que en la simulación.</li>
+        <li>Que un patrón visual sea una prueba estadística o una validación empírica.</li>
+      </ul>
+    </section>
+
+    <section class="guide-section">
+      <span class="guide-kicker">PRIMER ESTUDIO DEFENDIBLE</span>
+      <h2>Con qué me quedaría primero</h2>
+      <p>Usaría el modelo integrado como laboratorio, pero la pregunta principal aislaría una sola decisión: <strong>qué cambia cuando el auditor activa una intervención gradual frente al mismo sistema sin auditor</strong>. Todo lo demás se mantendría fijo y se incluirían controles y ablaciones.</p>
+      <blockquote>¿En qué condiciones una intervención activada por JDJ y dispersión reduce la bipolarización sin convertir toda la población en un consenso central artificial?</blockquote>
+      <div class="objective-grid">
+        <div><b>Comparación principal</b><p>Auditor apagado frente a encendido, con las mismas semillas y parámetros.</p></div>
+        <div><b>Resultado principal</b><p>JDJ junto con dispersión y número de clusters; nunca JDJ aislado.</p></div>
+        <div><b>Robustez</b><p>Repetir sin reactancia, sin ruido y sin obstinados para identificar dependencias.</p></div>
+        <div><b>Límite explícito</b><p>Evaluación de una política computacional; no afirmación causal sobre una sociedad.</p></div>
+      </div>
+      <div class="callout warning"><strong>Novedad pendiente de comprobar:</strong> esta formulación puede ser una contribución, pero no se afirma originalidad absoluta hasta cerrar una búsqueda sistemática específica sobre control por índices difusos de polarización.</div>
+    </section>
+
+    <section class="guide-section">
+      <span class="guide-kicker">BIBLIOTECA LOCAL</span>
+      <h2>Revisión realizada sobre los PDF de «PhD Tesis»</h2>
+      <p>Se inspeccionaron 25 archivos locales, equivalentes a 24 trabajos porque «Markov Chains» aparece en inglés y en español. Se extrajeron metadatos, resúmenes y, para las fuentes usadas en el motor, las secciones de ecuaciones. Esta tabla deja rastro de para qué se utilizó cada documento.</p>
+      <details class="library-audit">
+        <summary>Ver los 25 PDF revisados</summary>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Archivo</th><th>Trabajo identificado</th><th>Uso en este proyecto</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Duggins (2017), modelo psicológico de cambio de opinión</td><td>Compromiso por extremidad, conformidad y susceptibilidad.</td></tr>
+            <tr><td>2</td><td>Li & Xiao (2017), polarización multidimensional</td><td>Asimilación y contraste en más de una dimensión.</td></tr>
+            <tr><td>3</td><td>Ferraro et al. (2024), ABM y GenAI en redes</td><td>Contexto reciente; no entra en las ecuaciones.</td></tr>
+            <tr><td>4</td><td>Tang, Snijders & Flache (2025), estudio empírico de confianza y repulsión</td><td>Advertencia: la evidencia de influencia negativa depende del resultado.</td></tr>
+            <tr><td>6</td><td>Zhang, Hu & Zhang (2025), modelo basado en afinidad</td><td>Ecuación central de atracción, reactancia, homofilia y norma común.</td></tr>
+            <tr><td>7</td><td>Li, Luo & Chu (2025), confianza multidimensional ponderada</td><td>Fundamento para opinión 2D y discordancia entre temas.</td></tr>
+            <tr><td>8</td><td>Gestefeld & Lorenz (2023), calibración empírica</td><td>Exige calibrar transiciones y distribuciones; muestra fallos en extremos.</td></tr>
+            <tr><td>9</td><td>Chavalarias, Bouchaud & Panahi (2024), recomendadores</td><td>Retroalimentación entre red, exposición y opiniones.</td></tr>
+            <tr><td>10</td><td>Lorenz (2008), revisión de confianza acotada</td><td>Mapa de HK, Deffuant, multidimensionalidad y heterogeneidad.</td></tr>
+            <tr><td>11</td><td>Chuang et al. (2026), DEBATE</td><td>Advertencia: agentes LLM convergen antes que grupos humanos.</td></tr>
+            <tr><td>12</td><td>Wang et al. (2025), cámaras de eco con LLM</td><td>Contexto de red, recomendación y simulación generativa.</td></tr>
+            <tr><td>13</td><td>Larooij & Törnberg (2025), revisión crítica de ABM generativo</td><td>Advertencia sobre validación, opacidad y realismo.</td></tr>
+            <tr><td>14</td><td>Chen & Lan (2021), medios diversos y elección de audiencia</td><td>Señales mediáticas heterogéneas y límites de efecto.</td></tr>
+            <tr><td>16</td><td>Chen et al. (2019), heterogeneidad y conformidad dinámica</td><td>Contexto para diferencias individuales y conformidad.</td></tr>
+            <tr><td>17</td><td>Zou & Chau (2026), Axelrod modificado</td><td>Red de escala libre, convergencia/divergencia y agentes empáticos.</td></tr>
+            <tr><td>18</td><td>Keijzer, Mäs & Flache (2024), evidencia micro y efectos macro</td><td>Función de respuesta; reactancia débil solo ante gran desacuerdo.</td></tr>
+            <tr><td>19</td><td>Schweitzer, Krivachy & Garcia (2020), polarización y emociones</td><td>Decaimiento de atención a información antigua.</td></tr>
+            <tr><td>20</td><td>Zhao, Sasahara & Chen (2026), segregación antes de polarización</td><td>Distingue estructura de red y opinión; contexto para recomendadores.</td></tr>
+            <tr><td>21</td><td>Noorazar (2020), revisión de propagación de opiniones</td><td>Obstinación, ruido, repulsión, poder y temas relacionados.</td></tr>
+            <tr><td>22</td><td>Schüepp et al. (2026), recomendadores socialmente conscientes</td><td>Intervención y red como herramienta de control.</td></tr>
+            <tr><td>23</td><td>Moor-Smith & Carpentras (2026), validez de modelos</td><td>Advertencia: buen ajuste interno no garantiza predicción temporal.</td></tr>
+            <tr><td>HK</td><td>Pineda, Toral & Hernández-García (2013), HK con ruido</td><td>Salto aleatorio acotado usado en el simulador.</td></tr>
+            <tr><td>Markov EN</td><td>Guevara et al. (2022), modelado de polarización con Markov</td><td>Definición y límites de JDJ; versión inglesa.</td></tr>
+            <tr><td>Markov ES</td><td>El mismo trabajo traducido al español</td><td>Comprobación terminológica; no se contó como estudio distinto.</td></tr>
+            <tr><td>art. 32</td><td>Batista-Barallobre (2025), revisión de emergencia social</td><td>Marco de sistemas complejos y límites explicativos de los ABM.</td></tr>
+          </tbody>
+        </table></div>
+      </details>
+      <div class="callout neutral"><strong>Resultado de la revisión:</strong> no todos los PDF respaldan una fórmula. Algunos se usan precisamente para limitar afirmaciones, exigir datos o advertir contra modelos demasiado complejos.</div>
+    </section>
+
+    <section class="guide-section final-card">
+      <h2>La lectura correcta en una frase</h2>
+      <p>El laboratorio hace visibles las consecuencias de mecanismos documentados y adaptaciones declaradas; la evidencia sobre una sociedad empezará cuando las dimensiones, la red, los eventos y los parámetros procedan de datos observados.</p>
+    </section>
+  </main>
+</body>
+</html>

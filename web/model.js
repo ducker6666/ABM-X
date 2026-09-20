@@ -1,11 +1,13 @@
 /*
- * Motor científico por fases.
+ * Motor científico del laboratorio de dinámica de opinión.
  *
  * Esta parte no dibuja nada: solo implementa la ecuación documentada en
- * formula.html y en src/paper1_model.py. Separar modelo e interfaz permite
+ * formula.html y en src/integrated_model.py. Separar modelo e interfaz permite
  * comprobar que un botón o un color no cambien accidentalmente la teoría.
- * `step` conserva exactamente el control HK del Paper 1. `advance` añade, de
- * una en una, las capas DW, FJ, red y señales temporales documentadas.
+ * `step` conserva el control HK. `advance` permite comparar modelos clásicos
+ * y una composición integrada. Esa composición NO se presenta como una teoría
+ * publicada íntegramente: cada término tiene una fuente y la forma de unirlos
+ * es una decisión explícita del proyecto, documentada en formula.html.
  *
  * Regla por agente i (actualización síncrona):
  *
@@ -20,7 +22,7 @@
  * cuenta como dos voces. El promedio es (0.2+0.3+2*0.1)/4 = 0.175.
  */
 
-(function attachPaper1Model(globalScope) {
+(function attachABMXModel(globalScope) {
   "use strict";
 
   function clamp(value, min, max) {
@@ -141,6 +143,20 @@
   }
 
   function signalWeights(config, t) {
+    if (config.phase === "integrated") {
+      const windowed = [
+        config.signalAWeight * activeInterval(t, config.signalAStart, config.signalADuration),
+        config.signalBWeight * activeInterval(t, config.signalBStart, config.signalBDuration),
+      ];
+      if (!config.fatigueEnabled) return windowed;
+      // Decaimiento de atención: m_k(t)=m_k exp[-lambda(t-s_k)] dentro
+      // de su ventana. Es la discretización más simple del término de pérdida
+      // de atención -c h(t) descrito por Schweitzer et al. (2020).
+      return [
+        windowed[0] * Math.exp(-config.fatigueDecay * Math.max(0, t - config.signalAStart)),
+        windowed[1] * Math.exp(-config.fatigueDecay * Math.max(0, t - config.signalBStart)),
+      ];
+    }
     if (config.phase !== "temporal") return [config.signalAWeight, config.signalBWeight];
     return [
       config.signalAWeight * activeInterval(t, config.signalAStart, config.signalADuration),
@@ -150,8 +166,8 @@
 
   function validatePhasedConfig(config, nAgents) {
     validateConfig(config);
-    const phases = new Set(["hk", "dw", "fj", "network", "temporal"]);
-    if (!phases.has(config.phase)) throw new Error("fase desconocida");
+    const phases = new Set(["integrated", "hk", "dw", "fj", "network", "temporal"]);
+    if (!phases.has(config.phase)) throw new Error("modelo desconocido");
     if (!(config.compromiseRate > 0 && config.compromiseRate <= 0.5)) {
       throw new Error("mu debe pertenecer a (0, 0.5]");
     }
@@ -160,10 +176,22 @@
     if (!Number.isInteger(config.networkDegree) || config.networkDegree < 2 || config.networkDegree % 2 !== 0) {
       throw new Error("el grado de red debe ser un entero par mayor o igual que 2");
     }
-    if (["network", "temporal"].includes(config.phase) && config.networkDegree >= nAgents) {
+    if (["integrated", "network", "temporal"].includes(config.phase) && config.networkDegree >= nAgents) {
       throw new Error("el grado de red debe ser menor que el número de agentes");
     }
     if (!(config.networkRewiring >= 0 && config.networkRewiring <= 1)) throw new Error("beta debe pertenecer a [0,1]");
+    if (config.phase === "integrated") {
+      if (!(config.socialRate >= 0 && config.socialRate <= 1)) throw new Error("eta debe pertenecer a [0,1]");
+      if (!(config.homophilyScale > 0)) throw new Error("BH debe ser positivo");
+      if (!(config.commitmentStrength >= 0)) throw new Error("s debe ser no negativo");
+      if (!(config.centerStrength >= 0 && config.centerStrength <= 1)) throw new Error("alpha debe pertenecer a [0,1]");
+      if (!(config.auditorThreshold >= 0 && config.auditorThreshold <= 1)) throw new Error("el umbral JDJ debe pertenecer a [0,1]");
+      if (!(config.auditorMinDispersion >= 0)) throw new Error("la dispersión mínima debe ser no negativa");
+      if (!(config.fatigueDecay >= 0)) throw new Error("lambda debe ser no negativo");
+      if (!(config.noiseProbability >= 0 && config.noiseProbability <= 1)) throw new Error("la probabilidad de ruido debe pertenecer a [0,1]");
+      if (!(config.noiseRadius >= 0 && config.noiseRadius <= 1)) throw new Error("el radio de ruido debe pertenecer a [0,1]");
+      if (!(config.immobileShare >= 0 && config.immobileShare <= 1)) throw new Error("la fracción inmóvil debe pertenecer a [0,1]");
+    }
   }
 
   function buildSmallWorldNetwork(nAgents, degree, rewiring, seed) {
@@ -298,15 +326,139 @@
     return new Set(keys).size;
   }
 
+  function radicality(agent) {
+    // Adaptación 2D declarada del |50-O_i|/50 de Duggins (2017).
+    // La esquina del cuadrado está a sqrt(1/2) del centro; dividir por esa
+    // distancia deja r_i entre 0 (centro) y 1 (esquina).
+    return clamp(distance([agent.x, agent.y], [0.5, 0.5]) / Math.sqrt(0.5), 0, 1);
+  }
+
+  function socialImpactCoefficient(opinionDistance, tolerance, homophilyScale, reactanceEnabled) {
+    /*
+     * Zhang, Hu y Zhang (2025), ecuaciones 2--3:
+     *   D(d)=1-d/BT si d<2BT; D(d)=-1 en otro caso
+     *   q(d)=D(d) exp(-d/BH)
+     * q>0 aproxima opiniones; q<0 las separa. En nuestra extensión vectorial
+     * d es euclídea y q multiplica el vector (x_j-x_i).
+     */
+    const contrast = opinionDistance < 2 * tolerance
+      ? 1 - opinionDistance / Math.max(tolerance, 1e-12)
+      : -1;
+    const signed = reactanceEnabled ? contrast : Math.max(0, contrast);
+    return signed * Math.exp(-opinionDistance / homophilyScale);
+  }
+
+  function boundedNoise(agent, radius, random) {
+    // Ruido local de Pineda, Toral y Hernandez-Garcia (2013): con cierta
+    // probabilidad se sustituye la interacción por un salto aleatorio acotado
+    // alrededor de la opinión actual. Esta es su extensión componente a
+    // componente en [0,1]^2.
+    return {
+      ...agent,
+      x: clamp(agent.x + (2 * random() - 1) * radius, 0, 1),
+      y: clamp(agent.y + (2 * random() - 1) * radius, 0, 1),
+      previousX: agent.x,
+      previousY: agent.y,
+    };
+  }
+
+  function assignImmobility(agents, share, seed) {
+    // Los agentes inmóviles son agentes obstinados: conservan su opinión.
+    // La semilla hace reproducible qué individuos pertenecen a esa fracción.
+    const random = mulberry32(seed);
+    return agents.map(agent => ({ ...agent, immobile: random() < share }));
+  }
+
+  function integratedStep(agents, config, runtime) {
+    /*
+     * Composición auditable (no una teoría publicada como conjunto):
+     *
+     * x_i(t+1)=clip[x_i + eta/k_i (G_i+P_i) + a(t) alpha/k_i(c-x_i)]
+     * k_i=1+s r_i.
+     *
+     * G_i suma influencia de contactos; por eso un grupo con más miembros
+     * aporta más términos ("masa" social) sin introducir gravedad newtoniana.
+     * P_i contiene las señales obstinadas ponderadas. a(t) es la decisión del
+     * auditor: 1 solo si JDJ y dispersión superan los umbrales declarados.
+     */
+    const beforeJdj = jdjProductAxis(agents, config);
+    const beforeDispersion = dispersion(agents);
+    const auditorActive = Boolean(config.auditorEnabled)
+      && beforeJdj >= config.auditorThreshold
+      && beforeDispersion >= config.auditorMinDispersion;
+    const [weightA, weightB] = signalWeights(config, runtime.t);
+    const old = agents.map(agent => ({ ...agent }));
+
+    const next = old.map((agent, i) => {
+      if (agent.immobile) {
+        return { ...agent, previousX: agent.x, previousY: agent.y };
+      }
+      if (config.noiseEnabled && runtime.random() < config.noiseProbability) {
+        return boundedNoise(agent, config.noiseRadius, runtime.random);
+      }
+
+      const candidates = runtime.network
+        ? [...runtime.network[i]]
+        : old.map((_, index) => index).filter(index => index !== i);
+      let peerX = 0;
+      let peerY = 0;
+      for (const j of candidates) {
+        const d = distance([agent.x, agent.y], [old[j].x, old[j].y]);
+        const q = socialImpactCoefficient(d, config.epsilon, config.homophilyScale, config.reactanceEnabled);
+        peerX += q * (old[j].x - agent.x);
+        peerY += q * (old[j].y - agent.y);
+      }
+      const peerDenominator = Math.max(1, candidates.length);
+      peerX /= peerDenominator;
+      peerY /= peerDenominator;
+
+      // Una señal de masa m equivale a m fuentes obstinadas iguales dentro
+      // del límite de confianza. El denominador evita que la escala dependa
+      // de forma descontrolada del valor numérico de m.
+      let poleX = 0;
+      let poleY = 0;
+      let poleMass = 0;
+      for (const [position, weight] of [[config.signalA, weightA], [config.signalB, weightB]]) {
+        if (weight > 0 && distance([agent.x, agent.y], position) <= config.epsilon) {
+          poleX += weight * (position[0] - agent.x);
+          poleY += weight * (position[1] - agent.y);
+          poleMass += weight;
+        }
+      }
+      poleX /= 1 + poleMass;
+      poleY /= 1 + poleMass;
+
+      const commitment = config.adaptiveCommitment
+        ? 1 + config.commitmentStrength * radicality(agent)
+        : 1;
+      const centerX = auditorActive ? config.centerStrength * (0.5 - agent.x) : 0;
+      const centerY = auditorActive ? config.centerStrength * (0.5 - agent.y) : 0;
+      const deltaX = (config.socialRate * (peerX + poleX) + centerX) / commitment;
+      const deltaY = (config.socialRate * (peerY + poleY) + centerY) / commitment;
+      return {
+        ...agent,
+        x: clamp(agent.x + deltaX, 0, 1),
+        y: clamp(agent.y + deltaY, 0, 1),
+        previousX: agent.x,
+        previousY: agent.y,
+      };
+    });
+    return { agents: next, auditorActive, jdjBefore: beforeJdj, dispersionBefore: beforeDispersion };
+  }
+
   function advance(agents, config, runtime) {
     validatePhasedConfig(config, agents.length);
     const before = agents.map(agent => ({ ...agent }));
     let next;
-    if (config.phase === "hk") next = step(agents, config);
+    let diagnostics = { auditorActive: false };
+    if (config.phase === "integrated") {
+      diagnostics = integratedStep(agents, config, runtime);
+      next = diagnostics.agents;
+    } else if (config.phase === "hk") next = step(agents, config);
     else if (config.phase === "dw") next = deffuantRound(agents, config, runtime.random, runtime.t);
     else if (config.phase === "fj") next = friedkinJohnsenStep(agents, config, null, runtime.t);
     else next = friedkinJohnsenStep(agents, config, runtime.network, runtime.t);
-    return { agents: next, meanMove: meanDisplacement(before, next) };
+    return { agents: next, meanMove: meanDisplacement(before, next), auditorActive: diagnostics.auditorActive };
   }
 
   function axisProjection(agent, config) {
@@ -326,6 +478,10 @@
     if (agents.length === 0) return 0;
     const memberships = agents.map(agent => {
       const s = axisProjection(agent, config);
+      // Funciones triangulares complementarias de pertenencia a los polos.
+      // Un punto central pertenece 0.5 a cada polo y por eso JDJ-Pro vale 0.5
+      // ante consenso central. El auditor exige además dispersión positiva para
+      // no confundir ese riesgo difuso con una división social observable.
       return { a: 1 - s, b: s };
     });
     let total = 0;
@@ -388,8 +544,10 @@
   const api = {
     activeInterval,
     advance,
+    assignImmobility,
     axisProjection,
     buildSmallWorldNetwork,
+    boundedNoise,
     boundedTarget,
     clamp,
     connectedComponents,
@@ -399,10 +557,13 @@
     distance,
     friedkinJohnsenStep,
     initialize,
+    integratedStep,
     jdjProductAxis,
     meanDisplacement,
     mulberry32,
+    radicality,
     signalWeights,
+    socialImpactCoefficient,
     step,
     summarize,
     uniqueOpinionCount,
@@ -410,6 +571,6 @@
     validatePhasedConfig,
   };
 
-  globalScope.Paper1Model = api;
+  globalScope.ABMXModel = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 }(typeof window !== "undefined" ? window : globalThis));

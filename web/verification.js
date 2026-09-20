@@ -1,6 +1,6 @@
 "use strict";
 
-const Model = typeof require === "function" ? require("./model.js") : window.Paper1Model;
+const Model = typeof require === "function" ? require("./model.js") : window.ABMXModel;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -107,7 +107,56 @@ function runVerification() {
   assert(Model.uniqueOpinionCount([{ x: 0.1, y: 0.2 }, { x: 0.1, y: 0.2 }]) === 1,
     "dos posiciones idénticas forman una sola posición numérica");
 
-  return { ok: true, tests: 18, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
+  assert(Model.socialImpactCoefficient(0.1, 0.2, 0.4, true) > 0,
+    "una diferencia pequeña debe producir asimilación");
+  assert(Model.socialImpactCoefficient(0.3, 0.2, 0.4, true) < 0,
+    "una diferencia grande puede producir reactancia");
+  approx(Model.socialImpactCoefficient(0.3, 0.2, 0.4, false), 0);
+  approx(Model.radicality({ x: 0.5, y: 0.5 }), 0);
+  approx(Model.radicality({ x: 0, y: 0 }), 1);
+
+  const immobileA = Model.assignImmobility(Model.initialize(30, 1), 0.1, 44);
+  const immobileB = Model.assignImmobility(Model.initialize(30, 1), 0.1, 44);
+  assert(JSON.stringify(immobileA) === JSON.stringify(immobileB),
+    "la inmovilidad debe ser reproducible");
+
+  const integratedConfig = {
+    ...phasedConfig,
+    phase: "integrated",
+    socialRate: 0,
+    homophilyScale: 0.4,
+    reactanceEnabled: true,
+    adaptiveCommitment: false,
+    commitmentStrength: 1,
+    auditorEnabled: true,
+    auditorThreshold: 0.5,
+    auditorMinDispersion: 0.01,
+    centerStrength: 0.1,
+    noiseEnabled: false,
+    noiseProbability: 0,
+    noiseRadius: 0.02,
+    immobileShare: 0,
+    fatigueEnabled: true,
+    fatigueDecay: 0.01,
+    signalAStart: 0,
+    signalADuration: 200,
+    signalBStart: 0,
+    signalBDuration: 0,
+    signalAWeight: 0,
+    signalBWeight: 0,
+  };
+  const integratedAgents = [
+    { x: 0, y: 1, anchorX: 0, anchorY: 1, immobile: false },
+    { x: 1, y: 0, anchorX: 1, anchorY: 0, immobile: false },
+  ];
+  const integrated = Model.integratedStep(integratedAgents, integratedConfig, {
+    random: Model.mulberry32(7), network: [new Set(), new Set()], t: 0,
+  });
+  assert(integrated.auditorActive, "el auditor debe activarse ante una división extrema");
+  assert(Model.distance([integrated.agents[0].x, integrated.agents[0].y], [0.5, 0.5])
+    < Model.distance([0, 1], [0.5, 0.5]), "la intervención debe recentrar gradualmente");
+
+  return { ok: true, tests: 26, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
 }
 
 if (typeof module !== "undefined" && module.exports) {

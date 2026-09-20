@@ -1,6 +1,6 @@
 # Informe final
 
-> **Documento histórico del prototipo inicial.** No describe la formulación activa del Paper 1. Consulte `web/paper.html` y `docs/research_decisions.md`.
+> **Documento histórico del prototipo inicial.** No describe la formulación activa. Consulte `web/formula.html`, `web/guide.html` y `docs/research_decisions.md`.
 
 ## A. Resumen ejecutivo
 

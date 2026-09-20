@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ABM X · Laboratorio por fases</title>
-  <link rel="stylesheet" href="styles.css?v=phases-1-6" />
+  <title>ABM X · Laboratorio de opinión</title>
+  <link rel="stylesheet" href="styles.css?v=integrated-1" />
 </head>
 <body>
   <header class="site-header">
@@ -12,17 +12,17 @@
     <nav aria-label="Navegación principal">
       <a class="active" href="index.html"><b>1</b> Simulador</a>
       <a href="formula.html"><b>2</b> Fórmulas</a>
-      <a href="paper.html"><b>3</b> Paper</a>
+      <a href="guide.html"><b>3</b> Guía</a>
     </nav>
-    <span class="version-pill">Fases 1–6 · trazables</span>
+    <span class="version-pill">Mecanismos trazables</span>
   </header>
 
   <main class="simulator-shell">
     <aside class="control-panel">
       <section class="control-intro">
         <p class="eyebrow">MODELO ACTIVO</p>
-        <h1>Opiniones 2D, comparadas por fases</h1>
-        <p>El control HK sigue disponible. Por defecto se usan encuentros parciales Deffuant–Weisbuch para que el cambio sea gradual y explícito.</p>
+        <h1>Opiniones 2D y mecanismos sociales</h1>
+        <p>El modelo integrado recupera los efectos del simulador inicial, pero cada movimiento queda ligado a una ecuación, una fuente o una decisión operativa declarada.</p>
         <div class="status-line"><span class="status-dot"></span><span id="runStatus">Preparado</span></div>
       </section>
 
@@ -35,13 +35,14 @@
 
       <details class="control-group" open>
         <summary>Experimento</summary>
-        <label class="field inline-field"><span>Fase / modelo</span>
+        <label class="field inline-field"><span>Modelo</span>
           <select id="phase" data-reset-model>
-            <option value="hk">1 · HK, control base</option>
-            <option value="dw" selected>2 · Deffuant, contactos graduales</option>
-            <option value="fj">3 · FJ, anclaje inicial</option>
-            <option value="network">4 · FJ + red social</option>
-            <option value="temporal">5 · Red + señales temporales</option>
+            <option value="integrated" selected>Integrado social · recomendado</option>
+            <option value="hk">HK · promedio de vecindad</option>
+            <option value="dw">Deffuant · contactos graduales</option>
+            <option value="fj">Friedkin–Johnsen · anclaje</option>
+            <option value="network">FJ sobre red social</option>
+            <option value="temporal">Red + señales temporales</option>
           </select>
         </label>
         <label class="field">
@@ -77,7 +78,7 @@
 
       <details class="control-group" open>
         <summary>Señales externas A y B</summary>
-        <p class="control-note">En fases 1–4 son constantes. En la fase 5 solo actúan dentro de sus intervalos.</p>
+        <p class="control-note">Su masa es un peso de influencia: 5 equivale a cinco fuentes obstinadas iguales. No es masa física.</p>
         <div class="signal-label signal-a">Señal A</div>
         <label class="field"><span>Peso A <output data-output-for="signalAWeight">5</output></span><input id="signalAWeight" type="range" min="0" max="30" step="1" value="5" data-reset-model /></label>
         <div class="coordinate-pair">
@@ -93,20 +94,50 @@
       </details>
 
       <details class="control-group" open>
-        <summary>Fase 2 · contactos graduales DW</summary>
-        <p class="control-note">Solo se usa al seleccionar Fase 2. μ es la fracción recorrida en cada encuentro aceptado.</p>
+        <summary>Modelo integrado · interacción social</summary>
+        <p class="control-note">BT usa ε como tolerancia. Cerca hay asimilación; con reactancia activada, diferencias grandes pueden producir contraste.</p>
+        <label class="field"><span>Velocidad social η <output data-output-for="socialRate">0.06</output></span><input id="socialRate" type="range" min="0" max="0.30" step="0.01" value="0.06" data-reset-model /></label>
+        <label class="field"><span>Escala de homofilia BH <output data-output-for="homophilyScale">0.35</output></span><input id="homophilyScale" type="range" min="0.05" max="1" step="0.05" value="0.35" data-reset-model /></label>
+        <label class="check-field"><input id="reactanceEnabled" type="checkbox" checked data-reset-model /> Reactancia / efecto de contraste</label>
+        <label class="check-field"><input id="adaptiveCommitment" type="checkbox" checked data-reset-model /> Compromiso adaptativo por radicalidad</label>
+        <label class="field"><span>Intensidad del compromiso s <output data-output-for="commitmentStrength">1.00</output></span><input id="commitmentStrength" type="range" min="0" max="3" step="0.10" value="1" data-reset-model /></label>
+      </details>
+
+      <details class="control-group" open>
+        <summary>Auditor JDJ y recentrado</summary>
+        <p class="control-note">JDJ solo observa. Cuando supera ambos umbrales, una política explícita acerca gradualmente las posiciones al centro.</p>
+        <label class="check-field"><input id="auditorEnabled" type="checkbox" checked data-reset-model /> Permitir intervención del auditor</label>
+        <label class="field"><span>Umbral JDJ <output data-output-for="auditorThreshold">0.35</output></span><input id="auditorThreshold" type="range" min="0" max="1" step="0.05" value="0.35" data-reset-model /></label>
+        <label class="field"><span>Dispersión mínima <output data-output-for="auditorMinDispersion">0.02</output></span><input id="auditorMinDispersion" type="range" min="0" max="0.20" step="0.01" value="0.02" data-reset-model /></label>
+        <label class="field"><span>Recentrado α <output data-output-for="centerStrength">0.02</output></span><input id="centerStrength" type="range" min="0" max="0.10" step="0.01" value="0.02" data-reset-model /></label>
+      </details>
+
+      <details class="control-group">
+        <summary>Ruido, inmovilidad y atención</summary>
+        <p class="control-note">El ruido es un salto local publicado; los inmóviles son agentes obstinados. La pérdida de atención reduce el peso de cada señal con el tiempo.</p>
+        <label class="check-field"><input id="noiseEnabled" type="checkbox" checked data-reset-model /> Ruido local</label>
+        <label class="field"><span>Probabilidad de ruido m <output data-output-for="noiseProbability">0.01</output></span><input id="noiseProbability" type="range" min="0" max="0.20" step="0.01" value="0.01" data-reset-model /></label>
+        <label class="field"><span>Radio del salto γ <output data-output-for="noiseRadius">0.02</output></span><input id="noiseRadius" type="range" min="0" max="0.10" step="0.01" value="0.02" data-reset-model /></label>
+        <label class="field"><span>Agentes inmóviles <output data-output-for="immobileShare">0.05</output></span><input id="immobileShare" type="range" min="0" max="0.50" step="0.01" value="0.05" data-reset-model /></label>
+        <label class="check-field"><input id="fatigueEnabled" type="checkbox" checked data-reset-model /> Pérdida de atención</label>
+        <label class="field"><span>Decaimiento λ <output data-output-for="fatigueDecay">0.01</output></span><input id="fatigueDecay" type="range" min="0" max="0.10" step="0.01" value="0.01" data-reset-model /></label>
+      </details>
+
+      <details class="control-group">
+        <summary>Deffuant · contactos graduales</summary>
+        <p class="control-note">Solo se usa en el modelo Deffuant. μ es la fracción recorrida en cada encuentro aceptado.</p>
         <label class="field"><span>Compromiso μ <output data-output-for="compromiseRate">0.08</output></span><input id="compromiseRate" type="range" min="0.01" max="0.50" step="0.01" value="0.08" data-reset-model /></label>
         <label class="field"><span>Contactos por agente/ronda <output data-output-for="interactionsPerAgent">0.50</output></span><input id="interactionsPerAgent" type="range" min="0.10" max="2.00" step="0.10" value="0.50" data-reset-model /></label>
       </details>
 
       <details class="control-group">
-        <summary>Fases 3–5 · anclaje inicial FJ</summary>
+        <summary>Friedkin–Johnsen · anclaje inicial</summary>
         <p class="control-note">g es el peso conservado de la opinión inicial. g=0 elimina el ancla; g=1 impide cambiar.</p>
         <label class="field"><span>Peso del ancla g <output data-output-for="anchorWeight">0.85</output></span><input id="anchorWeight" type="range" min="0" max="1" step="0.01" value="0.85" data-reset-model /></label>
       </details>
 
       <details class="control-group">
-        <summary>Fases 4–5 · red social</summary>
+        <summary>Red social</summary>
         <p class="control-note">Red sintética Watts–Strogatz: una demostración reproducible, no datos de una red real.</p>
         <label class="field inline-field"><span>Grado inicial k</span>
           <select id="networkDegree" data-reset-model><option>4</option><option>6</option><option selected>8</option><option>10</option><option>12</option></select>
@@ -115,18 +146,19 @@
       </details>
 
       <details class="control-group">
-        <summary>Fase 5 · intervalos temporales</summary>
-        <p class="control-note">Indicadores encendido/apagado. No se introduce una curva de fatiga inventada.</p>
-        <label class="field"><span>Inicio A <output data-output-for="signalAStart">20</output></span><input id="signalAStart" type="range" min="0" max="300" step="5" value="20" data-reset-model /></label>
-        <label class="field"><span>Duración A <output data-output-for="signalADuration">80</output></span><input id="signalADuration" type="range" min="0" max="300" step="5" value="80" data-reset-model /></label>
+        <summary>Eventos y contraeventos</summary>
+        <p class="control-note">A y B son ventanas observables. B puede representar un contraevento; el modelo no decide por sí solo qué hecho real corresponde a cada señal.</p>
+        <label class="field"><span>Inicio A <output data-output-for="signalAStart">0</output></span><input id="signalAStart" type="range" min="0" max="300" step="5" value="0" data-reset-model /></label>
+        <label class="field"><span>Duración A <output data-output-for="signalADuration">300</output></span><input id="signalADuration" type="range" min="0" max="300" step="5" value="300" data-reset-model /></label>
         <label class="field"><span>Inicio B <output data-output-for="signalBStart">80</output></span><input id="signalBStart" type="range" min="0" max="300" step="5" value="80" data-reset-model /></label>
-        <label class="field"><span>Duración B <output data-output-for="signalBDuration">80</output></span><input id="signalBDuration" type="range" min="0" max="300" step="5" value="80" data-reset-model /></label>
+        <label class="field"><span>Duración B <output data-output-for="signalBDuration">100</output></span><input id="signalBDuration" type="range" min="0" max="300" step="5" value="100" data-reset-model /></label>
       </details>
 
       <details class="control-group">
         <summary>Diagnóstico y visualización</summary>
         <label class="field"><span>Umbral descriptivo de cluster <output data-output-for="clusterThreshold">0.05</output></span><input id="clusterThreshold" type="range" min="0.01" max="0.15" step="0.01" value="0.05" data-reset-model /></label>
         <label class="check-field"><input id="showNeighborhood" type="checkbox" checked data-redraw /> Mostrar vecindad ε del agente <span id="selectedAgentLabel">1</span></label>
+        <label class="check-field"><input id="showClusterMass" type="checkbox" checked data-redraw /> Mostrar tamaño de los grupos</label>
         <label class="check-field"><input id="showTrails" type="checkbox" data-redraw /> Mostrar último desplazamiento</label>
         <button class="wide" id="exportBtn">Exportar posiciones CSV</button>
       </details>
@@ -135,12 +167,12 @@
     <section class="workspace">
       <div class="workspace-heading">
         <div>
-          <p class="eyebrow">SIMULACIÓN INTERACTIVA · <span id="phaseLabel">FASE 2</span></p>
-          <h2 id="phaseTitle">Deffuant–Weisbuch: encuentros parciales y aleatorios</h2>
-          <p id="phaseDescription">Solo una muestra de parejas se encuentra por ronda y cada contacto recorre una fracción μ de la distancia.</p>
+          <p class="eyebrow">SIMULACIÓN INTERACTIVA · <span id="modelLabel">MODELO INTEGRADO</span></p>
+          <h2 id="phaseTitle">Influencia social, señales y control auditable</h2>
+          <p id="phaseDescription">Los contactos, polos, compromiso, ruido y auditor pueden actuar a la vez; cada término se calcula por separado.</p>
         </div>
         <div class="scope-badges" id="scopeBadges">
-          <span>Euclídea</span><span>Parejas</span><span>Compromiso parcial</span><span>Estocástica</span>
+          <span>Red social</span><span>Grupos con masa</span><span>Reactancia</span><span>Auditor visible</span>
         </div>
       </div>
 
@@ -159,8 +191,8 @@
           <article class="canvas-card"><canvas id="followersCanvas" width="520" height="250"></canvas></article>
           <article class="plain-card important-note">
             <p class="eyebrow">LECTURA CORRECTA</p>
-            <h3 id="readingTitle">La velocidad ahora tiene una interpretación explícita.</h3>
-            <p id="readingText">μ controla cuánto cambia una persona por encuentro y el número de contactos controla cuántas oportunidades de cambio hay por ronda.</p>
+            <h3 id="readingTitle">“Gravedad” significa influencia agregada, no física.</h3>
+            <p id="readingText">Un grupo grande pesa más porque contiene más voces. No se aplica una ley de gravitación a las personas.</p>
             <a href="formula.html">Ver cada fórmula y su fuente →</a>
           </article>
         </div>
@@ -171,6 +203,7 @@
         <div><span>Clusters</span><strong id="clusterStat">0</strong><small>umbral declarado</small></div>
         <div><span>Dispersión</span><strong id="dispersionStat">0</strong><small>salida primaria</small></div>
         <div><span>JDJ A–B</span><strong id="jdjStat">0</strong><small>exploratorio</small></div>
+        <div><span>Auditor</span><strong id="auditStat">inactivo</strong><small>regla visible</small></div>
         <div><span>Seguidores A</span><strong id="followerAStat">0</strong></div>
         <div><span>Seguidores B</span><strong id="followerBStat">0</strong></div>
         <div><span>RMSD a A</span><strong id="rmsdAStat">0</strong></div>
@@ -181,13 +214,13 @@
 
       <section class="removed-strip">
         <strong>Contrato científico:</strong>
-        cada selección ejecuta una formulación explícita. No se usan gravedad de clusters, rebote, fatiga, reactancia ni fuerzas de atracción inventadas.
-        <span>La Fase 6 (calibración) está preparada en Python, pero solo puede completarse con un panel empírico real.</span>
+        “gravedad” se implementa como suma de influencia social, “rebote” como intervención de recentrado y “fatiga” como pérdida de atención. Ninguna de esas palabras se presenta como una ley física o psicológica universal.
+        <span>El modelo integrado es una composición para experimentar; requiere calibración y validación antes de representar una población real.</span>
       </section>
     </section>
   </main>
 
-  <script src="model.js?v=phases-1-6"></script>
-  <script src="app.js?v=phases-1-6"></script>
+  <script src="model.js?v=integrated-1"></script>
+  <script src="app.js?v=integrated-1"></script>
 </body>
 </html>

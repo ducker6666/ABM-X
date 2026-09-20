@@ -1,6 +1,6 @@
 "use strict";
 
-const Model = window.Paper1Model;
+const Model = window.ABMXModel;
 const state = {
   agents: [],
   t: 0,
@@ -12,11 +12,20 @@ const state = {
   random: null,
   network: null,
   lastMeanMove: 0,
+  lastAudit: false,
 };
 
-const PHASE_INFO = {
+const MODEL_INFO = {
+  integrated: {
+    label: "MODELO INTEGRADO",
+    title: "Influencia social, señales y control auditable",
+    description: "Los contactos, polos, compromiso, ruido y auditor pueden actuar a la vez; cada término se calcula por separado.",
+    badges: ["Red social", "Grupos con masa", "Reactancia", "Auditor visible"],
+    readingTitle: "“Gravedad” significa influencia agregada, no física.",
+    readingText: "Un grupo grande pesa más porque contiene más voces. El tamaño del anillo muestra cuántas personas hay; no se aplica una ley de gravitación.",
+  },
   hk: {
-    label: "FASE 1 · CONTROL",
+    label: "CONTROL HK",
     title: "HK: promedio simultáneo de toda la vecindad",
     description: "Es el control teórico. Puede producir un único punto porque todos los agentes conectados calculan exactamente el mismo promedio.",
     badges: ["Euclídea", "Síncrona", "Todos los cercanos", "Sin anclaje"],
@@ -24,7 +33,7 @@ const PHASE_INFO = {
     readingText: "En HK, varios agentes pueden ocupar exactamente la misma coordenada. El lienzo superpone sus círculos y parecen uno solo.",
   },
   dw: {
-    label: "FASE 2 · CONTACTOS",
+    label: "DEFFUANT–WEISBUCH",
     title: "Deffuant–Weisbuch: encuentros parciales y aleatorios",
     description: "Solo una muestra de parejas se encuentra por ronda y cada contacto recorre una fracción μ de la distancia.",
     badges: ["Euclídea", "Parejas", "Compromiso parcial", "Estocástica"],
@@ -32,7 +41,7 @@ const PHASE_INFO = {
     readingText: "μ controla cuánto cambia una persona por encuentro y el número de contactos controla cuántas oportunidades de cambio hay por ronda.",
   },
   fj: {
-    label: "FASE 3 · ANCLAJE",
+    label: "FRIEDKIN–JOHNSEN",
     title: "Friedkin–Johnsen: memoria de la opinión inicial",
     description: "Cada agente conserva el peso g de su posición inicial y asigna 1−g al promedio social aceptado.",
     badges: ["Euclídea", "Síncrona", "Todos los cercanos", "Con anclaje"],
@@ -40,7 +49,7 @@ const PHASE_INFO = {
     readingText: "Las anclas iniciales diferentes impiden que el consenso exacto sea automático. La combinación con confianza acotada está declarada como adaptación.",
   },
   network: {
-    label: "FASE 4 · RED",
+    label: "FJ SOBRE RED",
     title: "Anclaje inicial sobre una red social",
     description: "Cada punto escucha únicamente a contactos conectados y cercanos en opinión. Esta es la vista predeterminada más lenta.",
     badges: ["Euclídea", "Síncrona", "Red sintética", "Con anclaje"],
@@ -48,7 +57,7 @@ const PHASE_INFO = {
     readingText: "El anclaje conserva parte de la opinión inicial. Los clusters, el color y el JDJ solo describen: no empujan a nadie.",
   },
   temporal: {
-    label: "FASE 5 · TIEMPO",
+    label: "RED Y SEÑALES TEMPORALES",
     title: "Red y señales activas en intervalos observables",
     description: "La red y el anclaje se mantienen; cada señal se enciende y apaga en el intervalo declarado.",
     badges: ["Euclídea", "Red sintética", "Con anclaje", "Señales temporales"],
@@ -77,6 +86,10 @@ function numberValue(id) {
   return Number(document.getElementById(id).value);
 }
 
+function checkedValue(id) {
+  return document.getElementById(id).checked;
+}
+
 function config() {
   return {
     phase: document.getElementById("phase").value,
@@ -94,6 +107,21 @@ function config() {
     signalADuration: numberValue("signalADuration"),
     signalBStart: numberValue("signalBStart"),
     signalBDuration: numberValue("signalBDuration"),
+    socialRate: numberValue("socialRate"),
+    homophilyScale: numberValue("homophilyScale"),
+    reactanceEnabled: checkedValue("reactanceEnabled"),
+    adaptiveCommitment: checkedValue("adaptiveCommitment"),
+    commitmentStrength: numberValue("commitmentStrength"),
+    auditorEnabled: checkedValue("auditorEnabled"),
+    auditorThreshold: numberValue("auditorThreshold"),
+    auditorMinDispersion: numberValue("auditorMinDispersion"),
+    centerStrength: numberValue("centerStrength"),
+    noiseEnabled: checkedValue("noiseEnabled"),
+    noiseProbability: numberValue("noiseProbability"),
+    noiseRadius: numberValue("noiseRadius"),
+    immobileShare: numberValue("immobileShare"),
+    fatigueEnabled: checkedValue("fatigueEnabled"),
+    fatigueDecay: numberValue("fatigueDecay"),
   };
 }
 
@@ -125,19 +153,21 @@ function resetModel() {
   state.selected = 0;
   state.accumulator = 0;
   state.lastMeanMove = 0;
+  state.lastAudit = false;
   state.random = Model.mulberry32(seed + 104729);
   state.agents = Model.initialize(
     nAgents,
     seed,
     document.getElementById("scenario").value,
   );
-  state.network = ["network", "temporal"].includes(c.phase)
+  state.agents = Model.assignImmobility(state.agents, c.phase === "integrated" ? c.immobileShare : 0, seed + 65537);
+  state.network = ["integrated", "network", "temporal"].includes(c.phase)
     ? Model.buildSmallWorldNetwork(nAgents, c.networkDegree, c.networkRewiring, seed + 7919)
     : null;
   state.history = [];
   recordMetrics();
-  updatePhaseCopy();
-  setStatus(`Preparado: ${PHASE_INFO[c.phase].label.toLowerCase()}, t = 0.`);
+  updateModelCopy();
+  setStatus(`Preparado: ${MODEL_INFO[c.phase].label.toLowerCase()}, t = 0.`);
   draw();
 }
 
@@ -160,6 +190,7 @@ function executeStep() {
   });
   state.agents = result.agents;
   state.lastMeanMove = result.meanMove;
+  state.lastAudit = result.auditorActive;
   state.t += 1;
   recordMetrics();
 }
@@ -179,12 +210,12 @@ function start() {
   state.running = true;
   const phase = config().phase;
   const timing = phase === "dw" ? "encuentros aleatorios parciales" : "actualización síncrona";
-  setStatus(`En ejecución: ${PHASE_INFO[phase].label.toLowerCase()}, ${timing}.`);
+  setStatus(`En ejecución: ${MODEL_INFO[phase].label.toLowerCase()}, ${timing}.`);
 }
 
-function updatePhaseCopy() {
-  const info = PHASE_INFO[config().phase];
-  document.getElementById("phaseLabel").textContent = info.label;
+function updateModelCopy() {
+  const info = MODEL_INFO[config().phase];
+  document.getElementById("modelLabel").textContent = info.label;
   document.getElementById("phaseTitle").textContent = info.title;
   document.getElementById("phaseDescription").textContent = info.description;
   document.getElementById("readingTitle").textContent = info.readingTitle;
@@ -270,6 +301,8 @@ function drawOpinionSpace() {
     }
   }
 
+  drawClusterMasses();
+
   for (const agent of state.agents) {
     const score = Model.axisProjection(agent, c);
     ctx.fillStyle = mixColor([23, 107, 135], [196, 81, 52], score, 0.76);
@@ -329,6 +362,30 @@ function drawSelectedNetwork() {
   ctx.restore();
 }
 
+function drawClusterMasses() {
+  if (!document.getElementById("showClusterMass").checked) return;
+  const groups = Model.connectedComponents(state.agents, clusterThreshold()).slice(0, 12);
+  ctx.save();
+  ctx.textAlign = "center";
+  for (const group of groups) {
+    if (group.length < 2) continue;
+    const centerX = group.reduce((sum, index) => sum + state.agents[index].x, 0) / group.length;
+    const centerY = group.reduce((sum, index) => sum + state.agents[index].y, 0) / group.length;
+    const radius = Math.min(34, 7 + 1.8 * Math.sqrt(group.length));
+    ctx.fillStyle = "rgba(71, 93, 98, .07)";
+    ctx.strokeStyle = "rgba(47, 75, 82, .34)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(sx(centerX), sy(centerY), radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "rgba(35, 55, 59, .78)";
+    ctx.font = "700 10px system-ui";
+    ctx.fillText(`n=${group.length}`, sx(centerX), sy(centerY) - radius - 4);
+  }
+  ctx.restore();
+}
+
 function drawAxis(c) {
   ctx.save();
   ctx.strokeStyle = "rgba(55,51,46,.48)";
@@ -371,8 +428,9 @@ function drawSignal(point, weight, label, color, epsilon, active) {
   ctx.fillStyle = "#2a2723";
   ctx.font = "600 13px system-ui";
   const offset = point[0] < 0.5 ? 70 : -70;
-  const temporalState = config().phase === "temporal" ? (active ? "activa" : "apagada") : "constante";
-  ctx.fillText(`Señal ${label} · ${temporalState} · peso ${weight}`, x + offset, y - 20);
+  const timed = ["integrated", "temporal"].includes(config().phase);
+  const temporalState = timed ? (active ? "activa" : "apagada") : "constante";
+  ctx.fillText(`Señal ${label} · ${temporalState} · peso ${weight.toFixed(2)}`, x + offset, y - 20);
   ctx.globalAlpha = 1;
 }
 
@@ -450,6 +508,7 @@ function updateStats() {
     clusterStat: latest.clusters,
     dispersionStat: latest.dispersion.toFixed(4),
     jdjStat: latest.jdj.toFixed(4),
+    auditStat: state.lastAudit ? "activo" : "inactivo",
     followerAStat: latest.followersA,
     followerBStat: latest.followersB,
     rmsdAStat: latest.rmsdA.toFixed(3),
@@ -462,9 +521,9 @@ function updateStats() {
 
 function exportCsv() {
   const c = config();
-  const rows = ["agent,phase,time,x,y,initial_x,initial_y,projection_A_B"];
+  const rows = ["agent,model,time,x,y,initial_x,initial_y,projection_A_B,immobile,auditor_active"];
   state.agents.forEach((agent, index) => {
-    rows.push(`${index + 1},${c.phase},${state.t},${agent.x},${agent.y},${agent.anchorX},${agent.anchorY},${Model.axisProjection(agent, c)}`);
+    rows.push(`${index + 1},${c.phase},${state.t},${agent.x},${agent.y},${agent.anchorX},${agent.anchorY},${Model.axisProjection(agent, c)},${Boolean(agent.immobile)},${state.lastAudit}`);
   });
   const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
