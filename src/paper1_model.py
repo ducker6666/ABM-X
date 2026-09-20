@@ -170,7 +170,9 @@ def axis_projection(opinions: FloatArray, config: Paper1Config) -> FloatArray:
 
 
 def jdj_product_axis(opinions: FloatArray, config: Paper1Config) -> float:
-    """Diagnostico JDJ-Pro tras la proyeccion A--B, normalizado a [0,1].
+    """OBSOLETO: regresion historica; no usar en el simulador activo.
+
+    Diagnostico JDJ-Pro tras la proyeccion A--B, normalizado a [0,1].
 
     Con mu_A(i)=1-s_i y mu_B(i)=s_i, se aplica el nucleo producto/maximo de
     Guevara et al. (2020) y una normalizacion operativa del proyecto:

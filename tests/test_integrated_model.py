@@ -7,8 +7,8 @@ from src.integrated_model import (
     bounded_noise,
     event_weight,
     initialize_memberships,
-    jdj_axis,
-    jdj_axis_details,
+    jdj_euclidean,
+    jdj_euclidean_details,
     load_membership_csv,
     opposite_position,
     position_from_memberships,
@@ -101,15 +101,15 @@ def test_jdj_reports_medium_risk_for_center_and_maximum_for_split():
     b = np.array([1.0, 0.0])
     split = np.array([[0.0, 1.0], [0.0, 1.0], [1.0, 0.0], [1.0, 0.0]])
     center = np.full((4, 2), 0.5)
-    assert np.isclose(jdj_axis(split, a, b), 1.0)
-    assert np.isclose(jdj_axis(center, a, b), 0.5)
+    assert np.isclose(jdj_euclidean(split, a, b), 1.0)
+    assert np.isclose(jdj_euclidean(center, a, b), 0.5)
 
 
 def test_jdj_details_expose_every_ordered_pair_and_the_final_sum():
     a = np.array([1.0, 0.0])
     b = np.array([0.0, 1.0])
     opinions = np.array([[0.8, 0.2], [0.2, 0.8]])
-    details = jdj_axis_details(opinions, a, b)
+    details = jdj_euclidean_details(opinions, a, b)
     assert details["total_pairs"] == 4
     assert np.isclose(details["pair_sum"], 1.6)
     assert np.isclose(details["value"], 0.8)

@@ -94,28 +94,18 @@ El `1` del denominador representa el peso de la posición propia. Si el agente
 es inmóvil, no cambia. Si el sorteo de ruido tiene éxito, esa ronda se sustituye
 por un salto local acotado. En otro caso se aplica la ecuación integrada.
 
-## 5. JDJ proyectado
+## 5. JDJ euclídeo
 
-El JDJ activo no usa directamente la distancia euclídea a los polos. Proyecta
-la posición actual sobre el eje A--B:
-
-\[
-s_i=\operatorname{clip}_{[0,1]}
-\frac{(x_i-R_A)\cdot(R_B-R_A)}{\|R_B-R_A\|^2},\quad
-\mu_A(i)=1-s_i,\quad \mu_B(i)=s_i.
-\]
-
-Después calcula los `N²` pares ordenados, incluidos los pares de una persona
-consigo misma:
-
-\[
-h_{ij}=\max[\mu_A(i)\mu_B(j),\mu_B(i)\mu_A(j)],\qquad
-JDJ_{proj}=\operatorname{clip}_{[0,1]}\frac{2\sum_{ij}h_{ij}}{N^2}.
-\]
-
-Producto y máximo siguen a Guevara et al. (2020). La proyección 2D y el factor
-2 son adaptaciones declaradas. El motor expone `sum(h_ij)` y `N²` para que el
-valor mostrado pueda recalcularse.
+Polos fijos A=(1,0), B=(0,1). dA=sqrt((x−1)²+y²), dB=sqrt(x²+(y−1)²).
+muA=1−dA/sqrt(2), muB=1−dB/sqrt(2), sin renormalizar.
+Pij=max(muA(i)*muB(j),muB(i)*muA(j)); JDJ=2*sum(Pij)/n².
+Incluye i=j y ambos órdenes, sin redondeo ni recorte del resultado.
+Población vacía: devuelve 0 como convención de software.
+Antecedente difuso: Juan Antonio Guevara Gil, Daniel Gómez, José Manuel Robles
+y Javier Montero (2020), DOI 10.1007/978-3-030-50143-3_40.
+La geometría euclídea 2D es la especificación del simulador. La proyección queda
+obsoleta. Los umbrales del auditor se conservan; su activación puede cambiar
+porque recibe una medida distinta fuera del eje.
 
 ## 6. Correspondencia con el código
 
@@ -126,7 +116,7 @@ valor mostrado pueda recalcularse.
 | Contraevento | `oppositePosition` | `opposite_position` | `(0.8,0.3)→(0.2,0.7)` |
 | Fuente ponderada | `weightedSourceDisplacement` | `weighted_source_displacement` | intensidad alta mueve más |
 | Actualización | `integratedStep` | `step` | polos, eventos, auditor e inmovilidad |
-| JDJ y sumandos | `jdjProductAxisDetails` | `jdj_axis_details` | `sum(h)=1.60`, `N²=4`, JDJ `0.80` |
+| JDJ y sumandos | `jdjEuclideanDetails` | `jdj_euclidean_details` | `sum(h)=1.60`, `N²=4`, JDJ `0.80` |
 
 Comandos de verificación:
 

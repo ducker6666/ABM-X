@@ -58,14 +58,20 @@ function runVerification() {
     { x: 1, y: 0 }, { x: 1, y: 0 },
   ];
   const center = Array.from({ length: 4 }, () => ({ x: 0.5, y: 0.5 }));
-  approx(Model.jdjProductAxis(split, axisConfig), 1);
-  approx(Model.jdjProductAxis(center, axisConfig), 0.5);
-  const workedJdj = Model.jdjProductAxisDetails([
+  approx(Model.jdjEuclidean(split, axisConfig), 1);
+  approx(Model.jdjEuclidean(center, axisConfig), 0.5);
+  const workedJdj = Model.jdjEuclideanDetails([
     { x: 0.8, y: 0.2 }, { x: 0.2, y: 0.8 },
   ], { ...axisConfig, signalA: [1, 0], signalB: [0, 1] });
   approx(workedJdj.pairSum, 1.6);
   assert(workedJdj.totalPairs === 4, "JDJ debe declarar sus cuatro pares ordenados");
   approx(workedJdj.value, 0.8);
+  const offAxis = Model.euclideanMemberships({ x: 0.2, y: 0.4 });
+  approx(offAxis.a, 0.3675444679663241);
+  approx(offAxis.b, 0.5527864045000421);
+  approx(Model.jdjEuclidean([{ x: 0, y: 0 }]), 0.17157287525381);
+  approx(Model.euclideanMemberships({ x: 1, y: 0 }).a, 1);
+  approx(Model.euclideanMemberships({ x: 0, y: 1 }).b, 1);
   assert(Model.dispersion(split) > Model.dispersion(center), "la dispersión debe distinguir extremos y centro");
 
   const clusters = Model.connectedComponents([
@@ -214,7 +220,7 @@ function runVerification() {
   assert(eventResult.agents[0].x < 0.2, "un evento activo debe mover a un agente dentro de su alcance");
   approx(eventResult.agents[1].x, 0.8);
 
-  return { ok: true, tests: 40, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
+  return { ok: true, tests: 45, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
 }
 
 if (typeof module !== "undefined" && module.exports) {

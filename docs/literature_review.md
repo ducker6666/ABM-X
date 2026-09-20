@@ -32,7 +32,7 @@ La distribución uniforme es el caso principal porque Fortunato et al. la usa y 
 
 ### JDJ
 
-Guevara et al. formulan el ejemplo aplicado sobre una escala ordinal bipolar 1D y señalan la extensión multidimensional como trabajo futuro. La proyección del plano sobre el eje A–B es una adaptación geométrica del proyecto, no una extensión JDJ validada. Por tanto, el JDJ proyectado es secundario.
+Guevara et al. formulan el ejemplo aplicado sobre una escala ordinal bipolar 1D y señalan la extensión multidimensional como trabajo futuro. La transformación actual mu=1−d/sqrt(2) usa distancias euclídeas a polos fijos, por especificación del simulador. No se atribuye esta geometría 2D como fórmula literal del artículo. El JDJ por proyección anteriormente utilizado queda obsoleto. Referencia primaria: https://pmc.ncbi.nlm.nih.gov/articles/PMC7274663/. Los scripts locales de Markov contienen también un prototipo que suma productos, distinto del máximo solicitado; no se reutiliza como implementación vigente.
 
 ## Literatura reservada para fases posteriores
 

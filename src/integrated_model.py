@@ -245,7 +245,7 @@ def event_weight(event: ExternalEvent, t: int, fatigue_enabled: bool, fatigue_de
 
 
 def axis_projection(opinions: FloatArray, signal_a: FloatArray, signal_b: FloatArray) -> FloatArray:
-    """Proyeccion geometrica 2D sobre el eje A--B, recortada a [0,1]."""
+    """OBSOLETA para JDJ: utilidad historica, sin uso en la metrica activa."""
 
     x = np.asarray(opinions, dtype=np.float64)
     a = np.asarray(signal_a, dtype=np.float64)
@@ -257,16 +257,31 @@ def axis_projection(opinions: FloatArray, signal_a: FloatArray, signal_b: FloatA
     return np.clip((x - a) @ direction / denominator, 0.0, 1.0)
 
 
-def jdj_axis_details(
+def euclidean_memberships(opinions: FloatArray) -> FloatArray:
+    """mu_A=1-d(x,(1,0))/sqrt(2); mu_B=1-d(x,(0,1))/sqrt(2).
+
+    No se exige mu_A+mu_B=1. Ejemplo (0.2,0.4): (0.367544,0.552786).
+    """
+    import math
+    x = np.asarray(opinions, dtype=np.float64)
+    if x.size == 0:
+        return np.empty((0, 2))
+    if x.ndim != 2 or x.shape[1] != 2 or not np.isfinite(x).all() or np.any((x < 0) | (x > 1)):
+        raise ValueError("JDJ requiere posiciones en [0,1]²")
+    return np.array([[1 - math.sqrt((float(a)-1)**2 + float(b)**2) / math.sqrt(2),
+                      1 - math.sqrt(float(a)**2 + (float(b)-1)**2) / math.sqrt(2)] for a, b in x])
+
+
+def jdj_euclidean_details(
     opinions: FloatArray,
-    signal_a: FloatArray,
-    signal_b: FloatArray,
+    signal_a: FloatArray | None = None,
+    signal_b: FloatArray | None = None,
 ) -> dict[str, float | int]:
-    """Devuelve JDJ proyectado y los sumandos que permiten auditarlo.
+    """JDJ euclideo con polos fijos (1,0)/(0,1), incluso si cambia la dinámica.
 
     ``pair_sum`` incluye los N² pares ordenados, incluidos ``i=j``. El valor
-    visible es ``clip(2*pair_sum/N², 0, 1)``. La proyeccion 2D y el factor 2
-    son adaptaciones declaradas, no parte literal del JDJ ordinal original.
+    visible es estrictamente ``2*pair_sum/N²``, sin recorte ni renormalizacion.
+    Los argumentos signal_a/b se aceptan por compatibilidad, pero no definen JDJ.
     """
 
     x = np.asarray(opinions, dtype=np.float64)
@@ -276,36 +291,36 @@ def jdj_axis_details(
             "pair_sum": 0.0,
             "total_pairs": 0,
             "mean_pair": 0.0,
-            "mean_projection": 0.0,
+            "mean_membership_a": 0.0,
         }
-    s = axis_projection(x, signal_a, signal_b)
-    membership_a = 1.0 - s
-    membership_b = s
-    first = membership_a[:, None] * membership_b[None, :]
-    second = membership_b[:, None] * membership_a[None, :]
-    opposition = np.maximum(first, second)
-    pair_sum = float(opposition.sum())
+    memberships = euclidean_memberships(x)
+    # Mismo orden de suma que JavaScript para permitir comparación exacta.
+    pair_sum = 0.0
+    pairs = memberships.tolist()
+    for a, b in pairs:
+        for c, d in pairs:
+            pair_sum += max(a * d, b * c)
     total_pairs = int(len(x) ** 2)
     return {
-        "value": float(np.clip(2.0 * pair_sum / total_pairs, 0.0, 1.0)),
+        "value": 2.0 * pair_sum / total_pairs,
         "pair_sum": pair_sum,
         "total_pairs": total_pairs,
         "mean_pair": pair_sum / total_pairs,
-        "mean_projection": float(s.mean()),
+        "mean_membership_a": float(memberships[:, 0].mean()),
     }
 
 
-def jdj_axis(opinions: FloatArray, signal_a: FloatArray, signal_b: FloatArray) -> float:
-    """Adaptacion bipolar JDJ sobre el eje A--B.
+def jdj_euclidean(opinions: FloatArray, signal_a: FloatArray | None = None, signal_b: FloatArray | None = None) -> float:
+    """JDJ por distancia euclidea a polos fijos, sin proyeccion.
 
-    Las pertenencias triangulares complementarias son ``1-s`` y ``s``.
+    Las pertenencias son ``1-distancia/sqrt(2)`` para cada polo.
     Por ello el consenso central vale 0.5 y una division extrema 50/50 vale 1.
     El auditor exige tambien dispersion para distinguir ambos escenarios.
-    Producto y maximo siguen a Guevara et al. (2020); proyeccion y
+    Producto y maximo siguen a Guevara et al. (2020); geometria y
     normalizacion son adaptaciones declaradas.
     """
 
-    return float(jdj_axis_details(opinions, signal_a, signal_b)["value"])
+    return float(jdj_euclidean_details(opinions, signal_a, signal_b)["value"])
 
 
 def dispersion(opinions: FloatArray) -> float:
@@ -387,7 +402,7 @@ def step(
     signal_a = np.asarray(config.signal_a, dtype=np.float64)
     signal_b = np.asarray(config.signal_b, dtype=np.float64)
     weight_a, weight_b = signal_weights(config, t)
-    current_jdj = jdj_axis(old, signal_a, signal_b)
+    current_jdj = jdj_euclidean(old, signal_a, signal_b)
     current_dispersion = dispersion(old)
     auditor_active = (
         config.auditor_enabled

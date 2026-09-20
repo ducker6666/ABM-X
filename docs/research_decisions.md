@@ -1,5 +1,12 @@
 # Registro de decisiones científicas
 
+## Decisión vigente: JDJ euclídeo
+
+JDJ usa mu=1−distancia/sqrt(2), polos fijos (1,0)/(0,1), y 2/n² por la
+suma del máximo de productos cruzados. Las decisiones anteriores sobre
+JDJ proyectado, conservadas abajo por trazabilidad, quedan obsoletas.
+El resto de la dinámica no cambia.
+
 ## 2026-09-20 — Recuperación auditable del modelo integrado
 
 - La web presenta un único modelo integrado; los comparadores históricos dejan de aparecer como opciones configurables.

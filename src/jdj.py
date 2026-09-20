@@ -1,4 +1,6 @@
-"""Fuzzy two-pole JDJ-style polarization measure.
+"""OBSOLETO: prototipo historico. Usar integrated_model.jdj_euclidean.
+
+Fuzzy two-pole JDJ-style polarization measure.
 
 The original JDJ formula must be checked against Guevara et al. before using
 this as more than an implementation placeholder. The function here implements

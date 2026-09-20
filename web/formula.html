@@ -184,16 +184,13 @@
         <div class="section-number">9</div>
         <div>
           <span class="truth published">Operadores difusos</span>
-          <span class="truth operational">Proyección 2D</span>
-          <h2>JDJ explicado paso a paso</h2>
-          <p>El JDJ original trabaja sobre una escala bipolar. En este simulador bidimensional se hace primero una <strong>proyección geométrica declarada</strong> sobre la línea A–B. Por tanto, usa la posición actual (x,y), pero <strong>no calcula JDJ con la distancia euclídea directa</strong>.</p>
-          <div class="formula-block"><span class="formula-line">s<sub>i</sub> = recortar{[(x<sub>i</sub> − R<sub>A</sub>) · (R<sub>B</sub> − R<sub>A</sub>)] ÷ ‖R<sub>B</sub> − R<sub>A</sub>‖², entre 0 y 1}</span><span class="formula-line">pertenencia a A: μ<sub>A</sub>(i) = 1 − s<sub>i</sub></span><span class="formula-line">pertenencia a B: μ<sub>B</sub>(i) = s<sub>i</sub></span></div>
-          <div class="worked-example"><strong>Ejemplo numérico de la proyección:</strong><ol class="numeric-steps"><li>A=(1,0), B=(0,1) y persona x=(0.75,0.25).</li><li>B−A=(−1,1); x−A=(−0.25,0.25).</li><li>Producto escalar: (−0.25)×(−1)+0.25×1=0.50.</li><li>Longitud al cuadrado de A–B: (−1)²+1²=2.</li><li>s=0.50/2=<strong>0.25</strong>. Su pertenencia proyectada es 0.75 a A y 0.25 a B.</li></ol>Con los polos fijos del programa, la misma cuenta se simplifica a <strong>s=(1−x+y)/2</strong>, recortado entre 0 y 1.</div>
-          <p>Después se comparan todas las parejas de personas:</p>
-          <div class="formula-block"><span class="formula-line">h<sub>ij</sub> = máximo[μ<sub>A</sub>(i)×μ<sub>B</sub>(j), μ<sub>B</sub>(i)×μ<sub>A</sub>(j)]</span><span class="formula-line">JDJ proyectado = 2 × Σh<sub>ij</sub> ÷ N²</span></div>
-          <div class="worked-example"><strong>Ejemplo numérico completo de JDJ:</strong><ol class="numeric-steps"><li>Persona 1=(0.80,0.20): s₁=(1−0.80+0.20)/2=<strong>0.20</strong>; por tanto μ<sub>A</sub>=0.80 y μ<sub>B</sub>=0.20.</li><li>Persona 2=(0.20,0.80): s₂=(1−0.20+0.80)/2=<strong>0.80</strong>; por tanto μ<sub>A</sub>=0.20 y μ<sub>B</sub>=0.80.</li><li>Los cuatro pares ordenados, incluidos 1–1 y 2–2, aportan: h₁₁=0.16, h₁₂=0.64, h₂₁=0.64 y h₂₂=0.16.</li><li>Σh=0.16+0.64+0.64+0.16=<strong>1.60</strong>.</li><li>JDJ=2×1.60÷2²=<strong>0.80</strong>.</li></ol>Debajo del gráfico el programa muestra esta misma operación como <strong>2×Σh/N²</strong> para que el resultado de cada ejecución sea auditable.</div>
-          <p><strong>Límite:</strong> un centro unido obtiene 0.5 aunque no esté dividido. Por eso el auditor nunca usa JDJ solo: exige también dispersión.</p>
-          <p class="source-line">Producto y máximo: Guevara et al. (2020). La proyección bidimensional sobre A–B y la normalización por 2 son adaptaciones declaradas de este proyecto; por eso la interfaz dice «JDJ proyectado*».</p>
+          <h2>JDJ por distancia euclídea</h2>
+          <p>Polos fijos A=(1,0), B=(0,1). Las pertenencias se calculan a partir de distancias, sin proyección y sin obligarlas a sumar 1.</p>
+          <div class="formula-block"><span class="formula-line">dᵢA=√[(xᵢ−1)²+yᵢ²]; dᵢB=√[xᵢ²+(yᵢ−1)²]</span><span class="formula-line">μA(i)=1−dᵢA/√2; μB(i)=1−dᵢB/√2</span><span class="formula-line">Pᵢⱼ=máximo[μA(i)μB(j), μB(i)μA(j)]</span><span class="formula-line">JDJ=2×ΣᵢΣⱼPᵢⱼ/n²</span></div>
+          <p>n es el número de agentes; √2 es la diagonal del cuadrado. Se incluyen los n² pares ordenados, incluidos i=j. No se redondean pertenencias ni se recorta el resultado.</p>
+          <div class="worked-example"><strong>Ejemplo (0.2,0.4):</strong><ol class="numeric-steps"><li>dA=√0.8=0.894427; dB=√0.4=0.632456.</li><li>μA=1−dA/√2=0.367544; μB=1−dB/√2=0.552786.</li><li>Para una población formada solo por ese agente, P₁₁=0.203174 y JDJ=2×P₁₁=0.406347.</li></ol>Se redondea solo para presentar los números.</div>
+          <div class="worked-example">En A: μ=(1,0); en B: μ=(0,1). Con un agente en cada polo, P=0,1,1,0 y JDJ=1. En el centro, μ=(0.5,0.5) y JDJ=0.5. En (0,0), μ=(0.292893,0.292893) y JDJ=0.171573: la distancia distingue este punto del centro.</div>
+          <p>Antecedente difuso: Juan Antonio Guevara Gil, Daniel Gómez, José Manuel Robles y Javier Montero (2020), DOI 10.1007/978-3-030-50143-3_40. La transformación euclídea 2D es la especificación de este simulador; no se atribuye como ecuación literal del artículo. La versión proyectada queda obsoleta. El auditor conserva sus umbrales y exige dispersión adicional.</p>
         </div>
       </section>
 
@@ -255,7 +252,7 @@
             <tr><td>Polos y eventos</td><td><code>integratedStep</code></td><td><code>step</code></td><td>más intensidad, mayor efecto</td></tr>
             <tr><td>Atención</td><td><code>activeEventWeight</code></td><td><code>event_weight</code></td><td>cero fuera de la ventana</td></tr>
             <tr><td>Contraevento</td><td><code>oppositePosition</code></td><td><code>opposite_position</code></td><td>punto medio exactamente (0.5,0.5)</td></tr>
-            <tr><td>JDJ y sumandos visibles</td><td><code>jdjProductAxisDetails</code></td><td><code>jdj_axis_details</code></td><td>Σh=1.60 y JDJ=0.80 en el ejemplo</td></tr>
+            <tr><td>JDJ y sumandos visibles</td><td><code>jdjEuclideanDetails</code></td><td><code>jdj_euclidean_details</code></td><td>Ejemplo fuera del eje: JDJ=0.406347</td></tr>
             <tr><td>Auditor</td><td><code>integratedStep</code></td><td><code>step</code></td><td>requiere dos umbrales</td></tr>
           </tbody></table></div>
         </div>

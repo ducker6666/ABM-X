@@ -526,7 +526,7 @@
      * la decisión del auditor: solo existe si JDJ y dispersión superan los
      * umbrales declarados.
      */
-    const beforeJdj = jdjProductAxis(agents, config);
+    const beforeJdj = jdjEuclidean(agents, config);
     const beforeDispersion = dispersion(agents);
     const auditorActive = Boolean(config.auditorEnabled)
       && beforeJdj >= config.auditorThreshold
@@ -620,8 +620,7 @@
   }
 
   function axisProjection(agent, config) {
-    // Proyección escalar estándar sobre el segmento A--B. Es preprocesamiento
-    // geométrico para JDJ, no una regla sociológica nueva.
+    // Solo color y exportación geométrica. OBSOLETA para calcular JDJ.
     const ax = config.signalA[0];
     const ay = config.signalA[1];
     const dx = config.signalB[0] - ax;
@@ -629,21 +628,23 @@
     return clamp(((agent.x - ax) * dx + (agent.y - ay) * dy) / (dx * dx + dy * dy), 0, 1);
   }
 
-  function jdjProductAxisDetails(agents, config) {
+  function euclideanMemberships(agent) {
+    // Polos fijos: A=(1,0), B=(0,1). No normalizar la suma de pertenencias.
+    if (![agent.x, agent.y].every(v => Number.isFinite(v) && v >= 0 && v <= 1)) {
+      throw new Error("JDJ requiere posiciones en [0,1]²");
+    }
+    return { a: 1 - distance([agent.x, agent.y], [1, 0]) / Math.SQRT2,
+      b: 1 - distance([agent.x, agent.y], [0, 1]) / Math.SQRT2 };
+  }
+
+  function jdjEuclideanDetails(agents) {
     // El producto y el máximo son los operadores de Guevara et al. (2020).
     // El factor 2 es una normalización operativa declarada: hace que una
     // división dura 50/50 entre A y B tome el valor 1.
     if (agents.length === 0) {
-      return { value: 0, pairSum: 0, totalPairs: 0, meanPair: 0, meanProjection: 0 };
+      return { value: 0, pairSum: 0, totalPairs: 0, meanPair: 0, meanMembershipA: 0 };
     }
-    const memberships = agents.map(agent => {
-      const s = axisProjection(agent, config);
-      // Funciones triangulares complementarias de pertenencia a los polos.
-      // Un punto central pertenece 0.5 a cada polo y por eso JDJ-Pro vale 0.5
-      // ante consenso central. El auditor exige además dispersión positiva para
-      // no confundir ese riesgo difuso con una división social observable.
-      return { a: 1 - s, b: s };
-    });
+    const memberships = agents.map(euclideanMemberships);
     let total = 0;
     for (const first of memberships) {
       for (const second of memberships) {
@@ -652,16 +653,16 @@
     }
     const totalPairs = agents.length * agents.length;
     return {
-      value: clamp(2 * total / totalPairs, 0, 1),
+      value: 2 * total / totalPairs,
       pairSum: total,
       totalPairs,
       meanPair: total / totalPairs,
-      meanProjection: memberships.reduce((sum, membership) => sum + membership.b, 0) / agents.length,
+      meanMembershipA: memberships.reduce((sum, membership) => sum + membership.a, 0) / agents.length,
     };
   }
 
-  function jdjProductAxis(agents, config) {
-    return jdjProductAxisDetails(agents, config).value;
+  function jdjEuclidean(agents, config) {
+    return jdjEuclideanDetails(agents, config).value;
   }
 
   function dispersion(agents) {
@@ -695,7 +696,7 @@
   }
 
   function summarize(agents, config, clusterThreshold = 0.05) {
-    const jdjDetails = jdjProductAxisDetails(agents, config);
+    const jdjDetails = jdjEuclideanDetails(agents, config);
     const followersA = agents.filter(agent => distance([agent.x, agent.y], config.signalA) <= 1e-3).length;
     const followersB = agents.filter(agent => distance([agent.x, agent.y], config.signalB) <= 1e-3).length;
     const rmsd = signal => Math.sqrt(agents.reduce((sum, agent) => {
@@ -712,7 +713,7 @@
       jdj: jdjDetails.value,
       jdjPairSum: jdjDetails.pairSum,
       jdjTotalPairs: jdjDetails.totalPairs,
-      jdjMeanProjection: jdjDetails.meanProjection,
+      jdjMeanMembershipA: jdjDetails.meanMembershipA,
     };
   }
 
@@ -735,8 +736,9 @@
     friedkinJohnsenStep,
     initialize,
     integratedStep,
-    jdjProductAxis,
-    jdjProductAxisDetails,
+    jdjEuclidean,
+    euclideanMemberships,
+    jdjEuclideanDetails,
     meanDisplacement,
     mulberry32,
     oppositePosition,

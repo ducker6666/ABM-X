@@ -1,5 +1,14 @@
 # ABM X — laboratorio auditable de opinión
 
+
+## JDJ vigente
+
+Usa distancias a polos fijos (1,0) y (0,1): mu=1−d/sqrt(2).
+JDJ=2/n² por la suma del máximo de productos cruzados, incluidos i=j.
+No usa proyección ni normalización de las pertenencias.
+Implementaciones: `jdj_euclidean` (Python) y `jdjEuclidean` (web).
+Las implementaciones históricas de JDJ están obsoletas.
+
 Simulador bidimensional para comparar mecanismos de dinámica de opinión. La
 vista predeterminada recupera la riqueza del prototipo inicial —grupos,
 señales, reactancia, ruido y auditor— pero sustituye metáforas físicas por

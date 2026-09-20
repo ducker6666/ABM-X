@@ -500,7 +500,7 @@ function drawMetricHistory() {
   drawSeries(metricsCtx, state.history.map(row => row.dispersion), canvas, "#1b7f79", 0, 0.5);
   metricsCtx.font = "12px system-ui";
   metricsCtx.fillStyle = "#6d4ba3";
-  metricsCtx.fillText("— JDJ proyectado* (0–1)", 56, canvas.height - 12);
+  metricsCtx.fillText("— JDJ euclídeo (0–1)", 56, canvas.height - 12);
   metricsCtx.fillStyle = "#1b7f79";
   metricsCtx.fillText("— dispersión (0–0.5)", 220, canvas.height - 12);
 }
@@ -539,7 +539,7 @@ function updateStats() {
   };
   for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
   // Se muestra el mismo numerador usado por el motor, no una explicación
-  // aproximada: JDJ = clip(2 * suma(h_ij) / N², 0, 1).
+  // aproximada: JDJ = 2 * suma(P_ij) / N², sin recorte.
   const pairSum = latest.jdjPairSum.toFixed(2);
   const totalPairs = latest.jdjTotalPairs.toLocaleString("es-ES");
   document.getElementById("jdjFormulaStat").textContent = `2×${pairSum}/${totalPairs}`;

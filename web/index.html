@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Laboratorio de opinión</title>
-  <link rel="stylesheet" href="styles.css?v=integrated-4" />
+  <link rel="stylesheet" href="styles.css?v=jdj-euclidean-1" />
 </head>
 <body>
   <header class="site-header">
@@ -205,7 +205,7 @@
         <div><span>Eventos activos</span><strong id="eventStat">0</strong></div>
         <div><span>Clusters</span><strong id="clusterStat">0</strong><small>umbral δ</small></div>
         <div><span>Dispersión</span><strong id="dispersionStat">0</strong></div>
-        <div><span>JDJ proyectado*</span><strong id="jdjStat">0</strong><small id="jdjFormulaStat">2Σh/N²</small></div>
+        <div><span>JDJ euclídeo</span><strong id="jdjStat">0</strong><small id="jdjFormulaStat">2Σh/N²</small></div>
         <div><span>Auditor</span><strong id="auditStat">inactivo</strong></div>
         <div><span>Cerca de A</span><strong id="followerAStat">0</strong></div>
         <div><span>Cerca de B</span><strong id="followerBStat">0</strong></div>
@@ -218,7 +218,7 @@
       <section class="calculation-strip" aria-label="Cómo se calculan JDJ y el movimiento">
         <div>
           <strong>Cómo sale JDJ:</strong>
-          usa la posición actual (x,y), la proyecta sobre el eje A–B y calcula <span id="jdjLiveFormula">2Σh/N²</span>; cada h mide la oposición difusa de una pareja. No es la distancia euclídea directa. La proyección 2D y el factor 2 son adaptaciones declaradas.
+          usa las distancias euclídeas a los polos fijos: μ=1−d/√2. Calcula <span id="jdjLiveFormula">2ΣP/n²</span> con todos los pares ordenados, incluidos i=j, sin renormalizar pertenencias.
         </div>
         <div>
           <strong>Cómo se mueve una persona:</strong>
@@ -230,7 +230,7 @@
     </section>
   </main>
 
-  <script src="model.js?v=integrated-4"></script>
-  <script src="app.js?v=integrated-4"></script>
+  <script src="model.js?v=jdj-euclidean-1"></script>
+  <script src="app.js?v=jdj-euclidean-1"></script>
 </body>
 </html>
