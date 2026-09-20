@@ -49,7 +49,9 @@ PhaseName = Literal["hk", "dw", "fj", "network", "temporal"]
 
 @dataclass(frozen=True)
 class PhasedConfig:
-    phase: PhaseName = "network"
+    # DW es el valor didactico predeterminado porque modela contactos parciales
+    # y espaciados. No se interpreta como una calibracion empirica.
+    phase: PhaseName = "dw"
     epsilon: float = 0.20
     signal_a: tuple[float, float] = (0.10, 0.90)
     signal_b: tuple[float, float] = (0.90, 0.10)

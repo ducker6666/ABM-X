@@ -22,7 +22,7 @@
       <section class="control-intro">
         <p class="eyebrow">MODELO ACTIVO</p>
         <h1>Opiniones 2D, comparadas por fases</h1>
-        <p>El control HK sigue disponible. Por defecto se usa anclaje inicial y red social para evitar un consenso instantáneo artificial.</p>
+        <p>El control HK sigue disponible. Por defecto se usan encuentros parciales Deffuant–Weisbuch para que el cambio sea gradual y explícito.</p>
         <div class="status-line"><span class="status-dot"></span><span id="runStatus">Preparado</span></div>
       </section>
 
@@ -38,9 +38,9 @@
         <label class="field inline-field"><span>Fase / modelo</span>
           <select id="phase" data-reset-model>
             <option value="hk">1 · HK, control base</option>
-            <option value="dw">2 · Deffuant, contactos graduales</option>
+            <option value="dw" selected>2 · Deffuant, contactos graduales</option>
             <option value="fj">3 · FJ, anclaje inicial</option>
-            <option value="network" selected>4 · FJ + red social</option>
+            <option value="network">4 · FJ + red social</option>
             <option value="temporal">5 · Red + señales temporales</option>
           </select>
         </label>
@@ -92,20 +92,20 @@
         </div>
       </details>
 
-      <details class="control-group">
+      <details class="control-group" open>
         <summary>Fase 2 · contactos graduales DW</summary>
         <p class="control-note">Solo se usa al seleccionar Fase 2. μ es la fracción recorrida en cada encuentro aceptado.</p>
         <label class="field"><span>Compromiso μ <output data-output-for="compromiseRate">0.08</output></span><input id="compromiseRate" type="range" min="0.01" max="0.50" step="0.01" value="0.08" data-reset-model /></label>
         <label class="field"><span>Contactos por agente/ronda <output data-output-for="interactionsPerAgent">0.50</output></span><input id="interactionsPerAgent" type="range" min="0.10" max="2.00" step="0.10" value="0.50" data-reset-model /></label>
       </details>
 
-      <details class="control-group" open>
+      <details class="control-group">
         <summary>Fases 3–5 · anclaje inicial FJ</summary>
         <p class="control-note">g es el peso conservado de la opinión inicial. g=0 elimina el ancla; g=1 impide cambiar.</p>
         <label class="field"><span>Peso del ancla g <output data-output-for="anchorWeight">0.85</output></span><input id="anchorWeight" type="range" min="0" max="1" step="0.01" value="0.85" data-reset-model /></label>
       </details>
 
-      <details class="control-group" open>
+      <details class="control-group">
         <summary>Fases 4–5 · red social</summary>
         <p class="control-note">Red sintética Watts–Strogatz: una demostración reproducible, no datos de una red real.</p>
         <label class="field inline-field"><span>Grado inicial k</span>
@@ -135,12 +135,12 @@
     <section class="workspace">
       <div class="workspace-heading">
         <div>
-          <p class="eyebrow">SIMULACIÓN INTERACTIVA · <span id="phaseLabel">FASE 4</span></p>
-          <h2 id="phaseTitle">Anclaje inicial sobre una red social</h2>
-          <p id="phaseDescription">Cada punto escucha únicamente a contactos conectados y cercanos en opinión.</p>
+          <p class="eyebrow">SIMULACIÓN INTERACTIVA · <span id="phaseLabel">FASE 2</span></p>
+          <h2 id="phaseTitle">Deffuant–Weisbuch: encuentros parciales y aleatorios</h2>
+          <p id="phaseDescription">Solo una muestra de parejas se encuentra por ronda y cada contacto recorre una fracción μ de la distancia.</p>
         </div>
         <div class="scope-badges" id="scopeBadges">
-          <span>Euclídea</span><span>Síncrona</span><span>Con red</span><span>Con anclaje</span>
+          <span>Euclídea</span><span>Parejas</span><span>Compromiso parcial</span><span>Estocástica</span>
         </div>
       </div>
 
@@ -159,8 +159,8 @@
           <article class="canvas-card"><canvas id="followersCanvas" width="520" height="250"></canvas></article>
           <article class="plain-card important-note">
             <p class="eyebrow">LECTURA CORRECTA</p>
-            <h3 id="readingTitle">La red limita quién puede influir.</h3>
-            <p id="readingText">El anclaje conserva parte de la opinión inicial. Los clusters, el color y el JDJ solo describen: no empujan a nadie.</p>
+            <h3 id="readingTitle">La velocidad ahora tiene una interpretación explícita.</h3>
+            <p id="readingText">μ controla cuánto cambia una persona por encuentro y el número de contactos controla cuántas oportunidades de cambio hay por ronda.</p>
             <a href="formula.html">Ver cada fórmula y su fuente →</a>
           </article>
         </div>

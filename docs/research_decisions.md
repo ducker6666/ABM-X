@@ -50,4 +50,4 @@ El control HK puede superponer agentes exactamente y aparentar una atracción de
 - La Fase 4 restringe la influencia a una red Watts–Strogatz sintética; no se presenta como red observada.
 - La Fase 5 activa señales mediante intervalos rectangulares declarados; no usa fatiga inventada.
 - La Fase 6 prepara calibración con RMSE y TVD, pero no genera datos ni resultados.
-- La web abre por defecto en Fase 4 porque mantiene diversidad y limita contactos mediante mecanismos trazables. “Más plausible” no significa “validada”.
+- La web abre por defecto en Fase 2 porque el compromiso parcial y el número limitado de contactos responden directamente al problema de la atracción demasiado rápida. “Más plausible” no significa “validada”.

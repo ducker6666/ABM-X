@@ -6,7 +6,7 @@ Simulador bidimensional de opiniones con mecanismos separados, citados y comprob
 
 En HK, dos agentes que escuchan exactamente al mismo conjunto calculan exactamente el mismo promedio. Siguen siendo dos agentes, pero ocupan la misma coordenada y el lienzo los superpone. Es una consecuencia del modelo, no un fallo gráfico.
 
-La vista predeterminada es ahora la **Fase 4 (FJ + red)**: cada agente conserva 85 % de su opinión inicial y solo escucha a contactos conectados que además están dentro de ε. Produce movimiento más limitado y desacuerdo persistente sin añadir ruido, repulsión ni una “fuerza social” inventada. Esto es más plausible como mecanismo, pero no se denomina realista empíricamente hasta calibrarlo.
+La vista predeterminada es ahora la **Fase 2 (Deffuant–Weisbuch)**: solo una muestra de parejas se encuentra en cada ronda y cada contacto aceptado recorre una fracción μ de la distancia. Con μ=0.08 y 0.5 contactos por agente/ronda, el cambio visual es gradual sin añadir ruido, repulsión ni una “fuerza social” inventada. Son valores ilustrativos, no parámetros sociales calibrados.
 
 ## Decisión científica
 
