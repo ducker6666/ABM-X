@@ -1,0 +1,55 @@
+n_agents: 200
+dimensions: 2
+steps: 10000
+seed: 20260620
+network: sbm
+p_in: 0.18
+p_out: 0.035
+epsilon_mean: 0.24
+epsilon_sd: 0.05
+epsilon_min: 0.04
+epsilon_max: 0.75
+mu_mean: 0.55
+mu_sd: 0.06
+lambda_mean: 0.04
+lambda_sd: 0.02
+alpha_mean: 0.004
+alpha_sd: 0.002
+fatigue_memory: 0.94
+fatigue_sensitivity: 0.002
+feedback_global: 0.001
+feedback_local: 0.004
+boundary: clip
+poles:
+  - position: [0.0, 1.0]
+    strength: 0.025
+    reach: 0.55
+    sign: 1.0
+  - position: [1.0, 0.0]
+    strength: 0.025
+    reach: 0.55
+    sign: 1.0
+events:
+  - position: [0.0, 1.0]
+    start: 100
+    duration: 1200
+    intensity: 0.11
+    reach: 0.35
+    decay: 0.002
+    sign: 1.0
+  - position: [1.0, 0.0]
+    start: 900
+    duration: 1200
+    intensity: 0.10
+    reach: 0.35
+    decay: 0.002
+    sign: 1.0
+  - position: [0.5, 0.5]
+    start: 3500
+    duration: 1800
+    intensity: 0.045
+    reach: 0.55
+    decay: 0.0015
+    sign: 1.0
+output_csv: outputs/long_run.csv
+output_parquet: outputs/long_run.parquet

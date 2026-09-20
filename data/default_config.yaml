@@ -1,0 +1,11 @@
+model: proposed
+seed: 123
+n_agents: 100
+steps: 100
+epsilon: 0.25
+mu: 0.5
+lambda_anchor: 0.0
+alpha_activation: 0.0
+boundary: clip
+output_csv: outputs/run.csv
+output_parquet: outputs/run.parquet

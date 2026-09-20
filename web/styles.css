@@ -1,0 +1,186 @@
+:root {
+  --bg: #f3f3f3;
+  --panel: #ffffff;
+  --line: #d8d8d8;
+  --text: #111111;
+  --muted: #666666;
+  --accent: #1f77b4;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 370px minmax(920px, 1fr);
+}
+.panel {
+  height: 100vh;
+  overflow: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 14px;
+}
+.panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(255,255,255,0.96);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+h1 { margin: 0 0 6px; font-size: 22px; }
+p { margin: 4px 0 10px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.run-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+button {
+  height: 34px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #f7f7f7;
+  color: #111;
+  cursor: pointer;
+  font-weight: 600;
+}
+button:hover { border-color: var(--accent); color: var(--accent); }
+.control-section { border-top: 1px solid var(--line); padding: 12px 0; }
+.control-section h2 { margin: 0 0 10px; font-size: 14px; }
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr 46px 72px;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 12px;
+  color: #333;
+}
+.control-row input { grid-column: 1 / -1; width: 100%; }
+.control-row output { text-align: right; font-variant-numeric: tabular-nums; }
+.control-row .unit { color: #777; }
+.control-row .real { color: #111; font-weight: 600; }
+.stage { padding: 16px 22px 28px; overflow: auto; }
+.titlebar { text-align: center; margin: 0 0 10px; }
+.titlebar h2 { font-size: 30px; font-weight: 500; margin: 0; }
+.layout {
+  display: grid;
+  grid-template-columns: minmax(600px, 1.22fr) minmax(420px, 0.9fr);
+  gap: 22px;
+  align-items: start;
+}
+.plot-card {
+  background: #fff;
+  border: 1px solid #cfcfcf;
+  padding: 10px;
+}
+.plot-card h3 { margin: 0 0 6px; text-align: center; font-size: 24px; font-weight: 500; }
+.main-plot { display: grid; place-items: center; }
+canvas { max-width: 100%; height: auto; display: block; }
+.side-plots { display: grid; gap: 22px; }
+.stats {
+  margin: 12px 0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(105px, 1fr));
+  gap: 8px;
+}
+.stats div {
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  padding: 8px 10px;
+}
+.stats span { display: block; color: var(--muted); font-size: 12px; }
+.stats strong { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.visual-legend {
+  background: #fff;
+  border: 1px solid #cfcfcf;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(190px, 1fr));
+  gap: 8px 14px;
+}
+.visual-legend h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.visual-legend div {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.visual-legend b { color: #111; }
+.visual-legend span { color: #555; }
+.formula-card {
+  background: #fff;
+  border: 1px solid #cfcfcf;
+  margin-top: 18px;
+  padding: 16px;
+}
+.formula-card h2 { margin: 0 0 10px; font-size: 22px; }
+details { border-top: 1px solid #e3e3e3; padding: 8px 0; }
+summary { cursor: pointer; font-weight: 700; }
+.formula-item { margin: 10px 0 12px; padding-left: 12px; border-left: 3px solid #d6e7f5; }
+.formula-item strong { font-size: 14px; }
+.formula-item p { font-size: 12px; color: #333; }
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 1fr; }
+  .panel { height: auto; }
+  .layout { grid-template-columns: 1fr; }
+}
+.legend-link { color: #1f77b4; font-weight: 700; text-decoration: none; }
+.legend-link:hover { text-decoration: underline; }
+.legend-body { background: #f7f7f7; }
+.legend-page { max-width: 980px; margin: 0 auto; padding: 28px; }
+.legend-page h1 { font-size: 34px; margin-bottom: 10px; }
+.legend-page pre { background: #f2f5f8; border: 1px solid #d6e0ea; padding: 12px; overflow-x: auto; font-size: 14px; }
+.legend-page a { color: #1f77b4; }
+.legend-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 16px;
+  font-size: 13px;
+  background: #fff;
+}
+.legend-table th,
+.legend-table td {
+  border: 1px solid #d6d6d6;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.legend-table th {
+  background: #f1f4f7;
+  font-weight: 700;
+}
+.legend-table tr:nth-child(even) td {
+  background: #fafafa;
+}
+.legend-table.compact {
+  font-size: 12px;
+}
+.legend-page mjx-container[jax="SVG"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+@media (max-width: 600px) {
+  .legend-page {
+    padding: 14px 10px;
+  }
+  .legend-page h1 {
+    font-size: 26px;
+  }
+  .formula-card {
+    padding: 12px;
+  }
+  .legend-table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}

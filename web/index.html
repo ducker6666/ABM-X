@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ABM de polarización con auditor interno</title>
+    <link rel="stylesheet" href="styles.css?v=legend-tolerance-1" />
+  </head>
+  <body>
+    <main class="app">
+      <aside class="panel">
+        <div class="panel-header">
+          <h1>ABM de polarización</h1>
+          <p>
+            Las cantidades estructurales usan unidades reales. Las fuerzas,
+            radios, probabilidades, umbrales y coeficientes usan escala 0.0-1.0.
+          </p>
+          <p><a class="legend-link" href="formula.html" target="_blank">Abrir leyenda matemática</a></p>
+          <div class="run-controls">
+            <button id="startBtn">Iniciar</button>
+            <button id="pauseBtn">Pausar</button>
+            <button id="resetBtn">Reiniciar</button>
+          </div>
+        </div>
+
+        <div id="controlsRoot"></div>
+      </aside>
+
+      <section class="stage">
+        <header class="titlebar">
+          <h2>ABM de opinión: polos permanentes, eventos con fatiga y masas sociales</h2>
+        </header>
+
+        <div class="layout">
+          <div class="plot-card main-plot">
+            <canvas id="mainCanvas" width="900" height="900"></canvas>
+          </div>
+          <div class="side-plots">
+            <div class="plot-card">
+              <h3>Polarización JDJ</h3>
+              <canvas id="polCanvas" width="620" height="300"></canvas>
+            </div>
+            <div class="plot-card">
+              <h3>Intensidad total de eventos</h3>
+              <canvas id="eventCanvas" width="620" height="300"></canvas>
+            </div>
+            <div class="plot-card">
+              <h3>Fuerzas medias</h3>
+              <canvas id="forceCanvas" width="620" height="260"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div><span>t</span><strong id="timeStat">0</strong></div>
+          <div><span>JDJ</span><strong id="polStat">0.000</strong></div>
+          <div><span>Separación diag.</span><strong id="jdjStat">0.000</strong></div>
+          <div><span>Balance 50/50</span><strong id="balanceStat">0.000</strong></div>
+          <div><span>Auditor</span><strong id="auditStat">inactivo</strong></div>
+          <div><span>Eventos activos</span><strong id="eventsStat">0</strong></div>
+          <div><span>Clusters</span><strong id="clustersStat">0</strong></div>
+          <div><span>ε seleccionado</span><strong id="epsilonStat">off</strong></div>
+        </div>
+
+        <section class="visual-legend">
+          <h3>Leyenda visual rápida</h3>
+          <div><b>Puntos negros</b><span>agentes; su color no predefine bando.</span></div>
+          <div><b>Áreas azul/naranja</b><span>campo de alcance de los polos permanentes.</span></div>
+          <div><b>Flechas naranjas</b><span>dirección de fuerza polar sobre una muestra; no son trayectorias.</span></div>
+          <div><b>Líneas grises</b><span>traza opcional del desplazamiento reciente; no son enlaces sociales.</span></div>
+          <div><b>Círculo negro ε</b><span>vecindad local del agente seleccionado; define quién entra en su media local.</span></div>
+          <div><b>Manchas moradas</b><span>campo de masa de clusters detectados; aparece solo si una fuerza de masa está activa.</span></div>
+          <div><b>Estrella verde/morada</b><span>evento temporal o contraevento con fatiga.</span></div>
+          <div><b>Diagonal A-B</b><span>referencia visual entre polos; JDJ usa similitud euclídea normalizada a ambos polos.</span></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js?v=legend-tolerance-1"></script>
+  </body>
+</html>

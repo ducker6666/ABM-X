@@ -1,0 +1,93 @@
+n_agents: 250
+dimensions: 2
+steps: 2000
+seed: 20260620
+
+network: sbm
+p_in: 0.20
+p_out: 0.025
+
+aggregator: mean
+trim_fraction: 0.1
+
+epsilon_mean: 0.28
+epsilon_sd: 0.05
+epsilon_min: 0.04
+epsilon_max: 0.85
+
+mu_mean: 0.50
+mu_sd: 0.06
+
+lambda_mean: 0.04
+lambda_sd: 0.02
+
+alpha_mean: 0.010
+alpha_sd: 0.004
+
+local_weight: 0.75
+pole_weight: 1.0
+event_weight: 1.0
+cluster_weight: 0.35
+center_weight_base: 0.0
+center_weight_polarization: 0.10
+center_weight_fatigue: 0.08
+
+cluster_radius: 0.65
+cluster_mass_exponent: 1.0
+
+fatigue_memory: 0.94
+fatigue_event_weight: 1.0
+fatigue_motion_weight: 0.8
+
+epsilon_radicalization_sensitivity: 0.0002
+epsilon_fatigue_sensitivity: 0.0008
+epsilon_local_polarization_sensitivity: 0.0005
+
+boundary: clip
+
+poles:
+  - position: [0.0, 1.0]
+    strength: 0.035
+    radius: 0.55
+    sign: 1.0
+  - position: [1.0, 0.0]
+    strength: 0.035
+    radius: 0.55
+    sign: 1.0
+
+events:
+  - position: [0.0, 1.0]
+    start: 100
+    duration: 650
+    strength: 0.18
+    radius: 0.35
+    decay: 0.003
+    sign: 1.0
+    visibility: 1.0
+    counter_position: [1.0, 0.0]
+    counter_probability_beta: 0.9
+    counter_strength_fraction: 0.45
+  - position: [1.0, 0.0]
+    start: 700
+    duration: 650
+    strength: 0.16
+    radius: 0.35
+    decay: 0.003
+    sign: 1.0
+    visibility: 1.0
+    counter_position: [0.0, 1.0]
+    counter_probability_beta: 0.9
+    counter_strength_fraction: 0.45
+  - position: [0.5, 0.5]
+    start: 1400
+    duration: 500
+    strength: 0.07
+    radius: 0.60
+    decay: 0.002
+    sign: 1.0
+    visibility: 0.7
+    counter_probability_beta: 0.0
+
+output_csv: outputs/attitudinal_abm.csv
+output_parquet: outputs/attitudinal_abm.parquet
+output_history: outputs/attitudinal_abm_history.npz

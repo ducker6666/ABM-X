@@ -1,0 +1,102 @@
+n_agents: 250
+dimensions: 2
+steps: 2000
+seed: 20260620
+
+network: sbm
+p_in: 0.22
+p_out: 0.0
+
+aggregator: mean
+trim_fraction: 0.1
+
+epsilon_mean: 0.20
+epsilon_sd: 0.04
+epsilon_min: 0.035
+epsilon_max: 0.70
+
+mu_mean: 0.58
+mu_sd: 0.06
+
+lambda_mean: 0.025
+lambda_sd: 0.015
+
+alpha_mean: 0.006
+alpha_sd: 0.002
+
+local_weight: 0.08
+pole_weight: 1.4
+event_weight: 1.4
+cluster_weight: 0.12
+center_weight_base: 0.0
+center_weight_polarization: 0.015
+center_weight_fatigue: 0.005
+
+cluster_mode: emergent
+cluster_detection_radius: 0.10
+cluster_radius: 0.70
+cluster_mass_exponent: 0.8
+cluster_density_exponent: 0.0
+cluster_min_size: 8
+
+fatigue_memory: 0.88
+fatigue_event_weight: 0.35
+fatigue_motion_weight: 0.25
+
+epsilon_radicalization_sensitivity: 0.00005
+epsilon_fatigue_sensitivity: 0.00005
+epsilon_local_polarization_sensitivity: 0.00004
+
+boundary: clip
+
+poles:
+  - position: [0.0, 1.0]
+    strength: 0.14
+    radius: 0.62
+    sign: 1.0
+    audience_group: 0
+  - position: [1.0, 0.0]
+    strength: 0.14
+    radius: 0.62
+    sign: 1.0
+    audience_group: 1
+
+events:
+  - position: [0.0, 1.0]
+    start: 120
+    duration: 800
+    strength: 0.24
+    radius: 0.40
+    decay: 0.0015
+    sign: 1.0
+    visibility: 1.0
+    audience_group: 0
+    counter_position: [1.0, 0.0]
+    counter_probability_beta: 0.15
+    counter_strength_fraction: 0.35
+  - position: [1.0, 0.0]
+    start: 120
+    duration: 850
+    strength: 0.24
+    radius: 0.40
+    decay: 0.0015
+    sign: 1.0
+    visibility: 1.0
+    audience_group: 1
+    counter_position: [0.0, 1.0]
+    counter_probability_beta: 0.15
+    counter_strength_fraction: 0.35
+
+random_event_probability: 0.006
+random_event_duration: 100
+random_event_strength_min: 0.08
+random_event_strength_max: 0.20
+random_event_radius_min: 0.20
+random_event_radius_max: 0.45
+random_event_decay: 0.012
+random_event_counter_probability_beta: 0.08
+
+output_csv: outputs/attitudinal_abm_polarizing.csv
+output_parquet: outputs/attitudinal_abm_polarizing.parquet
+output_history: outputs/attitudinal_abm_polarizing_history.npz
+output_events: outputs/attitudinal_abm_polarizing_random_events.csv
