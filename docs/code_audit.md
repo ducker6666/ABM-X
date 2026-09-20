@@ -1,7 +1,5 @@
 # Auditoria forense del codigo
 
-> **Documento histórico.** Audita el prototipo anterior. Desde 2026-09-20 el modelo científico activo del Paper 1 está definido en `src/paper1_model.py`, `docs/mathematical_model.md` y `docs/ODD_protocol.md`.
-
 Archivo solicitado no localizado: `modelo_basado_en_agentes (1).py`. Archivo auditado: `/Users/zhenboch/PhD Tesis/Markov Chain/Modelo base agentes.py`.
 
 ## Dictamen breve

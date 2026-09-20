@@ -1,11 +1,5 @@
 # Revisión de cumplimiento del simulador web
 
-> **Documento histórico del simulador anterior.** No debe usarse para explicar
-> la implementación actual ni su JDJ. El contrato activo está en
-> `docs/integrated_model_contract.md`; las fórmulas legibles están en
-> `web/formula.html` y las pruebas actuales en `tests/test_integrated_model.py`
-> y `web/verification.js`.
-
 Fecha de revisión: 2026-06-22.
 
 Este documento evalúa el simulador `project/web` frente a los puntos de diseño solicitados. La evaluación distingue entre implementación computacional, coherencia matemática y validación científica.

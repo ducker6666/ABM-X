@@ -1,45 +1,36 @@
-# Mapa histórico de fórmulas, código y pruebas — modelo de control
+# Mapa de formulas y ficheros
 
-> Este mapa conserva la trazabilidad del modelo HK de control. La composición
-> integrada visible en la web se documenta en `docs/integrated_model_contract.md`
-> y `web/formula.html`.
+Fecha: 2026-06-22.
 
-Fecha: 2026-09-20.
+Este documento indica donde se implementa cada formula del simulador web. La fuente ejecutable es `project/web/app.js`; `project/web/formula.html` es la leyenda matematica explicativa; `project/web/verification.js` contiene pruebas reproducibles.
 
-| Concepto | Fórmula o decisión | Python | Web | Prueba |
+| Componente | Formula / operacion | Fichero ejecutable | Funcion o bloque | Documentacion |
 |---|---|---|---|---|
-| Estado | $x_i(t)\in[0,1]^2$ | `Paper1Config`, `initialize_opinions` | `initialize` | límites `[0,1]` |
-| Distancia | $\sqrt{\Delta x^2+\Delta y^2}$ | `euclidean_distance` | `distance` | caso 3–4–5 = 0.5 |
-| Vecindad | $\mathcal N_i=\{j:d_E(i,j)\le\varepsilon\}$ | `step` | `step` | agentes aislados/conectados |
-| Señal oída | $I_{iA}=1[d_E(x_i,R_A)\le\varepsilon]$ | `step` | `step` | señal fuera de ε no influye |
-| Actualización | promedio HK con $m_AR_A,m_BR_B$ | `step` | `step` | ejemplo `(0.175, 0.2)` |
-| Sincronía | lectura de `old`, escritura en `new` | `step` | `step` | cadena `[0,.4,.8]→[.2,.4,.6]` |
-| Dispersión | media de $\|x_i-\bar x\|^2$ | `mean_squared_dispersion` | `dispersion` | extremos > centro |
-| Clusters | componentes conexas con umbral \(\delta_c\) | `connected_components` | `connectedComponents` | dos componentes conocidas |
-| Eje A–B | proyección escalar recortada | `axis_projection` | `axisProjection` | A=0, centro=.5, B=1 |
-| JDJ-Pro | $2E[\max(\mu_A(i)\mu_B(j),\mu_B(i)\mu_A(j))]$ | `jdj_product_axis` | `jdjProductAxis` | extremos 50/50=1; centro=.5 |
-| Resumen | seguidores, RMSD y salidas anteriores | `summarize` | `summarize` | seguidores A/B conocidos |
+| Parametros y escala de controles | Controles 0-1 y conteos reales | `project/web/app.js` | `PARAMS`, `cfg()` | `project/web/formula.html`, seccion "Efecto de las Variables" |
+| Estado de agentes | \(x_i(t)=(x_i,y_i)\in[0,1]^2\), `eps`, `mu`, `alpha`, `lambda` | `project/web/app.js` | `resetModel()` | `project/web/formula.html`, seccion "Estado del agente" |
+| Vecindad local | \(\mathcal N_i(t)=\{j:\|x_j-x_i\|\leq\varepsilon_i(t)\}\) | `project/web/app.js` | `step()`, bucle `nearby(...)` | `project/web/formula.html`, secciones "Tolerancia" e "Influencia local" |
+| Tolerancia adaptativa | \(\varepsilon_i(t)=clip(\varepsilon_i(0)(1-a_r rad_i)(1-a_m mass_i),0.01,1)\) | `project/web/app.js` | `step()`, actualizacion de `a.eps` | `project/web/formula.html`, seccion "Tolerancia y radio de confianza" |
+| Media local HK | \(F_i^{local}=mean_{\mathcal N_i}x_j-x_i\) | `project/web/app.js` | `step()`, variables `localX`, `localY` | `project/web/formula.html`, seccion "Influencia local" |
+| Polos permanentes | Pesos gaussianos \(w_A,w_B\), objetivo polar \(T_i^{pole}\), fuerza \(F_i^{poles}\) | `project/web/app.js` | `poleForce()` | `project/web/formula.html`, seccion "Polos permanentes" |
+| Eventos y fatiga | \(A_e(t)=2^{-(t-t_e)/h_e}\), \(F_i^{event}\) | `project/web/app.js` | `eventAmp()`, `maybeEvents()`, `step()` | `project/web/formula.html`, seccion "Eventos temporales con fatiga" |
+| Reactancia y contraeventos | Repulsion si `side(e) != side(i)`, contraevento en posicion opuesta | `project/web/app.js` | `step()`, bloque de eventos; `maybeEvents()` | `project/web/formula.html`, seccion "Reactancia y contraeventos" |
+| Deteccion de clusters | Grupos compactos por semilla densa y centroide local | `project/web/app.js` | `detectClusters()` | `project/web/formula.html`, seccion "Fuerza macroscópica por clusters" |
+| Masa de cluster | \(M_k=(|k|/N)^\gamma\) | `project/web/app.js` | `detectClusters()` | `project/web/formula.html`, seccion "Fuerza macroscópica por clusters" |
+| Gravedad de clusters | \(F_i^{clusters}\) con radio, suavizado y masa | `project/web/app.js` | `step()`, bloque `clusterX`, `clusterY` | `project/web/formula.html`, seccion "Fuerza macroscópica por clusters" |
+| Atraccion polo-masa | \(F_i^{mass-pole}=\kappa_{mp}(0.35+0.65M_k)F^{poles}(C_k)\) | `project/web/app.js` | `step()`, bloque `ownCluster` y `clusterPoleCoupling` | `project/web/formula.html`, seccion "Fuerza macroscópica por clusters" |
+| Inmovilidad, susceptibilidad y ruido | Umbral \(\alpha_i\), escala \(\mu_i\), perturbacion \(\xi_i(t)\) | `project/web/app.js` | `step()`, bloque `forceNorm`, `moveX`, `moveY` | `project/web/formula.html`, seccion "Inmovilidad α, susceptibilidad μ y anclaje λ" |
+| Frontera | Saturacion \(clip(x_i+\Delta x_i,0,1)\) | `project/web/app.js` | `step()`, `clamp(...)` | `project/web/formula.html`, seccion "Estado del agente" |
+| JDJ | Conversion 2D por similitud euclidea normalizada: \(d_{iA}=||x_i-P_A||_2\), \(d_{iB}=||x_i-P_B||_2\), \(\mu_A=1-d_{iA}/\sqrt{2}\), \(\mu_B=1-d_{iB}/\sqrt{2}\). Formula de las imagenes: \(P_{ij}=\max(A_iB_j,B_iA_j)\), \(JDJ=(2/n^2)\sum_{ij}P_{ij}\). Implementacion equivalente por frecuencias: \(2\sum_{kl}M_{kl}Freq_kFreq_l\). | `project/web/app.js` | `poleDistanceMembership()`, `jdjMembership()`, `jdjFromFrequencyTable()`, `jdjFrequencyRows()` | `project/web/formula.html`, seccion "Polarización JDJ" |
+| Auditor centro | Activacion por JDJ alto y balance 50/50 sostenido | `project/web/app.js` | `polarizationStats()`, `step()` | `project/web/formula.html`, seccion "Polarización JDJ y rebote al centro" |
+| Graficas y capas visuales | Mapas, vectores, trazas y leyenda visual | `project/web/app.js` | `drawMain()`, `drawPole()`, `drawPoleVectors()`, `drawClusterFields()` | `project/web/formula.html`, seccion "Mapa Visual" |
+| Pruebas | Casos JDJ, frontera, masa, eventos, polo-masa, ruido | `project/web/verification.js` | `runVerification()` | `project/docs/simulator_compliance.md` |
 
-## Módulos posteriores, separados del Paper 1
+## Regla para defender el codigo
 
-| Fase | Fórmula o decisión | Python | Web | Prueba |
-|---|---|---|---|---|
-| 2 · DW | $x_i'=x_i+\mu(x_j-x_i)$ | `deffuant_pair_update` | `deffuantPairUpdate` | 0 y .2, μ=.1 → .02 y .18 |
-| 3 · FJ | $g x_i(0)+(1-g)T_i(t)$ | `friedkin_johnsen_step` | `friedkinJohnsenStep` | g=1 conserva ancla |
-| 4 · red | filtro por arista y distancia | `_bounded_target` | `boundedTarget` | red simétrica sin lazos |
-| 4 · Watts–Strogatz | anillo k + reconexión β | `build_small_world_network` | `buildSmallWorldNetwork` | semilla reproducible |
-| 5 · intervalo | $1[s\le t<s+d]$ | `active_interval` | `activeInterval` | fronteras exactas |
-| 6 · RMSE | error euclídeo individual | `individual_rmse` | — | identidad = 0 |
-| 6 · TVD | $.5\sum_b|p_b-q_b|$ | `histogram_tvd` | — | histogramas disjuntos = 1 |
+Cuando se cambie una formula, hay que actualizar en paralelo:
 
-## Regla de mantenimiento
-
-Un cambio en la ecuación exige modificar conjuntamente:
-
-1. El motor Python pertinente (`paper1_model.py`, `phased_model.py` o `calibration.py`).
-2. `web/model.js` si el mecanismo se muestra en el navegador.
-3. `web/formula.html`.
-4. La prueba Python pertinente y `web/verification.js`.
-5. Este mapa; el protocolo ODD solo si cambia el Paper 1.
-
-`web/app.js` dibuja y controla la interfaz; no puede introducir una dinámica distinta.
+1. `project/web/app.js`: implementacion ejecutable.
+2. `project/web/formula.html`: formula y explicacion visible.
+3. `project/web/verification.js`: prueba minima si el cambio altera calculos.
+4. `project/docs/formula_file_map.md`: este mapa.
+5. `project/docs/simulator_compliance.md`: si cambia el cumplimiento 3.0-3.7.

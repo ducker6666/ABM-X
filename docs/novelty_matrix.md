@@ -1,7 +1,5 @@
 # Matriz de antecedentes y novedad
 
-> **Documento histórico.** Ninguna afirmación de novedad de este borrador debe trasladarse al Paper 1 sin una revisión sistemática actualizada.
-
 Escala: 0 no localizado en la busqueda realizada; 1 antecedente lejano; 2 mecanismo parcialmente equivalente; 3 antecedente muy proximo; 4 propuesta ya implementada practicamente igual.
 
 | Mecanismo | Existe | Referencia primaria | Ecuacion existente | Diferencia con propuesta | Solapamiento | Oportunidad de novedad |

@@ -1,79 +1,95 @@
-# Modelo matemático activo — Paper 1
+# Modelo matematico minimo
 
-## 1. Espacio y distancia
+## Seleccion del modelo base
 
-\(x_i(t)\in[0,1]^2\). La distancia es euclídea:
+Modelo de referencia: Hegselmann-Krause en red. Motivos: opiniones continuas, confianza acotada interpretable, actualizacion sincronica clara, compatibilidad con espacios `[0,1]^d`, redes reales y mediciones de polarizacion.
 
-\[
-d_E(x_i,x_j)=\sqrt{(x_{i1}-x_{j1})^2+(x_{i2}-x_{j2})^2}.
-\]
+Modelo alternativo: Deffuant-Weisbuch. Es preferible cuando se quiere modelar encuentros pairwise asincronicos.
 
-No se usa distancia Manhattan.
+Modelo extendido final: HK en red + Friedkin-Johnsen + eventos/polos + confianza adaptativa guiada por polarizacion global/local. No debe implementarse todo de inicio.
 
-## 2. Vecindad de confianza
+## Version 0: HK en red
 
-\[
-\mathcal N_i(t)=\{j:d_E(x_i(t),x_j(t))\le\varepsilon\}.
-\]
+Agentes `i=1,...,N`, opiniones `x_i(t) in [0,1]^d`, red ponderada `A`.
 
-El conjunto incluye a \(i\). \(\varepsilon\) es apertura: responde “¿a quién escucha?”, no “¿con qué fuerza se mueve?”.
+`N_i(t)={j: A_ij>0 and ||x_j(t)-x_i(t)||<=epsilon_i}`.
 
-## 3. Señales constantes
+`x_i(t+1)=Pi_E( sum_{j in N_i(t) union {i}} w_ij x_j(t) / sum_j w_ij )`.
 
-Las señales \(R_A,R_B\in[0,1]^2\) permanecen fijas. Sus indicadores de audición son:
+Frontera recomendada: proyeccion/saturacion `Pi_E(y)=min(1,max(0,y))`. Reflexion es util numericamente, pero socialmente implica rebote artificial. Periodicidad es incoherente para actitudes porque hace vecinas posiciones opuestas.
 
-\[
-I_{ik}(t)=\mathbf1[d_E(x_i(t),R_k)\le\varepsilon],\quad k\in\{A,B\}.
-\]
+## Version 1: susceptibilidad, obstinacion e inmovilidad
 
-Con pesos \(m_A,m_B\ge0\):
+`F_i(t)=m_i(t)-x_i(t)`, donde `m_i(t)` es la media local.
 
-\[
-x_i(t+1)=
-\frac{\sum_{j\in\mathcal N_i(t)}x_j(t)+I_{iA}m_AR_A+I_{iB}m_BR_B}
-{|\mathcal N_i(t)|+I_{iA}m_A+I_{iB}m_B}.
-\]
+`x_i(t+1)=Pi_E((1-lambda_i)[x_i(t)+mu_i F_i(t) 1{||F_i(t)||>alpha_i}] + lambda_i b_i)`.
 
-La actualización es síncrona. La regla es un promedio convexo, de modo que mantiene \(x_i(t+1)\in[0,1]^2\).
+Interpretacion: `epsilon_i` tolerancia/confianza; `mu_i` susceptibilidad; `lambda_i` anclaje; `alpha_i` activacion/inmovilidad.
 
-## 4. Ejemplo
+## Version 2: polos y eventos
 
-\(x_i=(0.2,0.2)\), vecino \(x_j=(0.3,0.2)\), señal \(R_A=(0.1,0.2)\), \(m_A=2\) y todos a distancia \(\le\varepsilon\):
+Polos permanentes `P_A=(0,1)`, `P_B=(1,0)` entran como campo:
 
-\[
-x_i(t+1)=\frac{(0.2,0.2)+(0.3,0.2)+2(0.1,0.2)}{4}=(0.175,0.2).
-\]
+`F_i(t)=F_i^soc(t)+sum_p rho_ip(t)(P_p-x_i(t))`.
 
-## 5. Salidas primarias
+Evento `e` con posicion `c_e`, intensidad `I_e`, alcance `R_e`, inicio `t_e`, duracion y decaimiento:
 
-Centroide y dispersión:
+`g_e(t)=I_e K(t-t_e) 1{t>=t_e}`.
 
-\[
-\bar x=\frac1N\sum_i x_i,\qquad D=\frac1N\sum_i\|x_i-\bar x\|_2^2.
-\]
+`F_i^evt(t)=sum_e s_e g_e(t) exp(-||x_i-c_e||^2/(2R_e^2)) (c_e-x_i)`, con `s_e=1` atraccion o `s_e=-1` repulsion.
 
-Clusters: componentes conexas del grafo diagnóstico con arista \(i-j\) si \(d_E(x_i,x_j)\le\delta_c\). \(\delta_c\) no entra en la dinámica.
+## Version 3: fatiga y retroalimentacion
 
-Seguidores de A: \(F_A=\#\{i:d_E(x_i,R_A)\le10^{-3}\}\). RMSD: \(\sqrt{N^{-1}\sum_i d_E(x_i,R_A)^2}\). Análogo para B.
+`H_i(t+1)=rho H_i(t)+sum_e exposure_ie(t)+||x_i(t+1)-x_i(t)||`.
 
-## 6. Diagnóstico JDJ exploratorio
+`P_G(t)=JDJ(X(t))`, pendiente de verificar con formula original.
 
-Proyección geométrica:
+`P_i^exp(t)=JDJ(X_{E_i(t)})`.
 
-\[
-s_i=clip\left(\frac{(x_i-R_A)\cdot(R_B-R_A)}{\|R_B-R_A\|_2^2},0,1\right).
-\]
+`epsilon_i(t+1)=clip(epsilon_i(t)+a(P_i^exp(t)-P_G(t))-bH_i(t), epsilon_min, epsilon_max)`.
 
-Pertenencias: \(\mu_A(i)=1-s_i\), \(\mu_B(i)=s_i\). Se conserva el núcleo producto/máximo de JDJ y se aplica una normalización operativa con factor 2 para que una división dura 50/50 entre A y B valga 1:
+Componente potencialmente nuevo: JDJ local/global como variable endogena de tolerancia. Verificacion: pruebas unitarias por casos limite y comparacion con HK cuando `a=b=0`. Validacion: series temporales de opiniones/red/eventos.
 
-\[
-JDJ=\frac2{N^2}\sum_{i,j}\max\{\mu_A(i)\mu_B(j),\mu_B(i)\mu_A(j)\}.
-\]
+## Version implementada en `src/final_model.py`
 
-La proyección y el factor de normalización son decisiones declaradas del proyecto. JDJ no realimenta la dinámica y no es una medida multidimensional validada.
+La version ejecutable usa opiniones `x_i(t) in [0,1]^d`, red no dirigida `A`, anclajes `b_i=x_i(0)`, tolerancia `epsilon_i(t)`, susceptibilidad `mu_i`, obstinacion `lambda_i`, umbral de activacion `alpha_i` y fatiga `H_i(t)`.
 
-## 7. Fuera del modelo activo
+Vecindad:
 
-En el Paper 1 no hay fuerzas, gravedad de clusters, eventos, fatiga, contraeventos, rebote al centro, ruido, anclaje, inmovilidad ni tolerancia adaptativa.
+`N_i(t)={j: A_ij>0, ||x_j(t)-x_i(t)|| <= epsilon_i(t)} union {i}`.
 
-El anclaje FJ, los contactos DW, la red y los intervalos temporales existen como modelos posteriores seleccionables, no como ingredientes ocultos del Paper 1. Sus fórmulas, fuentes y adaptaciones se documentan en `docs/realism_layers.md` y `web/formula.html`.
+Fuerza social:
+
+`F_i^soc(t)=mean_{j in N_i(t)} x_j(t)-x_i(t)`.
+
+Polos y eventos:
+
+`F_i^ext(t)=sum_k s_k rho_k exp(-||x_i-p_k||^2/(2R_k^2))(p_k-x_i) + sum_e s_e I_e exp[-delta_e(t-t_e)] 1_{t_e <= t < t_e+D_e} exp(-||x_i-c_e||^2/(2R_e^2))(c_e-x_i)`.
+
+Movimiento:
+
+`x_i^*(t+1)=x_i(t)+mu_i [F_i^soc(t)+F_i^ext(t)] 1{||F_i^soc(t)+F_i^ext(t)||>alpha_i}`.
+
+Anclaje:
+
+`x_i(t+1)=Pi_[0,1]^d((1-lambda_i)x_i^*(t+1)+lambda_i b_i)`.
+
+Fatiga:
+
+`H_i(t+1)=rho H_i(t)+exposicion_i(t)+||x_i(t+1)-x_i(t)||`.
+
+Retroalimentacion:
+
+`epsilon_i(t+1)=clip(epsilon_i(t)+a(P_i^exp(t)-P_G(t))-bP_G(t)-cH_i(t+1), epsilon_min, epsilon_max)`.
+
+`P_G` y `P_i^exp` se calculan con una medida difusa de oposicion entre polos. Importante: la implementacion usa una aproximacion operativa JDJ-like basada en membresia difusa a dos polos; para publicacion, la formula debe sustituirse o verificarse contra Guevara et al. (2020).
+
+Esta version no incluye aun contraeventos endogenos ni cambio adaptativo de la red. Se dejaron fuera a proposito para preservar identificabilidad.
+
+## Hipotesis
+
+H1: tolerancia adaptativa por polarizacion experimentada produce brechas entre polarizacion ideologica global y estructural.
+
+H2: eventos con decaimiento generan polarizacion episodica; si reducen tolerancia local de forma persistente pueden inducir polarizacion estructural.
+
+H3: un balance 50/50 de polos no crea atraccion al centro por si mismo; solo cancela fuerzas si son simetricas. Recentrado requiere fatiga, ruido, instituciones/moderadores, incentivos, repulsion de extremos o cambio de red.

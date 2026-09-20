@@ -1,701 +1,944 @@
-"use strict";
+const PARAMS = [
+  { group: "Estructura", id: "nAgents", label: "Número de agentes", kind: "count", min: 30, max: 1000, step: 10, value: 240 },
+  { group: "Estructura", id: "steps", label: "Iteraciones máximas", kind: "count", min: 100, max: 20000, step: 100, value: 3000 },
+  { group: "Estructura", id: "seed", label: "Semilla", kind: "count", min: 1, max: 999999, step: 1, value: 123 },
+  { group: "Estructura", id: "speed", label: "Velocidad visual", kind: "count", min: 1, max: 120, step: 1, value: 18 },
+  { group: "Estructura", id: "stepsPerFrame", label: "Pasos por frame", kind: "count", min: 1, max: 20, step: 1, value: 1 },
 
-const Model = window.ABMXModel;
+  { group: "Visualización y diagnóstico", id: "showConfidence", label: "Mostrar vecindad ε", value: 0.00 },
+  { group: "Visualización y diagnóstico", id: "selectedAgent", label: "Agente destacado", kind: "count", min: 1, max: 1000, step: 1, value: 1 },
+  { group: "Visualización y diagnóstico", id: "showMovementTrails", label: "Mostrar trazas grises", value: 0.00 },
+  { group: "Visualización y diagnóstico", id: "showPoleArrows", label: "Mostrar flechas polos", value: 1.00 },
+
+  { group: "Micro: tolerancia e inmovilidad", id: "epsilonMean", label: "Apertura local / tolerancia ε", value: 0.30 },
+  { group: "Micro: tolerancia e inmovilidad", id: "epsilonHeterogeneity", label: "Heterogeneidad de ε", value: 0.30 },
+  { group: "Micro: tolerancia e inmovilidad", id: "alpha", label: "Inmovilidad α", value: 0.10 },
+  { group: "Micro: tolerancia e inmovilidad", id: "mu", label: "Susceptibilidad μ", value: 0.60 },
+  { group: "Micro: tolerancia e inmovilidad", id: "lambda", label: "Anclaje λ", value: 0.10 },
+  { group: "Micro: tolerancia e inmovilidad", id: "noise", label: "Ruido", value: 0.10 },
+
+  { group: "Tolerancia adaptativa", id: "radicalToleranceLoss", label: "Cierre por radicalidad", value: 0.40 },
+  { group: "Tolerancia adaptativa", id: "massToleranceLoss", label: "Inercia de masa", value: 0.20 },
+
+  { group: "Polos permanentes", id: "poleAx", label: "Polo A x", value: 0.00 },
+  { group: "Polos permanentes", id: "poleAy", label: "Polo A y", value: 1.00 },
+  { group: "Polos permanentes", id: "poleBx", label: "Polo B x", value: 1.00 },
+  { group: "Polos permanentes", id: "poleBy", label: "Polo B y", value: 0.00 },
+  { group: "Polos permanentes", id: "poleStrength", label: "Fuerza polos", value: 0.70 },
+  { group: "Polos permanentes", id: "poleRadius", label: "Radio polos", value: 0.70 },
+
+  { group: "Eventos aleatorios", id: "eventProbability", label: "Frecuencia eventos", value: 0.70 },
+  { group: "Eventos aleatorios", id: "eventStrength", label: "Fuerza evento", value: 0.80 },
+  { group: "Eventos aleatorios", id: "eventRadius", label: "Radio evento", value: 0.40 },
+  { group: "Eventos aleatorios", id: "eventDuration", label: "Duración evento", value: 0.40 },
+  { group: "Eventos aleatorios", id: "eventDecay", label: "Fatiga/decaimiento", value: 0.50 },
+  { group: "Eventos aleatorios", id: "eventReactance", label: "Reactancia evento", value: 0.20 },
+  { group: "Eventos aleatorios", id: "counterEvent", label: "Contraevento", value: 0.40 },
+
+  { group: "Clusters con masa", id: "clusterStrength", label: "Fuerza masa cluster", value: 0.40 },
+  { group: "Clusters con masa", id: "clusterDetectRadius", label: "Radio detección cluster", value: 0.10 },
+  { group: "Clusters con masa", id: "clusterGravityRadius", label: "Radio gravedad cluster", value: 0.60 },
+  { group: "Clusters con masa", id: "clusterMassExponent", label: "Exponente masa", value: 0.70 },
+  { group: "Clusters con masa", id: "clusterMinSize", label: "Tamaño mínimo cluster", kind: "count", min: 3, max: 1000, step: 1, value: 20 },
+  { group: "Clusters con masa", id: "clusterSelfAttraction", label: "Autoatracción cluster", value: 0.10 },
+  { group: "Clusters con masa", id: "clusterPoleCoupling", label: "Atracción polo-masa", value: 0.70 },
+
+  { group: "Auditor JDJ y rebote", id: "auditThreshold", label: "Umbral JDJ", value: 0.60 },
+  { group: "Auditor JDJ y rebote", id: "auditBalanceThreshold", label: "Umbral 50/50", value: 0.70 },
+  { group: "Auditor JDJ y rebote", id: "auditPatience", label: "Paciencia auditor", value: 0.20 },
+  { group: "Auditor JDJ y rebote", id: "centerRebound", label: "Fuerza centro", value: 0.50 },
+];
+
 const state = {
-  agents: [],
-  t: 0,
+  controls: new Map(),
   running: false,
-  selected: 0,
-  lastFrame: 0,
+  rng: null,
+  model: null,
+  lastTimestamp: 0,
   accumulator: 0,
-  history: [],
-  random: null,
-  network: null,
-  events: [],
-  eventCounter: 0,
-  lastMeanMove: 0,
-  lastAudit: false,
-  activeEvents: 0,
-  importedMemberships: null,
-  importedFileName: "",
 };
 
-const elements = {
-  mainCanvas: document.getElementById("mainCanvas"),
-  metricsCanvas: document.getElementById("metricsCanvas"),
-  followersCanvas: document.getElementById("followersCanvas"),
-  start: document.getElementById("startBtn"),
-  pause: document.getElementById("pauseBtn"),
-  step: document.getElementById("stepBtn"),
-  reset: document.getElementById("resetBtn"),
-  export: document.getElementById("exportBtn"),
-  addEventPair: document.getElementById("addEventPairBtn"),
-  populationSource: document.getElementById("populationSource"),
-  membershipCsv: document.getElementById("membershipCsv"),
-  eventMode: document.getElementById("eventMode"),
-  eventLog: document.getElementById("eventLog"),
-  status: document.getElementById("runStatus"),
+const mainCanvas = document.getElementById("mainCanvas");
+const polCanvas = document.getElementById("polCanvas");
+const eventCanvas = document.getElementById("eventCanvas");
+const forceCanvas = document.getElementById("forceCanvas");
+const ctx = mainCanvas.getContext("2d");
+const polCtx = polCanvas.getContext("2d");
+const eventCtx = eventCanvas.getContext("2d");
+const forceCtx = forceCanvas.getContext("2d");
+
+const stats = {
+  t: document.getElementById("timeStat"),
+  pol: document.getElementById("polStat"),
+  jdj: document.getElementById("jdjStat"),
+  balance: document.getElementById("balanceStat"),
+  audit: document.getElementById("auditStat"),
+  events: document.getElementById("eventsStat"),
+  clusters: document.getElementById("clustersStat"),
+  epsilon: document.getElementById("epsilonStat"),
 };
 
-const ctx = elements.mainCanvas.getContext("2d");
-const metricsCtx = elements.metricsCanvas.getContext("2d");
-const followersCtx = elements.followersCanvas.getContext("2d");
-
-function numberValue(id) {
-  return Number(document.getElementById(id).value);
+function buildControls() {
+  const root = document.getElementById("controlsRoot");
+  const groups = {};
+  for (const p of PARAMS) {
+    if (!groups[p.group]) groups[p.group] = [];
+    groups[p.group].push(p);
+  }
+  for (const [group, params] of Object.entries(groups)) {
+    const section = document.createElement("section");
+    section.className = "control-section";
+    section.innerHTML = `<h2>${group}</h2>`;
+    for (const p of params) {
+      const row = document.createElement("label");
+      row.className = "control-row";
+      if (p.kind === "count") {
+        row.innerHTML = `<span>${p.label}</span><output>${p.value}</output><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}" />`;
+      } else {
+        row.innerHTML = `<span>${p.label}</span><output>${p.value.toFixed(1)}</output><input type="range" min="0" max="1" step="0.1" value="${p.value}" list="scaleTicks" />`;
+      }
+      const input = row.querySelector("input");
+      const out = row.querySelector("output");
+      input.addEventListener("input", () => {
+        out.textContent = p.kind === "count" ? input.value : Number(input.value).toFixed(1);
+        updateConfig();
+      });
+      section.appendChild(row);
+      state.controls.set(p.id, { param: p, input });
+    }
+    root.appendChild(section);
+  }
+  const datalist = document.createElement("datalist");
+  datalist.id = "scaleTicks";
+  for (let i = 0; i <= 10; i++) {
+    const option = document.createElement("option");
+    option.value = (i / 10).toFixed(1);
+    datalist.appendChild(option);
+  }
+  document.body.appendChild(datalist);
+  syncDependentControls();
 }
 
-function checkedValue(id) {
-  return document.getElementById(id).checked;
+function syncDependentControls() {
+  const nControl = state.controls.get("nAgents");
+  const clusterControl = state.controls.get("clusterMinSize");
+  const selectedControl = state.controls.get("selectedAgent");
+  if (!nControl || !clusterControl) return;
+  const nAgents = Math.round(Number(nControl.input.value));
+  clusterControl.input.max = String(nAgents);
+  if (Number(clusterControl.input.value) > nAgents) {
+    clusterControl.input.value = String(nAgents);
+    clusterControl.input.closest(".control-row").querySelector("output").textContent = String(nAgents);
+  }
+  if (selectedControl) {
+    selectedControl.input.max = String(nAgents);
+    if (Number(selectedControl.input.value) > nAgents) {
+      selectedControl.input.value = String(nAgents);
+      selectedControl.input.closest(".control-row").querySelector("output").textContent = String(nAgents);
+    }
+  }
 }
 
-function levelToUnit(id) {
-  // Escala visible 0--10 -> distancia interna 0--1.
-  return numberValue(id) / 10;
+function raw(id) {
+  return Number(state.controls.get(id).input.value);
 }
-
-function levelToRate(id) {
-  // Escala visible 0--10 -> paso maximo 0--0.10 por ronda.
-  return numberValue(id) / 100;
-}
-
-function percentToUnit(id) {
-  return numberValue(id) / 100;
-}
-
-function config() {
+function cfg() {
   return {
-    phase: "integrated",
-    epsilon: levelToUnit("epsilon"),
-    // El contrato A/B fija los extremos: pertenencia completa a A o a B.
-    signalA: [1, 0],
-    signalB: [0, 1],
-    signalAWeight: numberValue("signalAWeight"),
-    signalBWeight: numberValue("signalBWeight"),
-    signalAReach: levelToUnit("signalAReach"),
-    signalBReach: levelToUnit("signalBReach"),
-    signalAPermanent: true,
-    signalBPermanent: true,
-    // Constantes heredadas solo para que el validador común siga siendo
-    // compatible con las pruebas de los modelos de control retirados de la UI.
-    compromiseRate: 0.08,
-    interactionsPerAgent: 0.5,
-    anchorWeight: 0.85,
-    networkDegree: numberValue("networkDegree"),
-    networkRewiring: percentToUnit("networkRewiring"),
-    signalAStart: 0,
-    signalADuration: Number.MAX_SAFE_INTEGER,
-    signalBStart: 0,
-    signalBDuration: Number.MAX_SAFE_INTEGER,
-    socialRate: levelToRate("socialRate"),
-    homophilyScale: levelToUnit("homophilyScale"),
-    reactanceEnabled: checkedValue("reactanceEnabled"),
-    adaptiveCommitment: checkedValue("adaptiveCommitment"),
-    commitmentStrength: numberValue("commitmentStrength"),
-    auditorEnabled: checkedValue("auditorEnabled"),
-    auditorThreshold: percentToUnit("auditorThreshold"),
-    auditorMinDispersion: numberValue("auditorMinDispersion"),
-    centerStrength: levelToRate("centerStrength"),
-    noiseEnabled: checkedValue("noiseEnabled"),
-    noiseProbability: percentToUnit("noiseProbability"),
-    noiseRadius: levelToUnit("noiseRadius"),
-    immobileShare: percentToUnit("immobileShare"),
-    fatigueEnabled: checkedValue("fatigueEnabled"),
-    fatigueDecay: percentToUnit("fatigueDecay"),
+    nAgents: Math.round(raw("nAgents")),
+    steps: Math.round(raw("steps")),
+    seed: Math.round(raw("seed")),
+    speed: Math.round(raw("speed")),
+    stepsPerFrame: Math.round(raw("stepsPerFrame")),
+    showConfidence: raw("showConfidence"),
+    selectedAgent: Math.min(Math.max(1, Math.round(raw("selectedAgent"))), Math.round(raw("nAgents"))),
+    showMovementTrails: raw("showMovementTrails"),
+    showPoleArrows: raw("showPoleArrows"),
+    epsilonMean: raw("epsilonMean"),
+    epsilonHeterogeneity: raw("epsilonHeterogeneity"),
+    alpha: raw("alpha"),
+    mu: raw("mu"),
+    lambda: raw("lambda"),
+    noise: raw("noise"),
+    radicalToleranceLoss: raw("radicalToleranceLoss"),
+    massToleranceLoss: raw("massToleranceLoss"),
+    poleA: [raw("poleAx"), raw("poleAy")],
+    poleB: [raw("poleBx"), raw("poleBy")],
+    poleStrength: raw("poleStrength"),
+    poleRadius: Math.max(0.02, raw("poleRadius")),
+    eventFrequency: raw("eventProbability"),
+    eventStrength: raw("eventStrength"),
+    eventRadius: Math.max(0.02, raw("eventRadius")),
+    eventDuration: 20 + Math.round(180 * raw("eventDuration")),
+    eventMeanGap: 30 + Math.round(970 * (1 - raw("eventProbability"))),
+    eventDecay: raw("eventDecay"),
+    eventReactance: raw("eventReactance"),
+    counterEvent: raw("counterEvent"),
+    clusterStrength: raw("clusterStrength"),
+    clusterDetectRadius: Math.max(0.02, raw("clusterDetectRadius")),
+    clusterGravityRadius: Math.max(0.02, raw("clusterGravityRadius")),
+    clusterMassExponent: 0.5 + 1.5 * raw("clusterMassExponent"),
+    clusterMinSize: Math.min(Math.round(raw("clusterMinSize")), Math.round(raw("nAgents"))),
+    clusterSelfAttraction: raw("clusterSelfAttraction"),
+    clusterPoleCoupling: raw("clusterPoleCoupling"),
+    auditThreshold: raw("auditThreshold"),
+    auditBalanceThreshold: raw("auditBalanceThreshold"),
+    auditPatience: 1 + Math.round(119 * raw("auditPatience")),
+    centerRebound: raw("centerRebound"),
+    dt: 0.075,
+    maxMove: 0.05,
   };
 }
 
-function clusterThreshold() {
-  return levelToUnit("clusterThreshold");
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function rand() {
+    a += 0x6D2B79F5;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
-
-function updateControlOutputs() {
-  for (const input of document.querySelectorAll("input[type=range]")) {
-    const output = document.querySelector(`[data-output-for="${input.id}"]`);
-    if (!output) continue;
-    const decimals = input.step.includes(".") ? Math.max(1, input.step.split(".")[1].length) : 0;
-    output.textContent = Number(input.value).toFixed(decimals);
-  }
+function normal(mean = 0, sd = 1) {
+  let u = 0, v = 0;
+  while (u === 0) u = state.rng();
+  while (v === 0) v = state.rng();
+  return mean + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+function hypot(x, y) { return Math.sqrt(x * x + y * y); }
 
 function resetModel() {
-  state.running = false;
-  const c = config();
-  const useCsv = elements.populationSource.value === "csv";
-  if (useCsv && !state.importedMemberships) {
-    setStatus("Selecciona un CSV con columnas A y B para iniciar.");
-    return;
+  const c = cfg();
+  state.rng = mulberry32(c.seed);
+  const agents = [];
+  const nLeft = Math.floor(c.nAgents / 2);
+  for (let i = 0; i < c.nAgents; i++) {
+    const left = i < nLeft;
+    const center = left ? [0.28, 0.70] : [0.73, 0.29];
+    const spread = left ? [0.15, 0.14] : [0.14, 0.13];
+    const x = clamp(normal(center[0], spread[0]), 0.02, 0.98);
+    const y = clamp(normal(center[1], spread[1]), 0.02, 0.98);
+    const eps0 = clamp(normal(c.epsilonMean, 0.25 * c.epsilonHeterogeneity), 0.02, 1);
+    agents.push({
+      x, y,
+      previousX: x, previousY: y,
+      anchorX: x, anchorY: y,
+      eps0,
+      eps: eps0,
+      mu: clamp(normal(c.mu, 0.08), 0.02, 1),
+      alpha: clamp(normal(c.alpha, 0.05), 0, 1),
+      lambda: clamp(normal(c.lambda, 0.04), 0, 1),
+      clusterId: -1,
+    });
   }
-  const nAgents = useCsv ? state.importedMemberships.length : Math.round(numberValue("nAgents"));
-  const seed = Math.round(numberValue("seed"));
-  try {
-    Model.validatePhasedConfig(c, nAgents);
-  } catch (error) {
-    setStatus(`Configuración no válida: ${error.message}`);
-    return;
-  }
-  state.t = 0;
-  state.selected = 0;
-  state.accumulator = 0;
-  state.lastMeanMove = 0;
-  state.lastAudit = false;
-  state.activeEvents = 0;
-  state.events = [];
-  state.eventCounter = 0;
-  state.random = Model.mulberry32(seed + 104729);
-  state.agents = useCsv
-    ? Model.initializeFromMemberships(state.importedMemberships)
-    : Model.initialize(nAgents, seed, document.getElementById("scenario").value);
-  state.agents = Model.assignImmobility(state.agents, c.immobileShare, seed + 65537);
-  state.network = Model.buildSmallWorldNetwork(nAgents, c.networkDegree, c.networkRewiring, seed + 7919);
-  state.history = [];
-  recordMetrics();
-  updateEventLog();
-  setStatus(useCsv
-    ? `Preparado: ${nAgents} agentes importados de ${state.importedFileName}.`
-    : "Preparado: población A/B sintética, t = 0.");
+  state.model = {
+    cfg: c,
+    agents,
+    events: [],
+    clusters: [],
+    t: 0,
+    nextEventAt: Math.round(state.rng() * c.eventMeanGap),
+    highPolCount: 0,
+    historyPol: [],
+    historyEvent: [],
+    historyForces: [],
+    highlighted: Math.min(c.selectedAgent - 1, agents.length - 1),
+  };
+  pushMetrics({ local: 0, pole: 0, event: 0, cluster: 0, center: 0 });
   draw();
 }
 
-function setStatus(message) {
-  elements.status.textContent = message;
-  elements.start.disabled = state.running;
-  elements.pause.disabled = !state.running;
+function updateConfig() {
+  if (!state.model) return;
+  syncDependentControls();
+  const oldFrequency = state.model.cfg.eventFrequency;
+  state.model.cfg = cfg();
+  if (oldFrequency !== state.model.cfg.eventFrequency) {
+    state.model.nextEventAt = state.model.t + Math.round(0.5 * state.model.cfg.eventMeanGap);
+  }
+  state.model.highlighted = Math.min(state.model.cfg.selectedAgent - 1, state.model.agents.length - 1);
 }
 
-function executeStep() {
-  if (state.t >= Math.round(numberValue("maxSteps"))) {
-    state.running = false;
-    setStatus("Finalizado: se alcanzó el número máximo de iteraciones.");
-    return;
-  }
-  const result = Model.advance(state.agents, config(), {
-    random: state.random,
-    network: state.network,
-    events: state.events,
-    t: state.t,
+function makeGrid(agents, cellSize) {
+  const grid = new Map();
+  const inv = 1 / cellSize;
+  agents.forEach((a, i) => {
+    const key = `${Math.floor(a.x * inv)},${Math.floor(a.y * inv)}`;
+    if (!grid.has(key)) grid.set(key, []);
+    grid.get(key).push(i);
   });
-  state.agents = result.agents;
-  state.lastMeanMove = result.meanMove;
-  state.lastAudit = result.auditorActive;
-  state.activeEvents = result.activeEvents;
-  state.t += 1;
-  recordMetrics();
-  updateEventLog();
+  return { grid, inv };
 }
-
-function recordMetrics() {
-  const summary = Model.summarize(state.agents, config(), clusterThreshold());
-  state.history.push({
-    t: state.t,
-    ...summary,
-    meanMove: state.lastMeanMove,
-    uniqueOpinions: Model.uniqueOpinionCount(state.agents),
-  });
-  if (state.history.length > 1200) state.history.shift();
-}
-
-function start() {
-  state.running = true;
-  setStatus("En ejecución: actualización síncrona del modelo integrado.");
-}
-
-function pause() {
-  state.running = false;
-  setStatus(`Pausado en t = ${state.t}.`);
-}
-
-function animate(timestamp) {
-  if (state.running) {
-    const speed = numberValue("speed");
-    const interval = 1000 / speed;
-    state.accumulator += Math.min(100, timestamp - state.lastFrame);
-    let safety = 0;
-    while (state.accumulator >= interval && state.running && safety < 20) {
-      executeStep();
-      state.accumulator -= interval;
-      safety += 1;
-    }
-    draw();
-  }
-  state.lastFrame = timestamp;
-  requestAnimationFrame(animate);
-}
-
-function sx(x) { return 72 + x * 696; }
-function sy(y) { return 768 - y * 696; }
-
-function draw() {
-  drawOpinionSpace();
-  drawMetricHistory();
-  drawFollowerHistory();
-  updateStats();
-}
-
-function drawOpinionSpace() {
-  const c = config();
-  ctx.clearRect(0, 0, 840, 840);
-  ctx.fillStyle = "#fbfaf7";
-  ctx.fillRect(0, 0, 840, 840);
-
-  ctx.strokeStyle = "#e5e0d7";
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 10; i += 1) {
-    const p = 72 + i * 69.6;
-    ctx.beginPath();
-    ctx.moveTo(p, 72); ctx.lineTo(p, 768);
-    ctx.moveTo(72, p); ctx.lineTo(768, p);
-    ctx.stroke();
-  }
-  ctx.strokeStyle = "#2b2925";
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(72, 72, 696, 696);
-
-  ctx.fillStyle = "#4c4841";
-  ctx.font = "16px system-ui";
-  ctx.textAlign = "center";
-  ctx.fillText("Grado de pertenencia A", 420, 816);
-  ctx.save();
-  ctx.translate(22, 420);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillText("Grado de pertenencia B", 0, 0);
-  ctx.restore();
-
-  drawSelectedNetwork();
-  drawAxis(c);
-  const [activeA, activeB] = Model.signalWeights(c, state.t);
-  const statusA = c.signalAPermanent ? "permanente" : (activeA > 0 ? "activo" : "apagado");
-  const statusB = c.signalBPermanent ? "permanente" : (activeB > 0 ? "activo" : "apagado");
-  drawSignal(c.signalA, activeA, "A", "#176b87", c.signalAReach, activeA > 0, statusA);
-  drawSignal(c.signalB, activeB, "B", "#c45134", c.signalBReach, activeB > 0, statusB);
-  drawEvents(c);
-
-  if (document.getElementById("showTrails").checked) {
-    ctx.strokeStyle = "rgba(43,41,37,.22)";
-    ctx.lineWidth = 1;
-    for (const agent of state.agents) {
-      ctx.beginPath();
-      ctx.moveTo(sx(agent.previousX), sy(agent.previousY));
-      ctx.lineTo(sx(agent.x), sy(agent.y));
-      ctx.stroke();
+function nearby(spatial, x, y, r) {
+  const out = [];
+  const minX = Math.floor((x - r) * spatial.inv);
+  const maxX = Math.floor((x + r) * spatial.inv);
+  const minY = Math.floor((y - r) * spatial.inv);
+  const maxY = Math.floor((y + r) * spatial.inv);
+  for (let gx = minX; gx <= maxX; gx++) {
+    for (let gy = minY; gy <= maxY; gy++) {
+      const bucket = spatial.grid.get(`${gx},${gy}`);
+      if (bucket) out.push(...bucket);
     }
   }
-
-  drawClusterMasses();
-
-  for (const agent of state.agents) {
-    const score = Model.axisProjection(agent, c);
-    ctx.fillStyle = mixColor([23, 107, 135], [196, 81, 52], score, 0.76);
-    ctx.strokeStyle = "rgba(32,30,27,.62)";
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.arc(sx(agent.x), sy(agent.y), 4.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  }
-
-  const selected = state.agents[state.selected];
-  if (selected && document.getElementById("showNeighborhood").checked) {
-    ctx.strokeStyle = "rgba(24,22,20,.78)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([7, 5]);
-    ctx.beginPath();
-    ctx.arc(sx(selected.x), sy(selected.y), c.epsilon * 696, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#111";
-    ctx.beginPath();
-    ctx.arc(sx(selected.x), sy(selected.y), 6.5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  const latest = state.history[state.history.length - 1];
-  ctx.fillStyle = "rgba(255,255,255,.88)";
-  ctx.strokeStyle = "#cfc8bd";
-  ctx.lineWidth = 1;
-  roundRect(ctx, 89, 660, 258, 88, 8);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#27231f";
-  ctx.textAlign = "left";
-  ctx.font = "600 17px system-ui";
-  ctx.fillText(`t = ${state.t}`, 106, 689);
-  ctx.font = "14px system-ui";
-  ctx.fillText(`clusters = ${latest.clusters}  ·  dispersión = ${latest.dispersion.toFixed(3)}`, 106, 716);
-  ctx.fillText(`movimiento medio = ${latest.meanMove.toFixed(4)}`, 106, 739);
+  return out;
 }
 
-function drawSelectedNetwork() {
-  if (!state.network || !document.getElementById("showNeighborhood").checked) return;
-  const selected = state.agents[state.selected];
-  if (!selected) return;
-  ctx.save();
-  ctx.strokeStyle = "rgba(49, 93, 105, .26)";
-  ctx.lineWidth = 1.4;
-  for (const neighborIndex of state.network[state.selected]) {
-    const neighbor = state.agents[neighborIndex];
-    ctx.beginPath();
-    ctx.moveTo(sx(selected.x), sy(selected.y));
-    ctx.lineTo(sx(neighbor.x), sy(neighbor.y));
-    ctx.stroke();
-  }
-  ctx.restore();
+function sideScore(a) {
+  // Solo para clasificar el lado del agente ante eventos/contraeventos.
+  // No es el JDJ: el JDJ usa poleDistanceMembership() con normalizacion sqrt(2).
+  const c = state.model.cfg;
+  const dA = hypot(a.x - c.poleA[0], a.y - c.poleA[1]);
+  const dB = hypot(a.x - c.poleB[0], a.y - c.poleB[1]);
+  const denom = dA + dB;
+  return denom < 1e-9 ? 0.5 : clamp(dA / denom, 0, 1);
 }
-
-function drawClusterMasses() {
-  if (!document.getElementById("showClusterMass").checked) return;
-  const groups = Model.connectedComponents(state.agents, clusterThreshold()).slice(0, 12);
-  ctx.save();
-  ctx.textAlign = "center";
-  for (const group of groups) {
-    if (group.length < 2) continue;
-    const centerX = group.reduce((sum, index) => sum + state.agents[index].x, 0) / group.length;
-    const centerY = group.reduce((sum, index) => sum + state.agents[index].y, 0) / group.length;
-    const radius = Math.min(34, 7 + 1.8 * Math.sqrt(group.length));
-    ctx.fillStyle = "rgba(71, 93, 98, .07)";
-    ctx.strokeStyle = "rgba(47, 75, 82, .34)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.arc(sx(centerX), sy(centerY), radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "rgba(35, 55, 59, .78)";
-    ctx.font = "700 10px system-ui";
-    ctx.fillText(`n=${group.length}`, sx(centerX), sy(centerY) - radius - 4);
-  }
-  ctx.restore();
-}
-
-function drawAxis(c) {
-  ctx.save();
-  ctx.strokeStyle = "rgba(55,51,46,.48)";
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([9, 7]);
-  ctx.beginPath();
-  ctx.moveTo(sx(c.signalA[0]), sy(c.signalA[1]));
-  ctx.lineTo(sx(c.signalB[0]), sy(c.signalB[1]));
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawSignal(point, weight, label, color, reach, active, status) {
-  const x = sx(point[0]);
-  const y = sy(point[1]);
-  ctx.save();
-  ctx.fillStyle = color.replace(")", ", .06)").replace("rgb", "rgba");
-  ctx.strokeStyle = color;
-  ctx.globalAlpha = active ? 0.24 : 0.06;
-  ctx.setLineDash([6, 6]);
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(x, y, reach * 696, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.globalAlpha = active ? 1 : 0.28;
-  ctx.fillStyle = color;
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(x, y, 15, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "white";
-  ctx.font = "700 14px system-ui";
-  ctx.textAlign = "center";
-  ctx.fillText(label, x, y + 5);
-  ctx.fillStyle = "#2a2723";
-  ctx.font = "600 13px system-ui";
-  const offset = point[0] < 0.5 ? 70 : -70;
-  ctx.fillText(`Polo ${label} · ${status} · intensidad ${weight.toFixed(2)}/10`, x + offset, y - 20);
-  ctx.globalAlpha = 1;
-}
-
-function drawEvents(c) {
-  for (const event of state.events) {
-    const weight = Model.activeEventWeight(event, state.t, c.fatigueEnabled, c.fatigueDecay);
-    const active = weight > 0;
-    const x = sx(event.position[0]);
-    const y = sy(event.position[1]);
-    ctx.save();
-    ctx.globalAlpha = active ? 0.22 : 0.06;
-    ctx.fillStyle = event.kind === "counter" ? "#9b5f39" : "#6d4ba3";
-    ctx.strokeStyle = event.kind === "counter" ? "#9b5f39" : "#6d4ba3";
-    ctx.setLineDash([5, 5]);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(x, y, event.reach * 696, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.save();
-    ctx.globalAlpha = active ? 1 : 0.28;
-    ctx.fillStyle = event.kind === "counter" ? "#9b5f39" : "#6d4ba3";
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(x, y, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#fff";
-    ctx.font = "700 11px system-ui";
-    ctx.textAlign = "center";
-    ctx.fillText(event.label, x, y + 4);
-    ctx.fillStyle = "#2a2723";
-    ctx.font = "600 12px system-ui";
-    const offset = event.position[0] < 0.5 ? 82 : -82;
-    const eventStatus = active ? "activo" : (state.t < event.start ? "pendiente" : "finalizado");
-    ctx.fillText(`${event.kind === "counter" ? "Contraevento" : "Evento"} ${event.label} · ${eventStatus} · ${weight.toFixed(2)}/10`, x + offset, y + 28);
-    ctx.restore();
-  }
-}
-
-function mixColor(first, second, ratio, alpha) {
-  const rgb = first.map((value, index) => Math.round(value + (second[index] - value) * ratio));
-  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
-}
-
-function roundRect(context, x, y, width, height, radius) {
-  context.beginPath();
-  context.roundRect(x, y, width, height, radius);
-}
-
-function chartFrame(context, canvas, title, yLabel) {
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#fff";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#2a2723";
-  context.font = "600 16px system-ui";
-  context.textAlign = "left";
-  context.fillText(title, 18, 25);
-  context.font = "12px system-ui";
-  context.fillStyle = "#746e65";
-  context.fillText(yLabel, 18, 45);
-  context.strokeStyle = "#ded9d0";
-  context.strokeRect(48, 58, canvas.width - 68, canvas.height - 88);
-}
-
-function drawSeries(context, values, canvas, color, min, max) {
-  if (values.length < 2) return;
-  const width = canvas.width - 68;
-  const height = canvas.height - 88;
-  context.strokeStyle = color;
-  context.lineWidth = 2;
-  context.beginPath();
-  values.forEach((value, index) => {
-    const x = 48 + (index / (values.length - 1)) * width;
-    const y = 58 + (1 - (value - min) / Math.max(max - min, 1e-12)) * height;
-    if (index === 0) context.moveTo(x, y);
-    else context.lineTo(x, y);
-  });
-  context.stroke();
-}
-
-function drawMetricHistory() {
-  const canvas = elements.metricsCanvas;
-  chartFrame(metricsCtx, canvas, "Medidas de salida", "No intervienen en la dinámica");
-  drawSeries(metricsCtx, state.history.map(row => row.jdj), canvas, "#6d4ba3", 0, 1);
-  drawSeries(metricsCtx, state.history.map(row => row.dispersion), canvas, "#1b7f79", 0, 0.5);
-  metricsCtx.font = "12px system-ui";
-  metricsCtx.fillStyle = "#6d4ba3";
-  metricsCtx.fillText("— JDJ euclídeo (0–1)", 56, canvas.height - 12);
-  metricsCtx.fillStyle = "#1b7f79";
-  metricsCtx.fillText("— dispersión (0–0.5)", 220, canvas.height - 12);
-}
-
-function drawFollowerHistory() {
-  const canvas = elements.followersCanvas;
-  chartFrame(followersCtx, canvas, "Coincidencias exactas con los polos", "Distancia ≤ 0.001; diagnóstico estricto");
-  const max = Math.max(1, ...state.history.flatMap(row => [row.followersA, row.followersB]));
-  drawSeries(followersCtx, state.history.map(row => row.followersA), canvas, "#176b87", 0, max);
-  drawSeries(followersCtx, state.history.map(row => row.followersB), canvas, "#c45134", 0, max);
-  followersCtx.font = "12px system-ui";
-  followersCtx.fillStyle = "#176b87";
-  followersCtx.fillText("— polo A", 56, canvas.height - 12);
-  followersCtx.fillStyle = "#c45134";
-  followersCtx.fillText("— polo B", 145, canvas.height - 12);
-}
-
-function updateStats() {
-  const latest = state.history[state.history.length - 1];
-  if (!latest) return;
-  const values = {
-    timeStat: state.t,
-    eventStat: state.events.filter(event => Model.activeEventWeight(
-      event, state.t, config().fatigueEnabled, config().fatigueDecay,
-    ) > 0).length,
-    clusterStat: latest.clusters,
-    dispersionStat: latest.dispersion.toFixed(4),
-    jdjStat: latest.jdj.toFixed(4),
-    auditStat: state.lastAudit ? "activo" : "inactivo",
-    followerAStat: latest.followersA,
-    followerBStat: latest.followersB,
-    rmsdAStat: latest.rmsdA.toFixed(3),
-    rmsdBStat: latest.rmsdB.toFixed(3),
-    movementStat: latest.meanMove.toFixed(5),
-    uniqueStat: latest.uniqueOpinions,
-  };
-  for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
-  // Se muestra el mismo numerador usado por el motor, no una explicación
-  // aproximada: JDJ = 2 * suma(P_ij) / N², sin recorte.
-  const pairSum = latest.jdjPairSum.toFixed(2);
-  const totalPairs = latest.jdjTotalPairs.toLocaleString("es-ES");
-  document.getElementById("jdjFormulaStat").textContent = `2×${pairSum}/${totalPairs}`;
-  document.getElementById("jdjLiveFormula").textContent = `2 × ${pairSum} ÷ ${totalPairs} = ${latest.jdj.toFixed(4)}`;
-}
-
-function randomEventSpecification() {
-  const maximum = Math.round(numberValue("maxSteps"));
-  if (state.t >= maximum) throw new Error("La simulación ya alcanzó su duración máxima");
-  const start = state.t + Math.floor(state.random() * (maximum - state.t));
-  const remaining = maximum - start;
+function poleDistanceMembership(a, c = state.model.cfg) {
+  const dA = hypot(a.x - c.poleA[0], a.y - c.poleA[1]);
+  const dB = hypot(a.x - c.poleB[0], a.y - c.poleB[1]);
+  const maxDistance = Math.sqrt(2);
   return {
-    position: [state.random(), state.random()],
-    start,
-    intensity: 0.5 + Math.floor(state.random() * 20) / 2,
-    reach: (0.5 + Math.floor(state.random() * 20) / 2) / 10,
-    duration: 1 + Math.floor(state.random() * remaining),
+    a: clamp(1 - dA / maxDistance, 0, 1),
+    b: clamp(1 - dB / maxDistance, 0, 1),
+    dA,
+    dB,
+  };
+}
+function jdjMembership(a, c = state.model.cfg) {
+  // Adaptacion del simulador: el JDJ original recibe Prob_0/Prob_1.
+  // Aqui se generan A/B como similitud euclidea normalizada a los polos.
+  const m = poleDistanceMembership(a, c);
+  return { a: m.a, b: m.b };
+}
+function roundJdjValue(x) {
+  return Math.round(clamp(x, 0, 1) * 100) / 100;
+}
+function jdjFromFrequencyTable(agents) {
+  // Nucleo JDJ de contenido equivalente al ultimo codigo Python aportado:
+  // redondeo A/B a 2 decimales, tabla de frecuencias, max(A_i B_j, B_i A_j),
+  // ponderacion por Freq_i * Freq_j para todos los pares y factor final 2.
+  const n = agents.length;
+  if (n < 2) return 0;
+  const buckets = new Map();
+  for (const agent of agents) {
+    const m = jdjMembership(agent);
+    const a = roundJdjValue(m.a);
+    const b = roundJdjValue(m.b);
+    const key = `${a.toFixed(2)}|${b.toFixed(2)}`;
+    const current = buckets.get(key);
+    if (current) {
+      current.count++;
+    } else {
+      buckets.set(key, { a, b, count: 1 });
+    }
+  }
+  const freq = Array.from(buckets.values()).map(row => ({
+    a: row.a,
+    b: row.b,
+    f: row.count / n,
+  }));
+  let total = 0;
+  for (let i = 0; i < freq.length; i++) {
+    for (let j = 0; j < freq.length; j++) {
+      const m = Math.max(freq[i].a * freq[j].b, freq[i].b * freq[j].a);
+      const w = freq[i].f * freq[j].f;
+      total += m * w;
+    }
+  }
+  return clamp(2 * total, 0, 1);
+}
+function jdjFrequencyRows(agents) {
+  const n = agents.length;
+  const buckets = new Map();
+  for (const agent of agents) {
+    const m = jdjMembership(agent);
+    const a = roundJdjValue(m.a);
+    const b = roundJdjValue(m.b);
+    const key = `${a.toFixed(2)}|${b.toFixed(2)}`;
+    const current = buckets.get(key);
+    if (current) current.count++;
+    else buckets.set(key, { a, b, count: 1 });
+  }
+  return Array.from(buckets.values())
+    .map(row => ({ a: row.a, b: row.b, f: row.count / n, count: row.count }))
+    .sort((r1, r2) => r2.count - r1.count);
+}
+function polarizationStats() {
+  const agents = state.model.agents;
+  if (agents.length < 2) return { p: 0, jdj: 0, social: 0, balance: 0, separation: 0, meanB: 0, dominant: null };
+  const memberships = agents.map(a => jdjMembership(a));
+  const meanB = memberships.reduce((s, m) => s + m.b, 0) / memberships.length;
+  const balance = 4 * meanB * (1 - meanB);
+  const positions = memberships.map(m => m.b);
+  const mean = positions.reduce((a, b) => a + b, 0) / positions.length;
+  const variance = positions.reduce((s, x) => s + (x - mean) ** 2, 0) / positions.length;
+  const separation = clamp(4 * variance, 0, 1);
+  const jdj = jdjFromFrequencyTable(agents);
+  const rows = jdjFrequencyRows(agents);
+  return { p: jdj, jdj, social: clamp(jdj * separation, 0, 1), balance, separation, meanB, dominant: rows[0] || null };
+}
+
+function detectClusters() {
+  const m = state.model, c = m.cfg, agents = m.agents;
+  for (const a of agents) a.clusterId = -1;
+  const spatial = makeGrid(agents, c.clusterDetectRadius);
+  const assigned = Array(agents.length).fill(false);
+  const clusters = [];
+  const r2 = c.clusterDetectRadius ** 2;
+  const density = agents.map((a, i) => {
+    let count = 0;
+    for (const j of nearby(spatial, a.x, a.y, c.clusterDetectRadius)) {
+      const dx = a.x - agents[j].x, dy = a.y - agents[j].y;
+      if (dx * dx + dy * dy <= r2) count++;
+    }
+    return { i, count };
+  }).sort((a, b) => b.count - a.count);
+
+  for (const seed of density) {
+    if (assigned[seed.i] || seed.count < c.clusterMinSize) continue;
+    let cx = agents[seed.i].x;
+    let cy = agents[seed.i].y;
+    let members = [];
+
+    for (let iter = 0; iter < 5; iter++) {
+      members = [];
+      for (const j of nearby(spatial, cx, cy, c.clusterDetectRadius)) {
+        if (assigned[j]) continue;
+        const dx = cx - agents[j].x, dy = cy - agents[j].y;
+        if (dx * dx + dy * dy <= r2) members.push(j);
+      }
+      if (members.length < c.clusterMinSize) break;
+      let nx = 0, ny = 0;
+      for (const idx of members) { nx += agents[idx].x; ny += agents[idx].y; }
+      nx /= members.length; ny /= members.length;
+      if (hypot(nx - cx, ny - cy) < 0.002) {
+        cx = nx; cy = ny;
+        break;
+      }
+      cx = nx; cy = ny;
+    }
+
+    members = [];
+    for (const j of nearby(spatial, cx, cy, c.clusterDetectRadius)) {
+      if (assigned[j]) continue;
+      const dx = cx - agents[j].x, dy = cy - agents[j].y;
+      if (dx * dx + dy * dy <= r2) members.push(j);
+    }
+
+    if (members.length >= c.clusterMinSize) {
+      let x = 0, y = 0;
+      for (const idx of members) { x += agents[idx].x; y += agents[idx].y; }
+      x /= members.length; y /= members.length;
+      const massShare = members.length / agents.length;
+      const mass = Math.pow(massShare, c.clusterMassExponent);
+      const id = clusters.length;
+      for (const idx of members) {
+        agents[idx].clusterId = id;
+        assigned[idx] = true;
+      }
+      clusters.push({ id, x, y, members: new Set(members), size: members.length, mass, massShare });
+    }
+  }
+  m.clusters = clusters;
+}
+
+function eventAmp(e, t) {
+  if (t < e.start || t >= e.start + e.duration) return 0;
+  const halfLife = 1 + 299 * (1 - e.decay);
+  return Math.pow(2, -(t - e.start) / halfLife);
+}
+function maybeEvents() {
+  const m = state.model, c = m.cfg;
+  m.events = m.events.filter(e => m.t < e.start + e.duration);
+  if (c.eventFrequency <= 0) return;
+  const activePrimary = m.events.some(e => !e.counter && eventAmp(e, m.t) > 0);
+  if (!activePrimary && m.t >= m.nextEventAt) {
+    const strength = clamp(c.eventStrength * (0.65 + 0.7 * state.rng()), 0, 1);
+    const e = { x: state.rng(), y: state.rng(), start: m.t, duration: c.eventDuration, strength, radius: c.eventRadius, decay: c.eventDecay, reactance: c.eventReactance, counter: false };
+    m.events.push(e);
+    if (state.rng() < c.counterEvent) {
+      m.events.push({ x: 1 - e.x, y: 1 - e.y, start: m.t + 3, duration: Math.round(0.65 * e.duration), strength: 0.55 * strength, radius: e.radius, decay: e.decay, reactance: e.reactance, counter: true });
+    }
+    const jitter = 0.65 + 0.7 * state.rng();
+    m.nextEventAt = m.t + Math.max(8, Math.round(c.eventMeanGap * jitter));
+  }
+}
+
+function poleForce(a, c) {
+  const dax = c.poleA[0] - a.x, day = c.poleA[1] - a.y;
+  const dbx = c.poleB[0] - a.x, dby = c.poleB[1] - a.y;
+  const aA = Math.exp(-(dax * dax + day * day) / (2 * c.poleRadius * c.poleRadius));
+  const aB = Math.exp(-(dbx * dbx + dby * dby) / (2 * c.poleRadius * c.poleRadius));
+  const poleSharpness = 1 + 6 * c.poleStrength;
+  const sA = Math.pow(aA, poleSharpness);
+  const sB = Math.pow(aB, poleSharpness);
+  const denomPoles = sA + sB + 1e-9;
+  const wA = sA / denomPoles;
+  const wB = sB / denomPoles;
+  const poleTargetX = wA * c.poleA[0] + wB * c.poleB[0];
+  const poleTargetY = wA * c.poleA[1] + wB * c.poleB[1];
+  const poleCommitment = Math.abs(wA - wB);
+  const poleMagnitude = c.poleStrength * (0.35 + 0.65 * poleCommitment);
+  return {
+    x: poleMagnitude * (poleTargetX - a.x),
+    y: poleMagnitude * (poleTargetY - a.y),
+    targetX: poleTargetX,
+    targetY: poleTargetY,
+    wA,
+    wB,
   };
 }
 
-function manualEventSpecification() {
-  const position = [numberValue("eventX"), numberValue("eventY")];
-  Model.oppositePosition(position); // valida el cuadrado [0,1]^2
-  const start = Math.round(numberValue("eventStart"));
-  const intensity = numberValue("eventIntensity");
-  const reach = levelToUnit("eventReach");
-  const duration = Math.round(numberValue("eventDuration"));
-  const maximum = Math.round(numberValue("maxSteps"));
-  if (![start, intensity, reach, duration].every(Number.isFinite)
-      || start < 0 || start >= maximum || duration < 1
-      || intensity < 0 || intensity > 10 || reach <= 0 || reach > 1) {
-    throw new Error("Revisa inicio, duración, intensidad y área del evento");
+function clusterForceEnabled(c) {
+  return c.clusterStrength > 0 || c.clusterSelfAttraction > 0 || c.clusterPoleCoupling > 0;
+}
+
+function clusterDetectionEnabled(c) {
+  return clusterForceEnabled(c) || c.massToleranceLoss > 0;
+}
+
+function step() {
+  const m = state.model, c = m.cfg, agents = m.agents;
+  maybeEvents();
+  if (clusterDetectionEnabled(c)) detectClusters();
+  else {
+    for (const a of agents) a.clusterId = -1;
+    m.clusters = [];
   }
-  return { position, start, intensity, reach, duration };
-}
+  const spatial = makeGrid(agents, Math.max(c.epsilonMean, c.clusterDetectRadius, 0.05));
+  const statsPol = polarizationStats();
+  m.highPolCount = statsPol.p >= c.auditThreshold && statsPol.balance >= c.auditBalanceThreshold ? m.highPolCount + 1 : 0;
+  const forceMeans = { local: 0, pole: 0, event: 0, cluster: 0, center: 0 };
 
-function addEventPair() {
-  let specification;
-  try {
-    specification = elements.eventMode.value === "random"
-      ? randomEventSpecification()
-      : manualEventSpecification();
-  } catch (error) {
-    setStatus(`Evento no válido: ${error.message}`);
-    return;
-  }
-  state.eventCounter += 1;
-  const counterPosition = Model.oppositePosition(specification.position);
-  state.events.push(
-    { label: `E${state.eventCounter}`, kind: "event", ...specification },
-    { label: `C${state.eventCounter}`, kind: "counter", ...specification, position: counterPosition },
-  );
-  updateEventLog();
-  const mode = elements.eventMode.value === "random" ? "aleatorio reproducible" : "manual";
-  setStatus(`Par ${state.eventCounter} añadido en modo ${mode}; el contraevento está exactamente enfrente.`);
-  draw();
-}
+  for (let i = 0; i < agents.length; i++) {
+    const a = agents[i];
+    a.previousX = a.x; a.previousY = a.y;
+    const radicality = hypot(a.x - 0.5, a.y - 0.5) / Math.sqrt(0.5);
+    const ownCluster = m.clusters.find(cl => cl.id === a.clusterId);
+    const massInertia = ownCluster ? ownCluster.mass : 0;
+    a.eps = clamp(a.eps0 * (1 - c.radicalToleranceLoss * radicality) * (1 - c.massToleranceLoss * massInertia), 0.01, 1);
 
-function updateEventLog() {
-  if (state.events.length === 0) {
-    elements.eventLog.textContent = "Todavía no se ha añadido ningún evento.";
-    return;
-  }
-  const c = config();
-  elements.eventLog.innerHTML = state.events.map(event => {
-    const weight = Model.activeEventWeight(event, state.t, c.fatigueEnabled, c.fatigueDecay);
-    const status = weight > 0 ? `activo · intensidad actual ${weight.toFixed(2)}/10` : (state.t < event.start ? "pendiente" : "finalizado");
-    const point = `(${event.position[0].toFixed(2)}, ${event.position[1].toFixed(2)})`;
-    return `<div><strong>${event.label}</strong> · posición ${point} · t=${event.start}–${event.start + event.duration - 1} · I=${event.intensity.toFixed(1)}/10 · área=${(event.reach * 10).toFixed(1)}/10 · ${status}</div>`;
-  }).join("");
-}
-
-function updatePopulationVisibility() {
-  const useCsv = elements.populationSource.value === "csv";
-  document.getElementById("syntheticPopulationFields").hidden = useCsv;
-  document.getElementById("csvPopulationFields").hidden = !useCsv;
-}
-
-function updateEventModeVisibility() {
-  const manual = elements.eventMode.value === "manual";
-  document.getElementById("manualEventFields").hidden = !manual;
-  document.getElementById("randomEventFields").hidden = manual;
-}
-
-async function loadMembershipCsv() {
-  const file = elements.membershipCsv.files[0];
-  if (!file) return;
-  try {
-    const rows = Model.parseMembershipCsv(await file.text());
-    if (rows.length <= numberValue("networkDegree")) {
-      throw new Error("el archivo necesita más filas que el número de contactos de la red");
+    let localX = 0, localY = 0, count = 0;
+    for (const j of nearby(spatial, a.x, a.y, a.eps)) {
+      if (j === i) continue;
+      const b = agents[j];
+      const d = hypot(a.x - b.x, a.y - b.y);
+      if (d <= a.eps) { localX += b.x; localY += b.y; count++; }
     }
-    state.importedMemberships = rows;
-    state.importedFileName = file.name;
-    document.getElementById("csvStatus").textContent = `${rows.length} filas válidas. Se usará (x,y)=(A,B) sin alterar los valores.`;
-    resetModel();
-  } catch (error) {
-    state.importedMemberships = null;
-    state.importedFileName = "";
-    document.getElementById("csvStatus").textContent = `No se pudo cargar: ${error.message}`;
-    setStatus(`CSV no válido: ${error.message}`);
+    if (count) { localX = localX / count - a.x; localY = localY / count - a.y; }
+
+    const pf = poleForce(a, c);
+    let poleX = pf.x;
+    let poleY = pf.y;
+    if (ownCluster && c.clusterPoleCoupling > 0) {
+      const cpf = poleForce({ x: ownCluster.x, y: ownCluster.y }, c);
+      const massGain = c.clusterPoleCoupling * (0.35 + 0.65 * ownCluster.mass);
+      poleX += massGain * cpf.x;
+      poleY += massGain * cpf.y;
+    }
+
+    let eventX = 0, eventY = 0;
+    for (const e of m.events) {
+      const amp = eventAmp(e, m.t);
+      if (!amp) continue;
+      const dx = e.x - a.x, dy = e.y - a.y, d = Math.max(hypot(dx, dy), 0.02);
+      const k = Math.exp(-(d * d) / (2 * e.radius * e.radius));
+      const attract = amp * e.strength * k;
+      eventX += attract * dx;
+      eventY += attract * dy;
+      const eventSide = hypot(e.x - c.poleB[0], e.y - c.poleB[1]) < hypot(e.x - c.poleA[0], e.y - c.poleA[1]) ? 1 : 0;
+      const agentSide = sideScore(a) >= 0.5 ? 1 : 0;
+      if (eventSide !== agentSide) {
+        eventX -= amp * e.reactance * k * dx / d;
+        eventY -= amp * e.reactance * k * dy / d;
+      }
+    }
+
+    let clusterX = 0, clusterY = 0;
+    for (const cl of m.clusters) {
+      const dx = cl.x - a.x, dy = cl.y - a.y;
+      const d = Math.max(hypot(dx, dy), 0.01);
+      const d2 = d * d;
+      const reach = Math.exp(-d2 / (2 * c.clusterGravityRadius * c.clusterGravityRadius));
+      const softening = 0.02 + 0.18 * c.clusterGravityRadius;
+      const gravity = c.clusterStrength * cl.mass * reach / (d2 + softening * softening);
+      const selfFactor = cl.members.has(i) ? c.clusterSelfAttraction : 1;
+      clusterX += selfFactor * gravity * dx;
+      clusterY += selfFactor * gravity * dy;
+    }
+
+    let centerX = 0, centerY = 0;
+    if (m.highPolCount >= c.auditPatience) {
+      centerX = c.centerRebound * (0.5 - a.x);
+      centerY = c.centerRebound * (0.5 - a.y);
+    }
+
+    const anchorX = a.lambda * (a.anchorX - a.x);
+    const anchorY = a.lambda * (a.anchorY - a.y);
+    const totalX = localX + poleX + eventX + clusterX + centerX + anchorX;
+    const totalY = localY + poleY + eventY + clusterY + centerY + anchorY;
+    const forceNorm = hypot(totalX, totalY);
+    let moveX = 0, moveY = 0;
+    if (forceNorm > a.alpha) {
+      moveX = c.dt * a.mu * totalX;
+      moveY = c.dt * a.mu * totalY;
+    }
+    if (c.noise > 0) {
+      const noiseScale = 0.012 * c.noise;
+      moveX += normal(0, noiseScale);
+      moveY += normal(0, noiseScale);
+    }
+    const stepLen = hypot(moveX, moveY);
+    if (stepLen > c.maxMove) {
+      moveX *= c.maxMove / stepLen;
+      moveY *= c.maxMove / stepLen;
+    }
+    a.x = clamp(a.x + moveX, 0, 1);
+    a.y = clamp(a.y + moveY, 0, 1);
+
+    forceMeans.local += hypot(localX, localY);
+    forceMeans.pole += hypot(poleX, poleY);
+    forceMeans.event += hypot(eventX, eventY);
+    forceMeans.cluster += hypot(clusterX, clusterY);
+    forceMeans.center += hypot(centerX, centerY);
   }
+  for (const k of Object.keys(forceMeans)) forceMeans[k] /= agents.length;
+  m.t++;
+  pushMetrics(forceMeans);
 }
 
-function exportCsv() {
-  const c = config();
-  const rows = ["agent,source_id,model,time,A,B,initial_A,initial_B,distance_to_A,distance_to_B,projection_A_B,immobile,auditor_active,active_events"];
-  state.agents.forEach((agent, index) => {
-    const sourceId = String(agent.sourceId ?? "").replaceAll('"', '""');
-    const distanceA = Model.distance([agent.x, agent.y], c.signalA);
-    const distanceB = Model.distance([agent.x, agent.y], c.signalB);
-    rows.push(`${index + 1},"${sourceId}",${c.phase},${state.t},${agent.x},${agent.y},${agent.anchorX},${agent.anchorY},${distanceA},${distanceB},${Model.axisProjection(agent, c)},${Boolean(agent.immobile)},${state.lastAudit},${state.activeEvents}`);
+function pushMetrics(forceMeans) {
+  const m = state.model;
+  const ps = polarizationStats();
+  const eventIntensity = Math.min(1, m.events.reduce((s, e) => s + eventAmp(e, m.t) * e.strength, 0));
+  m.historyPol.push(ps.p);
+  m.historyEvent.push(eventIntensity);
+  m.historyForces.push(forceMeans);
+  if (m.historyPol.length > 900) { m.historyPol.shift(); m.historyEvent.shift(); m.historyForces.shift(); }
+}
+
+function sx(x) { return 70 + x * 760; }
+function sy(y) { return 830 - y * 760; }
+function drawCanvasLabel(text, x, y, options = {}) {
+  const font = options.font || "18px Arial";
+  const padX = options.padX ?? 6;
+  const padY = options.padY ?? 4;
+  const margin = options.margin ?? 8;
+  ctx.save();
+  ctx.font = font;
+  const width = ctx.measureText(text).width;
+  const height = options.height || 22;
+  const bx = clamp(x, margin, 900 - width - padX * 2 - margin);
+  const by = clamp(y, margin + height, 900 - padY * 2 - margin);
+  ctx.fillStyle = options.background || "rgba(255,255,255,0.78)";
+  ctx.strokeStyle = options.border || "rgba(0,0,0,0.18)";
+  ctx.lineWidth = 1;
+  roundRect(ctx, bx, by - height, width + padX * 2, height + padY, 4);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = options.color || "#111";
+  ctx.fillText(text, bx + padX, by - 5);
+  ctx.restore();
+}
+function draw() {
+  if (!state.model) return;
+  drawMain();
+  drawLineChart(polCtx, state.model.historyPol, "X = t", "Y = JDJ", "#1f77b4", { autoZoom: true });
+  drawLineChart(eventCtx, state.model.historyEvent, "X = t", "Y = Intensidad eventos", "#2ca02c");
+  drawForces();
+}
+function drawMain() {
+  const m = state.model, c = m.cfg;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 900, 900);
+  ctx.strokeStyle = "#e8e8e8"; ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const p = 70 + i * 76;
+    ctx.beginPath(); ctx.moveTo(p, 70); ctx.lineTo(p, 830); ctx.moveTo(70, p); ctx.lineTo(830, p); ctx.stroke();
+  }
+  ctx.strokeStyle = "#222"; ctx.strokeRect(70, 70, 760, 760);
+  ctx.fillStyle = "#111"; ctx.font = "28px Arial"; ctx.fillText("Dimensión actitudinal 1 (X)", 285, 884);
+  ctx.save(); ctx.translate(28, 570); ctx.rotate(-Math.PI / 2); ctx.fillText("Dimensión actitudinal 2 (Y)", 0, 0); ctx.restore();
+  drawJdjAxis();
+  drawPole(c.poleA, "Polo A permanente", "#1f77b4");
+  drawPole(c.poleB, "Polo B permanente", "#ff7f0e");
+  for (const e of m.events) if (eventAmp(e, m.t) > 0) drawEvent(e);
+  drawClusterFields();
+  if (c.showPoleArrows >= 0.5) drawPoleVectors();
+  if (c.showConfidence >= 0.5) drawConfidence(m.agents[m.highlighted], m.highlighted);
+  if (c.showMovementTrails >= 0.5) {
+    ctx.strokeStyle = "rgba(70,70,70,0.30)";
+    for (const a of m.agents) {
+      const dx = (a.x - a.previousX) * 18, dy = (a.y - a.previousY) * 18;
+      if (Math.abs(dx) + Math.abs(dy) < 0.001) continue;
+      ctx.beginPath(); ctx.moveTo(sx(a.previousX), sy(a.previousY)); ctx.lineTo(sx(a.previousX + dx), sy(a.previousY + dy)); ctx.stroke();
+    }
+  }
+  ctx.fillStyle = "rgba(40,40,40,0.62)"; ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = 1.6;
+  for (const a of m.agents) { ctx.beginPath(); ctx.arc(sx(a.x), sy(a.y), 4.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  if (c.showConfidence >= 0.5) drawSelectedAgent(m.agents[m.highlighted]);
+  const ps = polarizationStats();
+  ctx.fillStyle = "rgba(31,119,180,0.82)"; ctx.strokeStyle = "#111"; ctx.lineWidth = 2; roundRect(ctx, 84, 685, 470, 135, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#0b0b0b"; ctx.font = "23px Arial";
+  const activeEvents = m.events.filter(e => eventAmp(e, m.t) > 0).length;
+  ctx.fillText(`t = ${String(m.t).padStart(3, "0")}`, 98, 713);
+  ctx.fillText(`JDJ = ${ps.jdj.toFixed(3)}`, 98, 743);
+  ctx.fillText(`separación = ${ps.separation.toFixed(3)}`, 98, 773);
+  ctx.fillText(`eventos activos = ${activeEvents}; próximo ≈ t ${m.nextEventAt}`, 98, 803);
+  stats.t.textContent = String(m.t);
+  stats.pol.textContent = ps.jdj.toFixed(3);
+  stats.jdj.textContent = ps.separation.toFixed(3);
+  stats.balance.textContent = ps.balance.toFixed(3);
+  stats.audit.textContent = m.highPolCount >= c.auditPatience ? "centro activo" : "inactivo";
+  stats.events.textContent = String(activeEvents);
+  stats.clusters.textContent = String(m.clusters.length);
+  const selected = m.agents[m.highlighted];
+  stats.epsilon.textContent = c.showConfidence >= 0.5 && selected ? `${m.highlighted + 1}: ${selected.eps.toFixed(3)}` : "off";
+}
+function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function drawJdjAxis() {
+  const c = state.model.cfg;
+  ctx.save();
+  ctx.strokeStyle = "rgba(20,20,20,0.42)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([10, 8]);
+  ctx.beginPath();
+  ctx.moveTo(sx(c.poleA[0]), sy(c.poleA[1]));
+  ctx.lineTo(sx(c.poleB[0]), sy(c.poleB[1]));
+  ctx.stroke();
+  drawCanvasLabel("referencia A-B", sx(0.50) - 50, sy(0.50) - 12, { font: "17px Arial", background: "rgba(255,255,255,0.62)", border: "rgba(0,0,0,0.08)" });
+  ctx.restore();
+}
+function drawPole(p, label, color) {
+  const r = state.model.cfg.poleRadius * 760;
+  ctx.save();
+  ctx.globalAlpha = 0.11;
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), r, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.28;
+  ctx.setLineDash([8, 7]);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = color;
+  ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), r, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+  const px = sx(p[0]);
+  const py = sy(p[1]);
+  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px, py, 23, 0, Math.PI * 2); ctx.fill();
+  const labelX = p[0] < 0.5 ? px + 14 : px - 205;
+  const labelY = p[1] > 0.5 ? py + 32 : py - 36;
+  drawCanvasLabel(label, labelX, labelY, { font: "20px Arial", background: "rgba(255,255,255,0.84)", border: color, height: 25 });
+}
+function star(c, x, y, r1, r2, n) { c.beginPath(); for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, r = i % 2 === 0 ? r1 : r2, px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; if (i === 0) c.moveTo(px, py); else c.lineTo(px, py); } c.closePath(); }
+function drawEvent(e) {
+  const amp = eventAmp(e, state.model.t), x = sx(e.x), y = sy(e.y), color = e.counter ? "#9467bd" : "#2ca02c";
+  ctx.save();
+  ctx.globalAlpha = 0.10 + 0.18 * amp;
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x, y, e.radius * 760, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.40;
+  ctx.setLineDash([7, 6]);
+  ctx.strokeStyle = color;
+  ctx.beginPath(); ctx.arc(x, y, e.radius * 760, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = color; star(ctx, x, y, 16 + 24 * amp, 7 + 12 * amp, 5); ctx.fill();
+  ctx.fillStyle = "#111"; ctx.font = "19px Arial"; ctx.fillText(e.counter ? "Contraevento" : "Evento", x - 45, y - 27);
+}
+function drawClusterFields() {
+  const m = state.model, c = m.cfg;
+  if (!clusterForceEnabled(c)) return;
+  ctx.save();
+  for (const cl of m.clusters) {
+    const visibleStrength = Math.max(c.clusterStrength, c.clusterSelfAttraction, c.clusterPoleCoupling);
+    const alpha = clamp(0.04 + 0.55 * cl.massShare * visibleStrength, 0.03, 0.24);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#7b51a8";
+    ctx.beginPath(); ctx.arc(sx(cl.x), sy(cl.y), c.clusterGravityRadius * 760, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.72;
+    ctx.fillStyle = "#7b51a8";
+    const coreRadius = 7 + 52 * Math.sqrt(cl.massShare);
+    ctx.beginPath(); ctx.arc(sx(cl.x), sy(cl.y), coreRadius, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.90;
+    ctx.fillStyle = "#111";
+    ctx.font = "14px Arial";
+    ctx.fillText(`masa n=${cl.size}`, sx(cl.x) + coreRadius + 4, sy(cl.y) + 4);
+  }
+  ctx.restore();
+}
+function drawPoleVectors() {
+  const m = state.model, c = m.cfg;
+  if (c.poleStrength <= 0.05) return;
+  const stride = Math.max(1, Math.ceil(m.agents.length / 60));
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,127,14,0.50)";
+  ctx.fillStyle = "rgba(255,127,14,0.62)";
+  ctx.lineWidth = 1.8;
+  for (let i = 0; i < m.agents.length; i += stride) {
+    const a = m.agents[i];
+    const pf = poleForce(a, c);
+    const x1 = sx(a.x), y1 = sy(a.y);
+    const x2 = x1 + pf.x * 120;
+    const y2 = y1 - pf.y * 120;
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    if (len < 2) continue;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const ang = Math.atan2(y2 - y1, x2 - x1);
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 7 * Math.cos(ang - 0.45), y2 - 7 * Math.sin(ang - 0.45));
+    ctx.lineTo(x2 - 7 * Math.cos(ang + 0.45), y2 - 7 * Math.sin(ang + 0.45));
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function drawSelectedAgent(a) {
+  if (!a) return;
+  ctx.save();
+  ctx.strokeStyle = "#f2c94c";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(sx(a.x), sy(a.y), 9, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawConfidence(a, index) {
+  if (!a) return;
+  const r = a.eps * 760;
+  ctx.save();
+  ctx.setLineDash([8, 7]);
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(sx(a.x), sy(a.y), r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = "#111";
+  ctx.font = "18px Arial";
+  ctx.fillText(`ε local agente ${index + 1}: radio de escucha, no fuerza`, sx(a.x) - 108, sy(a.y) + r + 24);
+}
+function selectAgentFromCanvas(event) {
+  if (!state.model) return;
+  const rect = mainCanvas.getBoundingClientRect();
+  const px = (event.clientX - rect.left) * (mainCanvas.width / rect.width);
+  const py = (event.clientY - rect.top) * (mainCanvas.height / rect.height);
+  const x = (px - 70) / 760;
+  const y = (830 - py) / 760;
+  if (x < 0 || x > 1 || y < 0 || y > 1) return;
+  let best = -1;
+  let bestD2 = Infinity;
+  for (let i = 0; i < state.model.agents.length; i++) {
+    const a = state.model.agents[i];
+    const dx = a.x - x, dy = a.y - y;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestD2) { bestD2 = d2; best = i; }
+  }
+  if (best < 0) return;
+  state.model.highlighted = best;
+  const selected = state.controls.get("selectedAgent");
+  const show = state.controls.get("showConfidence");
+  if (selected) {
+    selected.input.value = String(best + 1);
+    selected.input.closest(".control-row").querySelector("output").textContent = String(best + 1);
+  }
+  if (show && Number(show.input.value) < 0.5) {
+    show.input.value = "1";
+    show.input.closest(".control-row").querySelector("output").textContent = "1.0";
+  }
+  updateConfig();
+}
+function drawLineChart(c, values, xLabel, yLabel, color, options = {}) {
+  c.fillStyle = "#fff"; c.fillRect(0, 0, c.canvas.width, c.canvas.height);
+  const clean = values.filter(v => Number.isFinite(v));
+  const rawMin = clean.length ? Math.min(...clean) : 0;
+  const rawMax = clean.length ? Math.max(...clean) : 1;
+  const mean = clean.length ? clean.reduce((s, v) => s + v, 0) / clean.length : 0;
+  const sd = clean.length ? Math.sqrt(clean.reduce((s, v) => s + (v - mean) ** 2, 0) / clean.length) : 0;
+  let yMin = 0, yMax = 1, zoomed = false;
+  if (options.autoZoom && clean.length > 2 && rawMax - rawMin < 0.20) {
+    const pad = Math.max(0.015, (rawMax - rawMin) * 0.35, sd * 1.25);
+    yMin = clamp(rawMin - pad, 0, 1);
+    yMax = clamp(rawMax + pad, 0, 1);
+    if (yMax - yMin < 0.06) {
+      const mid = (yMin + yMax) / 2;
+      yMin = clamp(mid - 0.03, 0, 1);
+      yMax = clamp(mid + 0.03, 0, 1);
+    }
+    zoomed = true;
+  }
+  const yRange = Math.max(1e-9, yMax - yMin);
+  c.strokeStyle = "#eee"; for (let i = 0; i <= 10; i++) {
+    const y = 260 - i * 22.5;
+    const label = yMin + yRange * i / 10;
+    c.beginPath(); c.moveTo(55, y); c.lineTo(590, y); c.stroke();
+    c.fillStyle = "#555"; c.font = "11px Arial"; c.fillText(label.toFixed(2), 18, y + 4);
+  }
+  c.strokeStyle = "#eee"; c.fillStyle = "#555"; c.font = "11px Arial";
+  const tMax = state.model ? state.model.t : values.length;
+  for (let i = 0; i <= 5; i++) {
+    const x = 55 + i * 107;
+    c.beginPath(); c.moveTo(x, 35); c.lineTo(x, 260); c.stroke();
+    c.fillText(String(Math.round(tMax * i / 5)), x - 8, 276);
+  }
+  c.strokeStyle = "#333"; c.strokeRect(55, 35, 535, 225);
+  c.fillStyle = "#111"; c.font = "16px Arial"; c.fillText(xLabel, 285, 292); c.save(); c.translate(18, 220); c.rotate(-Math.PI / 2); c.fillText(yLabel, 0, 0); c.restore();
+  if (options.autoZoom && clean.length) {
+    c.fillStyle = "#333"; c.font = "12px Arial";
+    c.fillText(`min=${rawMin.toFixed(3)} max=${rawMax.toFixed(3)} σ=${sd.toFixed(3)}${zoomed ? " · zoom visual" : ""}`, 300, 24);
+  }
+  c.strokeStyle = color; c.lineWidth = 3; c.beginPath();
+  values.forEach((v, i) => {
+    const x = 55 + (i / Math.max(1, values.length - 1)) * 535;
+    const y = 260 - ((clamp(v, yMin, yMax) - yMin) / yRange) * 225;
+    if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
   });
-  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `abmx_${c.phase}_seed-${Math.round(numberValue("seed"))}_t-${state.t}.csv`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  c.stroke();
 }
-
-for (const input of document.querySelectorAll("input[type=range]")) {
-  input.addEventListener("input", updateControlOutputs);
-}
-for (const input of document.querySelectorAll("[data-reset-model]")) {
-  input.addEventListener("change", resetModel);
-}
-for (const input of document.querySelectorAll("[data-redraw]")) {
-  input.addEventListener("change", draw);
-}
-
-elements.start.addEventListener("click", start);
-elements.pause.addEventListener("click", pause);
-elements.step.addEventListener("click", () => { state.running = false; executeStep(); setStatus(`Paso manual completado: t = ${state.t}.`); draw(); });
-elements.reset.addEventListener("click", resetModel);
-elements.export.addEventListener("click", exportCsv);
-elements.addEventPair.addEventListener("click", addEventPair);
-elements.populationSource.addEventListener("change", () => { updatePopulationVisibility(); resetModel(); });
-elements.membershipCsv.addEventListener("change", loadMembershipCsv);
-elements.eventMode.addEventListener("change", updateEventModeVisibility);
-elements.mainCanvas.addEventListener("click", event => {
-  const rect = elements.mainCanvas.getBoundingClientRect();
-  const clickX = (event.clientX - rect.left) * elements.mainCanvas.width / rect.width;
-  const clickY = (event.clientY - rect.top) * elements.mainCanvas.height / rect.height;
-  let best = 0;
-  let bestDistance = Infinity;
-  state.agents.forEach((agent, index) => {
-    const d = Math.hypot(sx(agent.x) - clickX, sy(agent.y) - clickY);
-    if (d < bestDistance) { bestDistance = d; best = index; }
+function drawForces() {
+  const vals = state.model.historyForces;
+  forceCtx.fillStyle = "#fff"; forceCtx.fillRect(0, 0, forceCanvas.width, forceCanvas.height);
+  forceCtx.strokeStyle = "#333"; forceCtx.strokeRect(55, 30, 535, 200);
+  const keys = [["pole", "#ff7f0e"], ["event", "#2ca02c"], ["cluster", "#9467bd"], ["center", "#555"]];
+  const max = Math.max(0.001, ...vals.flatMap(v => keys.map(([k]) => v[k] || 0)));
+  forceCtx.strokeStyle = "#eee"; forceCtx.fillStyle = "#555"; forceCtx.font = "11px Arial";
+  for (let i = 0; i <= 5; i++) {
+    const y = 230 - i * 40;
+    forceCtx.beginPath(); forceCtx.moveTo(55, y); forceCtx.lineTo(590, y); forceCtx.stroke();
+    forceCtx.fillText((max * i / 5).toFixed(2), 22, y + 4);
+  }
+  const tMax = state.model ? state.model.t : vals.length;
+  for (let i = 0; i <= 5; i++) {
+    const x = 55 + i * 107;
+    forceCtx.beginPath(); forceCtx.moveTo(x, 30); forceCtx.lineTo(x, 230); forceCtx.stroke();
+    forceCtx.fillText(String(Math.round(tMax * i / 5)), x - 8, 244);
+  }
+  keys.forEach(([k, color], idx) => {
+    forceCtx.strokeStyle = color; forceCtx.lineWidth = 2; forceCtx.beginPath();
+    vals.forEach((v, i) => { const x = 55 + (i / Math.max(1, vals.length - 1)) * 535, y = 230 - ((v[k] || 0) / max) * 200; if (i === 0) forceCtx.moveTo(x, y); else forceCtx.lineTo(x, y); });
+    forceCtx.stroke(); forceCtx.fillStyle = color; forceCtx.font = "13px Arial"; forceCtx.fillText(k, 70 + idx * 85, 20);
   });
-  state.selected = best;
-  draw();
-});
+  forceCtx.fillStyle = "#111"; forceCtx.font = "16px Arial"; forceCtx.fillText("X = t", 285, 252); forceCtx.save(); forceCtx.translate(18, 195); forceCtx.rotate(-Math.PI / 2); forceCtx.fillText("Y = fuerza media", 0, 0); forceCtx.restore();
+}
+function tick(ts) {
+  if (!state.lastTimestamp) state.lastTimestamp = ts;
+  const dt = ts - state.lastTimestamp; state.lastTimestamp = ts;
+  const m = state.model;
+  if (state.running && m && m.t < m.cfg.steps) {
+    state.accumulator += dt;
+    const frameMs = 1000 / Math.max(1, m.cfg.speed);
+    while (state.accumulator >= frameMs) {
+      for (let i = 0; i < m.cfg.stepsPerFrame && m.t < m.cfg.steps; i++) step();
+      state.accumulator -= frameMs;
+    }
+  }
+  draw(); requestAnimationFrame(tick);
+}
+document.getElementById("startBtn").addEventListener("click", () => { updateConfig(); state.running = true; });
+document.getElementById("pauseBtn").addEventListener("click", () => { state.running = false; });
+document.getElementById("resetBtn").addEventListener("click", () => { state.running = false; state.accumulator = 0; resetModel(); });
+mainCanvas.style.cursor = "crosshair";
+mainCanvas.addEventListener("click", selectAgentFromCanvas);
+mainCanvas.addEventListener("pointerdown", selectAgentFromCanvas);
 
-updateControlOutputs();
-updatePopulationVisibility();
-updateEventModeVisibility();
+buildControls();
 resetModel();
-requestAnimationFrame(animate);
+requestAnimationFrame(tick);

@@ -1,120 +1,150 @@
-# ABM X — laboratorio auditable de opinión
+# ABM X
 
+ABM X es una simulación sencilla y visual para estudiar cómo pueden cambiar las opiniones de muchas personas cuando interactúan entre sí.
 
-## JDJ vigente
+## La idea, explicada fácil
 
-Usa distancias a polos fijos (1,0) y (0,1): mu=1−d/sqrt(2).
-JDJ=2/n² por la suma del máximo de productos cruzados, incluidos i=j.
-No usa proyección ni normalización de las pertenencias.
-Implementaciones: `jdj_euclidean` (Python) y `jdjEuclidean` (web).
-Las implementaciones históricas de JDJ están obsoletas.
+Imagina un cuadrado. Cada punto dentro del cuadrado representa a una persona. La posición del punto representa su opinión sobre dos temas diferentes:
 
-Simulador bidimensional para comparar mecanismos de dinámica de opinión. La
-vista predeterminada recupera la riqueza del prototipo inicial —grupos,
-señales, reactancia, ruido y auditor— pero sustituye metáforas físicas por
-ecuaciones sociales identificables y adaptaciones declaradas.
+- el eje X representa una dimensión de la opinión;
+- el eje Y representa otra dimensión de la opinión.
 
-## Abrir la web
+Los puntos empiezan repartidos por el cuadrado y, con el paso del tiempo, pueden moverse. Se mueven porque escuchan a personas con opiniones parecidas, reciben la influencia de polos políticos, reaccionan ante acontecimientos y forman grupos de opinión.
 
-Desde esta carpeta `project`:
+El programa repite este proceso muchas veces. Cada repetición es un instante de tiempo, llamado `t`. Al observar todos esos instantes podemos estudiar si la sociedad llega a un consenso, se divide en grupos o se vuelve más polarizada.
+
+## ¿Qué significa ABM?
+
+ABM significa *Agent-Based Model*, o modelo basado en agentes.
+
+En este proyecto, un agente es una persona simulada. El programa no intenta adivinar la opinión exacta de una persona real. Construye una población artificial para estudiar una pregunta:
+
+> ¿Cómo pueden unas reglas sencillas de interacción producir un resultado colectivo, como la polarización?
+
+Esto convierte el programa en un pequeño laboratorio. Podemos cambiar las reglas y observar qué ocurre.
+
+## ¿Qué es la polarización?
+
+La polarización aparece cuando la población se separa en posiciones alejadas, normalmente alrededor de dos polos. Una población en el centro no es necesariamente una población polarizada.
+
+ABM X calcula un índice JDJ para resumir la posición de la población respecto a dos polos. Para cada agente se calcula su distancia euclídea a los dos polos y esa distancia se transforma en un grado de pertenencia a cada uno. Después se aplica la fórmula JDJ sobre esos grados de pertenencia.
+
+El índice es una medida de salida: describe lo que está ocurriendo en la población. No debe interpretarse automáticamente como una verdad sobre la sociedad real.
+
+## Qué puede hacer la simulación
+
+- Simular agentes con opiniones en dos dimensiones.
+- Hacer que los agentes escuchen a vecinos dentro de un radio de confianza.
+- Dar a cada agente una tolerancia, susceptibilidad, anclaje y umbral de inmovilidad.
+- Mantener las opiniones dentro del cuadrado `[0, 1] x [0, 1]`.
+- Añadir dos polos permanentes de influencia.
+- Crear acontecimientos temporales con fuerza, alcance, duración y fatiga.
+- Crear contraeventos o reacciones opuestas.
+- Detectar grupos compactos y representarlos como masas sociales.
+- Comparar modelos clásicos con el modelo extendido.
+- Ejecutar pruebas automáticas y simulaciones reproducibles mediante una semilla.
+- Ver la dinámica en una interfaz web interactiva.
+- Exportar resultados a CSV y Parquet.
+
+## Una aclaración importante
+
+El proyecto combina modelos conocidos de la literatura con extensiones de investigación. La confianza acotada, el anclaje y la susceptibilidad tienen antecedentes en modelos de dinámica de opiniones. La gravedad de los clusters, la fatiga de los eventos, los contraeventos y el rebote hacia el centro son mecanismos experimentales que necesitan calibración y validación con datos reales.
+
+Por tanto, este programa es un laboratorio computacional reproducible. No es una prueba de que una sociedad real se comporte exactamente como la simulación.
+
+## Cómo instalarlo
+
+Se necesita Python 3.10 o una versión posterior.
+
+```bash
+cd ABM-X
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+En Windows, la activación del entorno virtual es:
+
+```powershell
+.venv\\Scripts\\activate
+```
+
+## Cómo comprobar que funciona
+
+Ejecuta las pruebas:
+
+```bash
+python -m pytest
+```
+
+Las pruebas comprueban, entre otras cosas, las fronteras del espacio actitudinal, la reproducibilidad, los modelos base y los ejemplos del índice JDJ.
+
+## Cómo ejecutar modelos
+
+Comparación de modelos base:
+
+```bash
+python experiments/baseline_comparison.py --config data/default_config.yaml
+```
+
+Modelo extendido:
+
+```bash
+python experiments/run_final_model.py --config data/final_model.yaml
+```
+
+Análisis de sensibilidad:
+
+```bash
+python experiments/sensitivity_analysis.py --config data/final_model.yaml
+```
+
+Los resultados se guardan en `outputs/`. Esa carpeta contiene archivos generados y no se sube al repositorio para evitar mezclar resultados de una ejecución con el código del modelo.
+
+## Cómo abrir la versión visual
+
+Desde la carpeta `project`, inicia un servidor local:
 
 ```bash
 python -m http.server 8765 --directory web
 ```
 
-Después abre [http://localhost:8765/](http://localhost:8765/). Para cerrar el
-servidor, vuelve al Terminal y pulsa `Control + C`.
+Después abre en el navegador:
 
-Si ejecutas el comando desde otra carpeta, usa la ruta absoluta:
-
-```bash
-python -m http.server 8765 --directory "/Users/zhenboch/PhD Tesis/MBA:ABM:Modelo basado en agentes/project/web"
+```text
+http://localhost:8765/
 ```
 
-La web tiene tres páginas:
+La página permite modificar las variables antes de lanzar la simulación. También incluye un enlace a la leyenda matemática, donde se explica qué significa cada variable y qué fórmula utiliza.
 
-1. `index.html`: simulación y controles.
-2. `formula.html`: todas las ecuaciones en notación legible, con símbolos y ejemplos numéricos.
-3. `guide.html`: explicación sencilla, guía de cada variable, preparación para datos de COVID y auditoría de los 25 PDF locales.
+## Organización del proyecto
 
-## Modelo integrado
-
-Para un agente móvil que no realiza un salto de ruido:
-
-\[
-x_i(t+1)=\operatorname{clip}_{[0,1]^2}\left[
-x_i(t)+\frac{\eta(G_i(t)+P_i(t)+E_i(t))+R_i(t)}{k_i(t)}
-\right].
-\]
-
-- `G_i`: influencia firmada de los contactos. La suma hace que un grupo con
-  más miembros tenga más peso; no se usa gravedad newtoniana.
-- `P_i`: atracción de señales obstinadas con masa declarada.
-- `E_i`: eventos temporales declarados, con intensidad, alcance y duración visibles.
-- `R_i`: recentrado solo cuando interviene el auditor; se usa R para no
-  confundirlo con C, el contraevento.
-- `k_i`: compromiso creciente con la extremidad.
-
-El orden exacto es inmovilidad, posible ruido, red, polos/eventos, auditor,
-compromiso y recorte. La composición completa es una hipótesis del proyecto;
-no se presenta como una teoría publicada íntegramente.
-
-La interfaz presenta un único modelo. Las columnas de entrada `A` y `B` son
-grados de pertenencia y generan directamente la posición inicial
-`(x_i(0), y_i(0)) = (A_i, B_i)`. Los polos quedan fijados en `(1,0)` y `(0,1)`.
-La distancia euclídea se calcula después de colocar el punto; A y B no se
-reinterpretan como distancias.
-
-La población puede ser sintética —A y B se sortean independientemente— o
-importarse desde un CSV con cabeceras `A` y `B`. La entrada no necesita una
-columna `pos`: el motor solo consume los dos valores normalizados. El archivo
-aportado `elecciones_23_X_grados_pertenencia.csv` fue auditado sin copiar su
-contenido: 950 filas, valores en `[0,1]` y `A+B=1` salvo redondeo. Esa relación
-pertenece a ese archivo concreto; no se impone a futuros datos ni a la nube
-sintética.
-
-La intensidad de polos y eventos usa 0–10 como peso equivalente. Área,
-tolerancia y homofilia también se muestran sobre 0–10 y se dividen por 10 para
-obtener la distancia interna. La fuerza social y el recentrado se dividen por
-100 para obtener una tasa por ronda. Probabilidades y proporciones se muestran
-como porcentajes.
-
-Cada evento se crea junto a un contraevento exactamente opuesto. Para un
-evento `E=(x,y)`, el contraevento es `C=(1-x,1-y)`. El modo aleatorio sortea de
-forma reproducible posición, inicio, intensidad, área y duración; el modo
-manual permite escribir `x`, `y` y la ronda de inicio. La simetría es una
-decisión experimental declarada, no una ley social.
-
-## Código defendible
-
-- `src/integrated_model.py`: referencia Python del modelo integrado, con fórmulas y ejemplos en comentarios.
-- `web/model.js`: el mismo motor en JavaScript, separado de la interfaz.
-- `web/app.js`: controles y representación; no define una segunda dinámica.
-- `tests/test_integrated_model.py`: casos mínimos de signo, masa, JDJ, auditor, ruido e inmovilidad.
-- `web/verification.js`: comprobaciones independientes del motor web.
-- `src/paper1_model.py` y `src/phased_model.py`: implementaciones históricas conservadas para pruebas; no aparecen como opciones del simulador.
-- `src/calibration.py`: métricas para contrastar un panel empírico real.
-
-Los archivos `src/final_model.py`, `src/attitudinal_abm.py` y
-`src/proposed_model.py` se conservan como borradores históricos. No deben
-usarse como especificación del modelo actual.
-
-## Verificación
-
-```bash
-python -m pytest
-node web/verification.js
+```text
+src/          modelos, métricas y funciones matemáticas
+tests/        pruebas automáticas
+experiments/  experimentos reproducibles
+data/         configuraciones YAML
+docs/         auditoría, modelo matemático y revisión bibliográfica
+references/   referencias y registro de búsquedas
+web/          simulador visual y leyenda matemática
+outputs/      resultados generados localmente
 ```
 
-Los valores predeterminados son ilustrativos. Una aplicación social exige
-definir las dos actitudes, obtener red y eventos observados, calibrar
-parámetros y validar fuera de muestra.
+## Documentación recomendada
 
-## Primer estudio recomendado
+- `docs/code_audit.md`: auditoría del código y supuestos.
+- `docs/mathematical_model.md`: ecuaciones del modelo.
+- `docs/literature_review.md`: revisión de modelos y referencias.
+- `docs/novelty_matrix.md`: antecedentes y posibles contribuciones.
+- `docs/ODD_protocol.md`: descripción formal del modelo basado en agentes.
+- `web/formula.html`: leyenda visual y matemática para entender la interfaz.
 
-La comparación más clara es el mismo sistema con el auditor apagado y
-encendido, usando iguales semillas y parámetros. La pregunta es si una
-intervención activada por JDJ y dispersión reduce bipolarización sin imponer un
-consenso central artificial. Debe acompañarse de ablaciones —sin reactancia,
-sin ruido y sin obstinados— y no permite afirmar causalidad sobre una sociedad
-sin datos.
+## Reproducibilidad
+
+Las simulaciones utilizan una semilla aleatoria configurable. Para comparar dos ejecuciones hay que conservar la misma configuración YAML, la misma semilla y la misma versión del código.
+
+La reproducibilidad computacional no significa que el modelo esté validado empíricamente. La validación requiere comparar sus resultados con datos reales y comprobar si las hipótesis explican mejor los patrones observados.
+
+## Estado del proyecto
+
+ABM X es una base de investigación en desarrollo. Sus resultados deben interpretarse como experimentos de simulación. Antes de presentar una conclusión científica, conviene realizar análisis de sensibilidad, estudios de ablación, calibración, validación fuera de muestra y una revisión bibliográfica actualizada.

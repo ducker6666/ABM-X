@@ -1,69 +1,39 @@
-# Protocolo ODD — Paper 1
+# Protocolo ODD
 
-Fecha de revisión: 2026-09-20.
+## Overview
 
-## 1. Overview
+Proposito: estudiar cuando una dinamica de confianza acotada en red produce consenso, fragmentacion, polarizacion episodica o polarizacion estructural.
 
-### 1.1 Propósito
+Entidades: agentes, enlaces de red, polos permanentes, eventos temporales.
 
-Estudiar cómo el límite de confianza, la posición y la intensidad de dos señales constantes competidoras afectan al consenso, el seguimiento y la fragmentación en un espacio de opinión bidimensional.
+Escalas: tiempo discreto; espacio actitudinal `[0,1]^d`; red social fija inicialmente.
 
-### 1.2 Entidades, variables de estado y escalas
+Procesos: percepcion de vecinos, agregacion bounded-confidence, movimiento actitudinal, aplicacion de frontera, medicion JDJ/modularidad, actualizacion opcional de tolerancia.
 
-- **Agentes normales:** \(N\) agentes con opinión \(x_i(t)\in[0,1]^2\).
-- **Señales constantes:** dos posiciones fijas \(R_A,R_B\in[0,1]^2\) con pesos \(m_A,m_B\ge0\).
-- **Tiempo:** discreto, \(t=0,1,2,\ldots\).
-- **Interacción:** población completamente mezclada; no hay una red social en el Paper 1.
+## Design concepts
 
-### 1.3 Procesos y orden
+Emergencia: clusters y polarizacion global emergen de reglas locales.
 
-En cada paso:
+Adaptacion: extensiones permiten `epsilon_i(t)` dependiente de historia.
 
-1. Se guarda una copia completa del estado en \(t\).
-2. Para cada agente se localizan agentes y señales dentro de la distancia euclídea \(\varepsilon\).
-3. Se calcula el promedio ponderado definido por la ecuación del modelo.
-4. Todas las nuevas posiciones se asignan simultáneamente.
-5. Se calculan medidas descriptivas que no realimentan la dinámica.
+Objetivos: no se asume utilidad individual en la version minima.
 
-## 2. Design concepts
+Aprendizaje: representado como actualizacion de opinion; memoria entra via `H_i(t)`.
 
-- **Principios básicos:** confianza acotada HK y señales constantes publicadas.
-- **Emergencia:** consenso y clusters aparecen por promedios locales; no existe una fuerza de cluster.
-- **Adaptación:** ninguna en el Paper 1. \(\varepsilon\) es constante.
-- **Objetivos individuales:** no se modelizan.
-- **Aprendizaje:** cambio de opinión por promedio local.
-- **Predicción:** no se atribuye capacidad predictiva empírica sin calibración.
-- **Percepción:** un agente percibe opiniones y señales dentro de \(\varepsilon\).
-- **Interacción:** indirecta mediante la media síncrona.
-- **Estocasticidad:** solo la condición inicial, controlada por semilla.
-- **Colectivos:** los clusters son componentes conexas calculadas después de cada paso; no son agentes colectivos.
-- **Observación:** dispersión, clusters, seguidores, RMSD y JDJ proyectado exploratorio.
+Interaccion: por red y distancia actitudinal.
 
-## 3. Details
+Estocasticidad: inicializacion, eventos y muestreo en variantes Deffuant.
 
-### 3.1 Inicialización
+Observacion: distribucion de opiniones, JDJ, clusters, modularidad, persistencia y respuesta a eventos.
 
-La condición principal es uniforme: \(x_i(0)\sim U([0,1]^2)\). Las condiciones central y bimodal son contrastes explícitos, no valores por defecto ocultos.
+## Details
 
-### 3.2 Datos de entrada
+Inicializacion: `x_i(0) ~ U([0,1]^d)` o datos empiricos; red `A` completa, sintetica o empirica; parametros validados.
 
-El experimento recibe `data/paper1_config.yaml`: población, semillas, posiciones de señales, pesos, valores de \(\varepsilon\), límite temporal y criterio de convergencia.
+Entrada: configuracion YAML, semilla, red y eventos.
 
-### 3.3 Submodelos
+Submodelos: HK en red, FJ/anclaje, eventos, fatiga, JDJ, metricas estructurales.
 
-La dinámica completa es:
+Verificacion: pruebas unitarias, casos limite, invariantes y reduccion a modelos base.
 
-\[
-x_i(t+1)=
-\frac{\sum_{j\in\mathcal N_i(t)}x_j(t)+I_{iA}m_AR_A+I_{iB}m_BR_B}
-{|\mathcal N_i(t)|+I_{iA}m_A+I_{iB}m_B}.
-\]
-
-No existen otros submodelos activos. Las definiciones de salida están en `docs/mathematical_model.md` y `web/formula.html`.
-
-## 4. Verificación, calibración y validación
-
-- **Verificación:** pruebas unitarias, casos límite, comparación del ejemplo manual y equivalencia conceptual Python/JavaScript.
-- **Calibración:** no realizada todavía.
-- **Validación empírica:** no realizada todavía.
-- **Validación de patrones:** se debe comprobar primero el caso HK sin señales contra patrones cualitativos publicados.
+Validacion: comparacion con distribuciones reales, polarizacion medida, comunidades, persistencia temporal y respuesta a shocks.
