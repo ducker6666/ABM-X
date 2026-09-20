@@ -200,6 +200,7 @@ function mulberry32(seed) {
   };
 }
 function normal(mean = 0, sd = 1) {
+  // Box–Muller (1958): m+s√(-2 ln U)cos(2πV). Ej.: m=.28,s=.15,Z=1 → .43.
   let u = 0, v = 0;
   while (u === 0) u = state.rng();
   while (v === 0) v = state.rng();
@@ -315,17 +316,17 @@ function roundJdjValue(x) {
   return Math.round(clamp(x, 0, 1) * 100) / 100;
 }
 function jdjFromFrequencyTable(agents) {
-  // Nucleo JDJ de contenido equivalente al ultimo codigo Python aportado:
-  // redondeo A/B a 2 decimales, tabla de frecuencias, max(A_i B_j, B_i A_j),
-  // ponderacion por Freq_i * Freq_j para todos los pares y factor final 2.
+  // JDJ = 2 sum_ij max(muA_i muB_j, muB_i muA_j)/n².
+  // Agrupar pares idénticos es exacto; redondearlos antes altera la medida.
+  // Un agente en el centro aporta 2*(.5*.5)=.5, incluyendo i=j.
   const n = agents.length;
-  if (n < 2) return 0;
+  if (n === 0) return 0;
   const buckets = new Map();
   for (const agent of agents) {
     const m = jdjMembership(agent);
-    const a = roundJdjValue(m.a);
-    const b = roundJdjValue(m.b);
-    const key = `${a.toFixed(2)}|${b.toFixed(2)}`;
+    const a = m.a;
+    const b = m.b;
+    const key = `${a}|${b}`;
     const current = buckets.get(key);
     if (current) {
       current.count++;
@@ -346,7 +347,7 @@ function jdjFromFrequencyTable(agents) {
       total += m * w;
     }
   }
-  return clamp(2 * total, 0, 1);
+  return 2 * total;
 }
 function jdjFrequencyRows(agents) {
   const n = agents.length;
@@ -366,7 +367,7 @@ function jdjFrequencyRows(agents) {
 }
 function polarizationStats() {
   const agents = state.model.agents;
-  if (agents.length < 2) return { p: 0, jdj: 0, social: 0, balance: 0, separation: 0, meanB: 0, dominant: null };
+  if (agents.length === 0) return { p: 0, jdj: 0, social: 0, balance: 0, separation: 0, meanB: 0, dominant: null };
   const memberships = agents.map(a => jdjMembership(a));
   const meanB = memberships.reduce((s, m) => s + m.b, 0) / memberships.length;
   const balance = 4 * meanB * (1 - meanB);
@@ -380,6 +381,8 @@ function polarizationStats() {
 }
 
 function detectClusters() {
+  // Heurística propia de centros locales; no es DBSCAN. Ver formula.html#masa.
+  // Centro=media; masa=(miembros/N)^γ. Ej.: 20/100 y γ=1 → masa .2.
   const m = state.model, c = m.cfg, agents = m.agents;
   for (const a of agents) a.clusterId = -1;
   const spatial = makeGrid(agents, c.clusterDetectRadius);
@@ -444,6 +447,7 @@ function detectClusters() {
 }
 
 function eventAmp(e, t) {
+  // a(t)=2^(-edad/H): a los H pasos queda 1/2. Ventana temporal propia.
   if (t < e.start || t >= e.start + e.duration) return 0;
   const halfLife = 1 + 299 * (1 - e.decay);
   return Math.pow(2, -(t - e.start) / halfLife);
@@ -468,12 +472,15 @@ function maybeEvents() {
 function poleForce(a, c) {
   const dax = c.poleA[0] - a.x, day = c.poleA[1] - a.y;
   const dbx = c.poleB[0] - a.x, dby = c.poleB[1] - a.y;
-  const aA = Math.exp(-(dax * dax + day * day) / (2 * c.poleRadius * c.poleRadius));
-  const aB = Math.exp(-(dbx * dbx + dby * dby) / (2 * c.poleRadius * c.poleRadius));
   const poleSharpness = 1 + 6 * c.poleStrength;
-  const sA = Math.pow(aA, poleSharpness);
-  const sB = Math.pow(aB, poleSharpness);
-  const denomPoles = sA + sB + 1e-9;
+  // Softmax estable: restar el máximo conserva wA+wB=1 incluso con radio .02.
+  // Antes, +1e-9 dominaba los pesos minúsculos y creaba un destino falso (0,0).
+  // Referencia matemática: Blanchard, Higham & Higham, DOI 10.1093/imanum/draa038.
+  const zA = -poleSharpness * (dax * dax + day * day) / (2 * c.poleRadius ** 2);
+  const zB = -poleSharpness * (dbx * dbx + dby * dby) / (2 * c.poleRadius ** 2);
+  const shift = Math.max(zA, zB);
+  const sA = Math.exp(zA - shift), sB = Math.exp(zB - shift);
+  const denomPoles = sA + sB;
   const wA = sA / denomPoles;
   const wB = sB / denomPoles;
   const poleTargetX = wA * c.poleA[0] + wB * c.poleB[0];
@@ -510,16 +517,24 @@ function step() {
   const statsPol = polarizationStats();
   m.highPolCount = statsPol.p >= c.auditThreshold && statsPol.balance >= c.auditBalanceThreshold ? m.highPolCount + 1 : 0;
   const forceMeans = { local: 0, pole: 0, event: 0, cluster: 0, center: 0 };
+  // Todas las fuerzas leen el estado t de la misma ronda (actualización síncrona).
+  // La cuadrícula espacial se construyó con esas posiciones; escribir antes
+  // de terminar mezclaría tiempos y perdería vecinos. Guardamos solo el resultado.
+  const nextPositions = [];
 
   for (let i = 0; i < agents.length; i++) {
     const a = agents[i];
     a.previousX = a.x; a.previousY = a.y;
     const radicality = hypot(a.x - 0.5, a.y - 0.5) / Math.sqrt(0.5);
+    // Hipótesis geométrica propia: ε=ε0(1-cierre*r)(1-inercia*M), acotada.
+    // Ej.: .3*(1-.4*.5)*(1-.2*.2)=.2304. No es una ley psicológica.
     const ownCluster = m.clusters.find(cl => cl.id === a.clusterId);
     const massInertia = ownCluster ? ownCluster.mass : 0;
     a.eps = clamp(a.eps0 * (1 - c.radicalToleranceLoss * radicality) * (1 - c.massToleranceLoss * massInertia), 0.01, 1);
 
     let localX = 0, localY = 0, count = 0;
+    // Confianza acotada (HK, 2002), adaptada: L=media(vecinos sin i)-posición.
+    // En (.4,.5), un vecino (.6,.5) aporta L=(.2,0), no un salto inmediato.
     for (const j of nearby(spatial, a.x, a.y, a.eps)) {
       if (j === i) continue;
       const b = agents[j];
@@ -556,6 +571,8 @@ function step() {
     }
 
     let clusterX = 0, clusterY = 0;
+    // Hipótesis de masa: Σ h*S*M*exp(-d²/(2ρ²))*(centro-u)/(d²+b²).
+    // b evita singularidad; no se atribuye esta gravedad a una ley social.
     for (const cl of m.clusters) {
       const dx = cl.x - a.x, dy = cl.y - a.y;
       const d = Math.max(hypot(dx, dy), 0.01);
@@ -575,6 +592,9 @@ function step() {
     }
 
     const anchorX = a.lambda * (a.anchorX - a.x);
+    // Anclaje aditivo, inspirado en persistencia FJ, no FJ literal.
+    // F=L+P+E+C+R+λ(u0-u); v=dt*μ*F si ||F||>α, después ruido y límites.
+    // Ej.: F=(.19,0), dt=.075, μ=.6 → v=(.00855,0). Ver formula.html#final.
     const anchorY = a.lambda * (a.anchorY - a.y);
     const totalX = localX + poleX + eventX + clusterX + centerX + anchorX;
     const totalY = localY + poleY + eventY + clusterY + centerY + anchorY;
@@ -594,8 +614,7 @@ function step() {
       moveX *= c.maxMove / stepLen;
       moveY *= c.maxMove / stepLen;
     }
-    a.x = clamp(a.x + moveX, 0, 1);
-    a.y = clamp(a.y + moveY, 0, 1);
+    nextPositions.push([clamp(a.x + moveX, 0, 1), clamp(a.y + moveY, 0, 1)]);
 
     forceMeans.local += hypot(localX, localY);
     forceMeans.pole += hypot(poleX, poleY);
@@ -603,6 +622,7 @@ function step() {
     forceMeans.cluster += hypot(clusterX, clusterY);
     forceMeans.center += hypot(centerX, centerY);
   }
+  agents.forEach((a, i) => { [a.x, a.y] = nextPositions[i]; });
   for (const k of Object.keys(forceMeans)) forceMeans[k] /= agents.length;
   m.t++;
   pushMetrics(forceMeans);

@@ -1,5 +1,19 @@
 # ABM X
 
+## Simulador original: documentación vigente
+
+La web conserva su formato original. Consulta [Teoría](web/formula.html) para
+las ecuaciones, ejemplos numéricos, referencias y límites; [Guía](web/guide.html)
+explica todos los controles. La [auditoría](docs/theory_audit.md) registra las
+correcciones de cálculo y distingue hipótesis propias de fórmulas publicadas.
+Los modelos Python y documentos previos corresponden a desarrollos históricos;
+no son una réplica numéricamente equivalente de esta web.
+
+Desde la carpeta `project`, inicia `python -m http.server 8765 --directory web`
+y abre [el simulador local](http://localhost:8765/). Si ya hay un servidor en ese
+puerto, no inicies otro: actualiza la página. Las pruebas son
+`node web/verification.js` y `python -m pytest -q`.
+
 ABM X es una simulación sencilla y visual para estudiar cómo pueden cambiar las opiniones de muchas personas cuando interactúan entre sí.
 
 ## La idea, explicada fácil
