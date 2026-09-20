@@ -11,10 +11,10 @@
  *
  * Regla integrada por agente i (actualización síncrona):
  *
- * x_i(t+1) = clip[x_i + {eta(G_i + P_i + E_i) + C_i}/k_i].
+ * x_i(t+1) = clip[x_i + {eta(G_i + P_i + E_i) + R_i}/k_i].
  *
  * G_i agrega contactos; P_i agrega los polos permanentes A/B; E_i agrega
- * eventos temporales; C_i es la intervención del auditor; k_i es resistencia
+ * eventos temporales; R_i es el recentrado del auditor; k_i es resistencia
  * por extremidad. Cada término y un ejemplo numérico están en formula.html.
  * Las funciones HK/FJ/DW que aparecen más abajo se conservan solo como
  * controles de regresión y ya no son opciones de la interfaz.
@@ -192,19 +192,24 @@
     const agents = [];
     for (let i = 0; i < nAgents; i += 1) {
       let membershipA;
+      let membershipB;
       if (scenario === "uniform") {
         membershipA = random();
+        membershipB = random();
       } else if (scenario === "central") {
         membershipA = clamp(normal(random, 0.5, 0.10), 0, 1);
+        membershipB = clamp(normal(random, 0.5, 0.10), 0, 1);
       } else if (scenario === "two_groups") {
         const first = i < Math.floor(nAgents / 2);
         membershipA = clamp(normal(random, first ? 0.75 : 0.25, 0.09), 0, 1);
+        membershipB = clamp(normal(random, first ? 0.25 : 0.75, 0.09), 0, 1);
       } else {
         throw new Error("escenario inicial desconocido");
       }
-      // La población sintética usa el mismo contrato que el CSV: primero se
-      // generan A y B=1-A; después (x,y)=(A,B).
-      const membershipB = 1 - membershipA;
+      // En la población sintética A y B se sortean por separado. Esto es un
+      // escenario nulo reproducible: permite ambivalencia (A y B altos) y
+      // desvinculación (A y B bajos) sin inventarlas en los datos importados.
+      // Un CSV siempre conserva exactamente los valores A/B observados.
       agents.push(agentFromMemberships(membershipA, membershipB));
     }
     return agents;
@@ -512,12 +517,12 @@
     /*
      * Composición auditable (no una teoría publicada como conjunto):
      *
-     * x_i(t+1)=clip[x_i + {eta(G_i+P_i+E_i)+C_i}/k_i]
+     * x_i(t+1)=clip[x_i + {eta(G_i+P_i+E_i)+R_i}/k_i]
      * k_i=1+s r_i.
      *
      * G_i suma influencia de contactos; por eso un grupo con más miembros
      * aporta más términos ("masa" social) sin introducir gravedad newtoniana.
-     * P_i contiene los polos obstinados y E_i los eventos temporales. C_i es
+     * P_i contiene los polos obstinados y E_i los eventos temporales. R_i es
      * la decisión del auditor: solo existe si JDJ y dispersión superan los
      * umbrales declarados.
      */
@@ -624,11 +629,13 @@
     return clamp(((agent.x - ax) * dx + (agent.y - ay) * dy) / (dx * dx + dy * dy), 0, 1);
   }
 
-  function jdjProductAxis(agents, config) {
+  function jdjProductAxisDetails(agents, config) {
     // El producto y el máximo son los operadores de Guevara et al. (2020).
     // El factor 2 es una normalización operativa declarada: hace que una
     // división dura 50/50 entre A y B tome el valor 1.
-    if (agents.length === 0) return 0;
+    if (agents.length === 0) {
+      return { value: 0, pairSum: 0, totalPairs: 0, meanPair: 0, meanProjection: 0 };
+    }
     const memberships = agents.map(agent => {
       const s = axisProjection(agent, config);
       // Funciones triangulares complementarias de pertenencia a los polos.
@@ -643,7 +650,18 @@
         total += Math.max(first.a * second.b, first.b * second.a);
       }
     }
-    return clamp(2 * total / (agents.length * agents.length), 0, 1);
+    const totalPairs = agents.length * agents.length;
+    return {
+      value: clamp(2 * total / totalPairs, 0, 1),
+      pairSum: total,
+      totalPairs,
+      meanPair: total / totalPairs,
+      meanProjection: memberships.reduce((sum, membership) => sum + membership.b, 0) / agents.length,
+    };
+  }
+
+  function jdjProductAxis(agents, config) {
+    return jdjProductAxisDetails(agents, config).value;
   }
 
   function dispersion(agents) {
@@ -677,6 +695,7 @@
   }
 
   function summarize(agents, config, clusterThreshold = 0.05) {
+    const jdjDetails = jdjProductAxisDetails(agents, config);
     const followersA = agents.filter(agent => distance([agent.x, agent.y], config.signalA) <= 1e-3).length;
     const followersB = agents.filter(agent => distance([agent.x, agent.y], config.signalB) <= 1e-3).length;
     const rmsd = signal => Math.sqrt(agents.reduce((sum, agent) => {
@@ -690,7 +709,10 @@
       followersB,
       rmsdA: rmsd(config.signalA),
       rmsdB: rmsd(config.signalB),
-      jdj: jdjProductAxis(agents, config),
+      jdj: jdjDetails.value,
+      jdjPairSum: jdjDetails.pairSum,
+      jdjTotalPairs: jdjDetails.totalPairs,
+      jdjMeanProjection: jdjDetails.meanProjection,
     };
   }
 
@@ -714,6 +736,7 @@
     initialize,
     integratedStep,
     jdjProductAxis,
+    jdjProductAxisDetails,
     meanDisplacement,
     mulberry32,
     oppositePosition,

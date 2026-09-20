@@ -8,6 +8,7 @@ from src.integrated_model import (
     event_weight,
     initialize_memberships,
     jdj_axis,
+    jdj_axis_details,
     load_membership_csv,
     opposite_position,
     position_from_memberships,
@@ -40,11 +41,12 @@ def test_membership_columns_are_the_initial_coordinates():
     assert np.isclose(np.linalg.norm(point - np.array([1.0, 0.0])), np.sqrt(2) / 7)
 
 
-def test_synthetic_population_generates_a_then_b_equals_one_minus_a():
+def test_synthetic_population_draws_a_and_b_independently():
     first = initialize_memberships(20, 123)
     second = initialize_memberships(20, 123)
     assert np.array_equal(first, second)
-    assert np.allclose(first.sum(axis=1), 1.0)
+    assert np.all((0 <= first) & (first <= 1))
+    assert not np.allclose(first.sum(axis=1), 1.0)
 
 
 def test_membership_csv_supports_quoted_multiline_text(tmp_path):
@@ -101,6 +103,16 @@ def test_jdj_reports_medium_risk_for_center_and_maximum_for_split():
     center = np.full((4, 2), 0.5)
     assert np.isclose(jdj_axis(split, a, b), 1.0)
     assert np.isclose(jdj_axis(center, a, b), 0.5)
+
+
+def test_jdj_details_expose_every_ordered_pair_and_the_final_sum():
+    a = np.array([1.0, 0.0])
+    b = np.array([0.0, 1.0])
+    opinions = np.array([[0.8, 0.2], [0.2, 0.8]])
+    details = jdj_axis_details(opinions, a, b)
+    assert details["total_pairs"] == 4
+    assert np.isclose(details["pair_sum"], 1.6)
+    assert np.isclose(details["value"], 0.8)
 
 
 def test_auditor_requires_jdj_and_dispersion_then_recenters():

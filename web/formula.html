@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Fórmulas y ejemplos</title>
-  <link rel="stylesheet" href="styles.css?v=integrated-3" />
+  <link rel="stylesheet" href="styles.css?v=integrated-4" />
 </head>
 <body class="document-body">
   <header class="site-header">
@@ -62,13 +62,12 @@
         <div>
           <span class="truth operational">Contrato de datos observado</span>
           <h2>Cómo las columnas A y B se convierten en un punto</h2>
-          <p>En el archivo <code>elecciones_23_X_grados_pertenencia.csv</code>, A y B son grados de pertenencia entre 0 y 1. No son distancias. Por eso el programa no realiza una triangulación que añadiría información inexistente: copia ambos valores como coordenadas.</p>
+          <p>El programa recibe directamente dos grados normalizados entre 0 y 1: A y B. No necesita una columna <code>pos</code> ni reconstruye A/B desde otra escala. Tampoco trata A y B como distancias: copia ambos valores como coordenadas.</p>
           <div class="formula-block"><span class="formula-line">posición inicial de la persona i: x<sub>i</sub>(0) = (A<sub>i</sub>, B<sub>i</sub>)</span><span class="formula-line">polo A: R<sub>A</sub>=(1,0) · polo B: R<sub>B</sub>=(0,1)</span></div>
-          <p>La auditoría del archivo encontró 950 filas válidas y A+B=1 en todas ellas, salvo el redondeo normal de coma flotante. También comprobó la relación exacta usada en el propio archivo:</p>
-          <div class="formula-block"><span class="formula-line">A = (pos + 7) ÷ 14</span><span class="formula-line">B = (7 − pos) ÷ 14 = 1 − A</span></div>
-          <div class="worked-example"><strong>Ejemplo real de la tabla, sin usar el texto del mensaje:</strong><ol class="numeric-steps"><li>Si pos=5, A=(5+7)/14=12/14=<strong>0.8571</strong>.</li><li>B=(7−5)/14=2/14=<strong>0.1429</strong>.</li><li>El agente se coloca en <strong>(0.8571, 0.1429)</strong>.</li><li>Distancia al polo A: √[(0.8571−1)²+(0.1429−0)²] = <strong>0.2020</strong>.</li><li>Distancia al polo B: √[(0.8571−0)²+(0.1429−1)²] = <strong>1.2122</strong>. Por tanto, está mucho más cerca de A.</li></ol></div>
-          <p><strong>Población sintética:</strong> sigue el mismo contrato. Primero sortea A, después fija B=1−A y finalmente crea el punto (A,B). Al importar un CSV, conserva exactamente sus A y B.</p>
-          <div class="callout warning"><strong>Límite identificable:</strong> como A+B=1, el archivo observado contiene una dimensión bipolar, aunque se dibuje en dos ejes. No se afirmará que aporta dos actitudes independientes.</div>
+          <div class="worked-example"><strong>Ejemplo de entrada normalizada:</strong><ol class="numeric-steps"><li>La fila entrega A=<strong>0.8571</strong> y B=<strong>0.1429</strong>.</li><li>El agente se coloca directamente en <strong>(0.8571, 0.1429)</strong>.</li><li>Distancia al polo A: √[(0.8571−1)²+(0.1429−0)²] = <strong>0.2020</strong>.</li><li>Distancia al polo B: √[(0.8571−0)²+(0.1429−1)²] = <strong>1.2122</strong>. Por tanto, está mucho más cerca de A.</li></ol></div>
+          <p><strong>Población sintética:</strong> sortea A y B de forma independiente y reproducible. Eso dispersa la nube y permite, por ejemplo, pertenencia alta a ambos lados o baja a ambos lados. Es un escenario nulo para probar el motor, no una afirmación sobre una población real.</p>
+          <p><strong>Datos importados:</strong> el programa conserva exactamente el par (A,B) recibido. Si un archivo concreto cumple A+B=1, sus puntos aparecerán en esa diagonal porque así son los datos; el programa no añade dispersión artificial.</p>
+          <div class="callout warning"><strong>Límite identificable:</strong> el CSV de elecciones inspeccionado sí cumple A+B=1 y, por tanto, contiene una dimensión bipolar. Los futuros archivos A/B no están obligados a cumplir esa relación.</div>
         </div>
       </section>
 
@@ -187,14 +186,14 @@
           <span class="truth published">Operadores difusos</span>
           <span class="truth operational">Proyección 2D</span>
           <h2>JDJ explicado paso a paso</h2>
-          <p>JDJ necesita saber cuánto pertenece cada persona al lado A y al lado B. Para estados que ya no cumplen A+B=1, primero proyecta el punto sobre la línea entre los polos.</p>
+          <p>El JDJ original trabaja sobre una escala bipolar. En este simulador bidimensional se hace primero una <strong>proyección geométrica declarada</strong> sobre la línea A–B. Por tanto, usa la posición actual (x,y), pero <strong>no calcula JDJ con la distancia euclídea directa</strong>.</p>
           <div class="formula-block"><span class="formula-line">s<sub>i</sub> = recortar{[(x<sub>i</sub> − R<sub>A</sub>) · (R<sub>B</sub> − R<sub>A</sub>)] ÷ ‖R<sub>B</sub> − R<sub>A</sub>‖², entre 0 y 1}</span><span class="formula-line">pertenencia a A: μ<sub>A</sub>(i) = 1 − s<sub>i</sub></span><span class="formula-line">pertenencia a B: μ<sub>B</sub>(i) = s<sub>i</sub></span></div>
-          <div class="worked-example"><strong>Ejemplo numérico de la proyección:</strong><ol class="numeric-steps"><li>A=(1,0), B=(0,1) y persona x=(0.75,0.25).</li><li>B−A=(−1,1); x−A=(−0.25,0.25).</li><li>Producto: (−0.25)×(−1)+0.25×1=0.50.</li><li>Longitud al cuadrado de A–B: (−1)²+1²=2.</li><li>s=0.50/2=<strong>0.25</strong>. Su pertenencia proyectada es 0.75 a A y 0.25 a B.</li></ol></div>
+          <div class="worked-example"><strong>Ejemplo numérico de la proyección:</strong><ol class="numeric-steps"><li>A=(1,0), B=(0,1) y persona x=(0.75,0.25).</li><li>B−A=(−1,1); x−A=(−0.25,0.25).</li><li>Producto escalar: (−0.25)×(−1)+0.25×1=0.50.</li><li>Longitud al cuadrado de A–B: (−1)²+1²=2.</li><li>s=0.50/2=<strong>0.25</strong>. Su pertenencia proyectada es 0.75 a A y 0.25 a B.</li></ol>Con los polos fijos del programa, la misma cuenta se simplifica a <strong>s=(1−x+y)/2</strong>, recortado entre 0 y 1.</div>
           <p>Después se comparan todas las parejas de personas:</p>
-          <div class="formula-block"><span class="formula-line">JDJ = (2/N²) × suma sobre i y j del mayor entre:</span><span class="formula-line">μ<sub>A</sub>(i)×μ<sub>B</sub>(j) y μ<sub>B</sub>(i)×μ<sub>A</sub>(j)</span></div>
-          <div class="worked-example"><strong>Ejemplo numérico de JDJ:</strong> cuatro personas: dos exactamente en A y dos exactamente en B. Hay 16 parejas ordenadas; 8 cruzan A–B y aportan 1. JDJ = (2/16) × 8 = <strong>1</strong>. Si las cuatro están en el centro, cada producto vale 0.25: JDJ = (2/16) × (16×0.25) = <strong>0.5</strong>.</div>
+          <div class="formula-block"><span class="formula-line">h<sub>ij</sub> = máximo[μ<sub>A</sub>(i)×μ<sub>B</sub>(j), μ<sub>B</sub>(i)×μ<sub>A</sub>(j)]</span><span class="formula-line">JDJ proyectado = 2 × Σh<sub>ij</sub> ÷ N²</span></div>
+          <div class="worked-example"><strong>Ejemplo numérico completo de JDJ:</strong><ol class="numeric-steps"><li>Persona 1=(0.80,0.20): s₁=(1−0.80+0.20)/2=<strong>0.20</strong>; por tanto μ<sub>A</sub>=0.80 y μ<sub>B</sub>=0.20.</li><li>Persona 2=(0.20,0.80): s₂=(1−0.20+0.80)/2=<strong>0.80</strong>; por tanto μ<sub>A</sub>=0.20 y μ<sub>B</sub>=0.80.</li><li>Los cuatro pares ordenados, incluidos 1–1 y 2–2, aportan: h₁₁=0.16, h₁₂=0.64, h₂₁=0.64 y h₂₂=0.16.</li><li>Σh=0.16+0.64+0.64+0.16=<strong>1.60</strong>.</li><li>JDJ=2×1.60÷2²=<strong>0.80</strong>.</li></ol>Debajo del gráfico el programa muestra esta misma operación como <strong>2×Σh/N²</strong> para que el resultado de cada ejecución sea auditable.</div>
           <p><strong>Límite:</strong> un centro unido obtiene 0.5 aunque no esté dividido. Por eso el auditor nunca usa JDJ solo: exige también dispersión.</p>
-          <p class="source-line">Producto y máximo: Guevara et al. (2020). Proyección sobre el eje A–B y normalización: adaptación declarada.</p>
+          <p class="source-line">Producto y máximo: Guevara et al. (2020). La proyección bidimensional sobre A–B y la normalización por 2 son adaptaciones declaradas de este proyecto; por eso la interfaz dice «JDJ proyectado*».</p>
         </div>
       </section>
 
@@ -203,7 +202,7 @@
         <div>
           <span class="truth exploratory">Intervención explícita</span>
           <h2>Auditor y recentrado</h2>
-          <div class="formula-block"><span class="formula-line">auditor = 1 solo si JDJ ≥ umbral JDJ y dispersión ≥ dispersión mínima</span><span class="formula-line">C<sub>i</sub> = auditor × α × [(0.5,0.5) − x<sub>i</sub>]</span></div>
+          <div class="formula-block"><span class="formula-line">auditor = 1 solo si JDJ ≥ umbral JDJ y dispersión ≥ dispersión mínima</span><span class="formula-line">R<sub>i</sub> = auditor × α × [(0.5,0.5) − x<sub>i</sub>]</span></div>
           <div class="worked-example"><strong>Ejemplo numérico:</strong> JDJ = 0.70, umbral = 0.60, dispersión = 0.08 y mínimo = 0.03: el auditor se activa. Para una coordenada x = 0.80 y α = 0.02, el término es 0.02 × (0.50 − 0.80) = <strong>−0.006</strong>, un paso pequeño hacia el centro.</div>
           <p><strong>Efecto:</strong> representa una política de mediación o exposición común. El disparador JDJ es una regla del proyecto; no se afirma que la sociedad se recentre automáticamente.</p>
           <p class="source-line">La atracción hacia una norma común tiene antecedente en Zhang et al. (2025). La activación por dos umbrales es una decisión de control evaluable.</p>
@@ -216,11 +215,11 @@
           <span class="truth operational">Composición del proyecto</span>
           <h2>La fórmula final que decide adónde va cada agente</h2>
           <p>Primero se calcula un cambio vectorial Δ=(Δx,Δy). Después se suma a la posición actual. Esa suma es la razón exacta por la que (x,y) se convierte en (x<sub>1</sub>,y<sub>1</sub>).</p>
-          <div class="formula-block"><span class="formula-line">Δ<sub>i</sub> = {η × [G<sub>i</sub> + P<sub>i</sub> + E<sub>i</sub>] + C<sub>i</sub>} ÷ k<sub>i</sub></span><span class="formula-line">x<sub>i</sub>(t+1) = clip[x<sub>i</sub>(t) + Δ<sub>ix</sub>, entre 0 y 1]</span><span class="formula-line">y<sub>i</sub>(t+1) = clip[y<sub>i</sub>(t) + Δ<sub>iy</sub>, entre 0 y 1]</span></div>
-          <ul class="symbol-list"><li><strong>G:</strong> contactos de la red.</li><li><strong>P:</strong> polos permanentes A y B.</li><li><strong>E:</strong> eventos y contraeventos activos.</li><li><strong>C:</strong> recentrado del auditor, o cero.</li><li><strong>η:</strong> fracción social aplicada por ronda.</li><li><strong>k:</strong> resistencia; dividir por un valor mayor reduce el movimiento.</li></ul>
+          <div class="formula-block"><span class="formula-line">Δ<sub>i</sub> = {η × [G<sub>i</sub> + P<sub>i</sub> + E<sub>i</sub>] + R<sub>i</sub>} ÷ k<sub>i</sub></span><span class="formula-line">x<sub>i</sub>(t+1) = clip[x<sub>i</sub>(t) + Δ<sub>ix</sub>, entre 0 y 1]</span><span class="formula-line">y<sub>i</sub>(t+1) = clip[y<sub>i</sub>(t) + Δ<sub>iy</sub>, entre 0 y 1]</span></div>
+          <ul class="symbol-list"><li><strong>G:</strong> contactos de la red.</li><li><strong>P:</strong> polos permanentes A y B.</li><li><strong>E:</strong> eventos y contraeventos activos.</li><li><strong>R:</strong> recentrado del auditor, o cero. Se usa R para no confundirlo con C, el contraevento.</li><li><strong>η:</strong> fracción social aplicada por ronda.</li><li><strong>k:</strong> resistencia; dividir por un valor mayor reduce el movimiento.</li></ul>
           <h3>Las excepciones también forman parte de la fórmula</h3>
           <div class="formula-block"><span class="formula-line">si el agente es inmóvil: posición nueva = posición actual</span><span class="formula-line">si ocurre ruido en esta ronda: posición nueva = clip[posición actual + salto aleatorio]</span><span class="formula-line">en otro caso: se aplica la suma Δ mostrada arriba</span></div>
-          <div class="worked-example"><strong>Ejemplo completo en x e y:</strong> posición actual (0.60,0.40); G=(0.03,−0.02); P=(0.04,−0.01); E=(−0.01,0.02); fuerza social 6/10, por tanto η=0.06; C=(−0.002,0.002); resistencia k=1.25.<ol class="numeric-steps"><li>Suma de influencias: G+P+E=(0.03+0.04−0.01, −0.02−0.01+0.02)=<strong>(0.06,−0.01)</strong>.</li><li>Aplicar η: 0.06×(0.06,−0.01)=<strong>(0.0036,−0.0006)</strong>.</li><li>Sumar recentrado: (0.0036,−0.0006)+(−0.002,0.002)=<strong>(0.0016,0.0014)</strong>.</li><li>Dividir por resistencia: Δ=(0.0016,0.0014)/1.25=<strong>(0.00128,0.00112)</strong>.</li><li>Sumar a la posición: (0.60,0.40)+Δ=<strong>(0.60128,0.40112)</strong>.</li><li>Ambas coordenadas ya están entre 0 y 1, por lo que el recorte no las modifica.</li></ol></div>
+          <div class="worked-example"><strong>Ejemplo completo, calculando cada término desde posiciones concretas:</strong><ol class="numeric-steps"><li>Persona i=(0.60,0.40) y un contacto j=(0.70,0.40). Con tolerancia ε=0.20 y homofilia B<sub>H</sub>=0.40, la distancia es d=0.10; D=1−0.10/0.20=0.50; q=0.50×e<sup>−0.10/0.40</sup>=0.3894. Entonces <strong>G=0.3894×(0.10,0)=(0.03894,0)</strong>.</li><li>Solo actúa el polo A=(1,0), con peso 1 y radio 0.60. Su distancia es √(0.40²+0.40²)=0.5657, así que está dentro. Con peso propio 1: <strong>P=[1×(0.40,−0.40)]/(1+1)=(0.20,−0.20)</strong>.</li><li>Evento=(0.85,0.55), peso 1 y radio 0.30. Está a distancia √(0.25²+0.15²)=0.2915, así que <strong>E=(0.25,0.15)/(1+1)=(0.125,0.075)</strong>. Su contraevento (0.15,0.45) queda a 0.4528 y no aporta porque está fuera del radio.</li><li>El auditor está activo y α=0.02: <strong>R=0.02×[(0.50,0.50)−(0.60,0.40)]=(−0.002,0.002)</strong>.</li><li>La radicalidad es r=‖(0.60,0.40)−(0.50,0.50)‖/√0.5=0.20. Con s=1: <strong>k=1+s×r=1.20</strong>.</li><li>Con fuerza social 6/10, η=0.06. G+P+E=<strong>(0.36394,−0.125)</strong>.</li><li>Δ={0.06×(0.36394,−0.125)+(−0.002,0.002)}÷1.20=<strong>(0.01653,−0.00458)</strong>.</li><li>Nueva posición: (0.60,0.40)+Δ=<strong>(0.61653,0.39542)</strong>. Como ambas coordenadas están en [0,1], el recorte no cambia nada.</li></ol></div>
           <p><strong>Por qué se suma:</strong> cada término es un desplazamiento dirigido. Un valor positivo aumenta la coordenada; uno negativo la reduce. Fuerzas opuestas se restan de forma natural porque una de ellas tiene signo negativo.</p>
           <p><strong>Orden exacto del código:</strong> inmovilidad → posible ruido → contactos → polos → eventos → auditor → suma → resistencia → recorte. La composición es una hipótesis transparente del proyecto, no una teoría publicada como conjunto.</p>
         </div>
@@ -256,7 +255,7 @@
             <tr><td>Polos y eventos</td><td><code>integratedStep</code></td><td><code>step</code></td><td>más intensidad, mayor efecto</td></tr>
             <tr><td>Atención</td><td><code>activeEventWeight</code></td><td><code>event_weight</code></td><td>cero fuera de la ventana</td></tr>
             <tr><td>Contraevento</td><td><code>oppositePosition</code></td><td><code>opposite_position</code></td><td>punto medio exactamente (0.5,0.5)</td></tr>
-            <tr><td>JDJ</td><td><code>jdjProductAxis</code></td><td><code>jdj_axis</code></td><td>división extrema = 1</td></tr>
+            <tr><td>JDJ y sumandos visibles</td><td><code>jdjProductAxisDetails</code></td><td><code>jdj_axis_details</code></td><td>Σh=1.60 y JDJ=0.80 en el ejemplo</td></tr>
             <tr><td>Auditor</td><td><code>integratedStep</code></td><td><code>step</code></td><td>requiere dos umbrales</td></tr>
           </tbody></table></div>
         </div>

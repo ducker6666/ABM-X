@@ -154,6 +154,10 @@ canvas { display: block; max-width: 100%; height: auto; }
 .stat-grid div { background: white; border: 1px solid var(--line); border-radius: 7px; padding: 11px 12px; }
 .stat-grid span, .stat-grid small { display: block; color: var(--muted); font-size: 10px; }
 .stat-grid strong { display: block; margin: 2px 0; font: 700 20px Georgia, serif; font-variant-numeric: tabular-nums; }
+.calculation-strip { max-width: 1450px; margin: 12px auto 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.calculation-strip div { background: #f5f1e9; border: 1px solid var(--line); border-radius: 7px; padding: 12px 15px; color: #686158; font-size: 12px; line-height: 1.55; }
+.calculation-strip strong { color: var(--ink); }
+.calculation-strip a { color: var(--a); font-weight: 750; text-decoration: none; }
 .removed-strip { max-width: 1450px; margin: 12px auto 0; border: 1px dashed #c9c2b6; padding: 12px 15px; border-radius: 7px; color: #686158; font-size: 12px; }
 .removed-strip strong { color: var(--ink); }
 .removed-strip span { display: block; font-style: italic; margin-top: 3px; }
@@ -280,6 +284,7 @@ blockquote { margin: 22px 0; padding: 4px 0 4px 22px; border-left: 4px solid var
   .workspace { padding-left: 12px; padding-right: 12px; }
   .chart-column { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .calculation-strip { grid-template-columns: 1fr; }
   .document-layout { display: block; padding: 20px 10px 60px; }
   .document-index { display: none; }
   .doc-section { grid-template-columns: 1fr; padding: 24px 18px; }

@@ -60,6 +60,12 @@ function runVerification() {
   const center = Array.from({ length: 4 }, () => ({ x: 0.5, y: 0.5 }));
   approx(Model.jdjProductAxis(split, axisConfig), 1);
   approx(Model.jdjProductAxis(center, axisConfig), 0.5);
+  const workedJdj = Model.jdjProductAxisDetails([
+    { x: 0.8, y: 0.2 }, { x: 0.2, y: 0.8 },
+  ], { ...axisConfig, signalA: [1, 0], signalB: [0, 1] });
+  approx(workedJdj.pairSum, 1.6);
+  assert(workedJdj.totalPairs === 4, "JDJ debe declarar sus cuatro pares ordenados");
+  approx(workedJdj.value, 0.8);
   assert(Model.dispersion(split) > Model.dispersion(center), "la dispersión debe distinguir extremos y centro");
 
   const clusters = Model.connectedComponents([
@@ -72,7 +78,8 @@ function runVerification() {
   const first = Model.initialize(5, 123, "uniform");
   const second = Model.initialize(5, 123, "uniform");
   assert(JSON.stringify(first) === JSON.stringify(second), "la semilla debe reproducir la inicialización");
-  first.forEach(agent => approx(agent.x + agent.y, 1));
+  assert(first.some(agent => Math.abs(agent.x + agent.y - 1) > 1e-6),
+    "la población sintética no debe quedar forzada sobre A+B=1");
 
   const membershipPoint = Model.agentFromMemberships(6 / 7, 1 / 7, { sourceId: "fila-1" });
   approx(membershipPoint.x, 6 / 7);
@@ -207,7 +214,7 @@ function runVerification() {
   assert(eventResult.agents[0].x < 0.2, "un evento activo debe mover a un agente dentro de su alcance");
   approx(eventResult.agents[1].x, 0.8);
 
-  return { ok: true, tests: 37, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
+  return { ok: true, tests: 40, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
 }
 
 if (typeof module !== "undefined" && module.exports) {

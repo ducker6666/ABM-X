@@ -34,7 +34,7 @@ Para un agente móvil que no realiza un salto de ruido:
 
 \[
 x_i(t+1)=\operatorname{clip}_{[0,1]^2}\left[
-x_i(t)+\frac{\eta(G_i(t)+P_i(t)+E_i(t))+C_i(t)}{k_i(t)}
+x_i(t)+\frac{\eta(G_i(t)+P_i(t)+E_i(t))+R_i(t)}{k_i(t)}
 \right].
 \]
 
@@ -42,7 +42,8 @@ x_i(t)+\frac{\eta(G_i(t)+P_i(t)+E_i(t))+C_i(t)}{k_i(t)}
   más miembros tenga más peso; no se usa gravedad newtoniana.
 - `P_i`: atracción de señales obstinadas con masa declarada.
 - `E_i`: eventos temporales declarados, con intensidad, alcance y duración visibles.
-- `C_i`: recentrado solo cuando interviene el auditor.
+- `R_i`: recentrado solo cuando interviene el auditor; se usa R para no
+  confundirlo con C, el contraevento.
 - `k_i`: compromiso creciente con la extremidad.
 
 El orden exacto es inmovilidad, posible ruido, red, polos/eventos, auditor,
@@ -55,10 +56,13 @@ grados de pertenencia y generan directamente la posición inicial
 La distancia euclídea se calcula después de colocar el punto; A y B no se
 reinterpretan como distancias.
 
-La población puede ser sintética —primero se sortea A, después se fija
-`B=1-A`— o importarse desde un CSV con cabeceras `A` y `B`. El archivo aportado
-`elecciones_23_X_grados_pertenencia.csv` fue auditado sin copiar su contenido:
-950 filas, valores en `[0,1]` y `A+B=1` salvo redondeo de coma flotante.
+La población puede ser sintética —A y B se sortean independientemente— o
+importarse desde un CSV con cabeceras `A` y `B`. La entrada no necesita una
+columna `pos`: el motor solo consume los dos valores normalizados. El archivo
+aportado `elecciones_23_X_grados_pertenencia.csv` fue auditado sin copiar su
+contenido: 950 filas, valores en `[0,1]` y `A+B=1` salvo redondeo. Esa relación
+pertenece a ese archivo concreto; no se impone a futuros datos ni a la nube
+sintética.
 
 La intensidad de polos y eventos usa 0–10 como peso equivalente. Área,
 tolerancia y homofilia también se muestran sobre 0–10 y se dividen por 10 para

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Guía de lectura</title>
-  <link rel="stylesheet" href="styles.css?v=integrated-3" />
+  <link rel="stylesheet" href="styles.css?v=integrated-4" />
 </head>
 <body class="document-body">
   <header class="site-header">
@@ -48,7 +48,7 @@
           <tr><td>Personas, N</td><td>Número de agentes simulados.</td><td>Hay más puntos y mayor coste de cálculo; no garantiza mayor realismo.</td></tr>
           <tr><td>Duración máxima</td><td>Número máximo de rondas.</td><td>Permite observar una evolución más larga.</td></tr>
           <tr><td>Semilla</td><td>Número que reproduce los sorteos.</td><td>No tiene un orden «mejor» o «peor»; una semilla distinta produce otra réplica.</td></tr>
-          <tr><td>Distribución de A</td><td>En modo sintético se genera A y después B=1−A.</td><td>No es una escala; se elige uniforme, central o dos grupos.</td></tr>
+          <tr><td>Distribución sintética A/B</td><td>En modo sintético se sortean A y B por separado y con la misma semilla.</td><td>No es una escala; se elige nube uniforme, central o dos grupos.</td></tr>
           <tr><td>Intensidad A/B</td><td>Peso equivalente de cada fuente fija, limitado a 0–10 en la interfaz.</td><td>El polo tiene más peso frente a las otras influencias.</td></tr>
           <tr><td>Área A/B, 0–10</td><td>Radio visible; el programa divide el nivel entre 10.</td><td><strong>Amplía el círculo A o B</strong> y alcanza opiniones más alejadas.</td></tr>
           <tr><td>Modalidad del evento</td><td>Aleatoria sortea todos sus atributos; manual permite escribir x, y y t.</td><td>No tiene orden. En ambos casos el contraevento se calcula en (1−x,1−y).</td></tr>
@@ -70,7 +70,7 @@
         </tbody>
       </table></div>
       <div class="callout safe"><strong>Mini leyenda:</strong> tolerancia baja = se acepta poca diferencia; tolerancia alta = se acepta más. Fuerza alta = movimiento más rápido. Área alta = influencia más lejana. Ruido alto = más saltos o saltos mayores. Inmovilidad alta = más puntos fijos. Pérdida de atención alta = eventos que se debilitan antes.</div>
-      <div class="callout neutral"><strong>Comprobación del CSV aportado:</strong> 950 filas; A y B entre 0 y 1; A+B=1 en todas las filas salvo redondeo numérico; y <code>A=(pos+7)/14</code>. Por eso la posición inicial es (A,B), no una posición aleatoria reconstruida.</div>
+      <div class="callout neutral"><strong>Entrada de datos:</strong> solo hacen falta A y B normalizados entre 0 y 1; el programa ignora cualquier columna <code>pos</code>. En el CSV aportado A+B=1 y por eso sus puntos forman una diagonal. Otros datos A/B pueden ocupar todo el plano y siempre se conservarán sin dispersión artificial.</div>
       <div class="callout neutral"><strong>Para los datos de COVID:</strong> primero habrá que definir qué miden los dos ejes, convertir las fechas reales a rondas y decidir qué variables se observan directamente y cuáles deben calibrarse. La coincidencia se evaluará sobre toda la trayectoria, no escogiendo una sola imagen parecida.</div>
     </section>
 
@@ -111,7 +111,7 @@
         <tbody>
           <tr><td>Clusters</td><td>Número de componentes bajo un umbral visible.</td><td>Cambia si cambia el umbral; no es una verdad única sobre “grupos sociales”.</td></tr>
           <tr><td>Dispersión</td><td>Cuánto se extiende la nube alrededor de su centro.</td><td>No distingue por sí sola uno, dos o muchos grupos.</td></tr>
-          <tr><td>JDJ A–B</td><td>Riesgo de bipolarización a lo largo del eje entre A y B.</td><td>Pierde la separación perpendicular y nunca debe leerse solo.</td></tr>
+          <tr><td>JDJ proyectado*</td><td>Riesgo de bipolarización después de proyectar cada posición (x,y) sobre el eje A–B.</td><td>No usa directamente la distancia euclídea; pierde la separación perpendicular y nunca debe leerse solo.</td></tr>
           <tr><td>Seguidores</td><td>Personas prácticamente coincidentes con un polo.</td><td>Es un criterio estricto; RMSD informa cercanía gradual.</td></tr>
           <tr><td>Movimiento medio</td><td>Tamaño medio del cambio en la última ronda.</td><td>Movimiento pequeño no equivale necesariamente a equilibrio estable.</td></tr>
           <tr><td>Auditor</td><td>Indica si la regla de intervención está activa.</td><td>Es una decisión normativa programada, no un descubrimiento causal.</td></tr>

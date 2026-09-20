@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Laboratorio de opinión</title>
-  <link rel="stylesheet" href="styles.css?v=integrated-3" />
+  <link rel="stylesheet" href="styles.css?v=integrated-4" />
 </head>
 <body>
   <header class="site-header">
@@ -46,9 +46,9 @@
           <label class="field">
             <span>Personas simuladas <output data-output-for="nAgents">200</output></span>
             <input id="nAgents" type="range" min="20" max="1000" step="10" value="200" data-reset-model />
-            <small class="variable-help">Primero se genera A entre 0 y 1; después B=1−A y la posición inicial es (A,B).</small>
+            <small class="variable-help">A y B se sortean por separado entre 0 y 1. Así la nube ocupa el mapa y no queda obligada a cumplir A+B=1.</small>
           </label>
-          <label class="field inline-field"><span>Distribución de A</span>
+          <label class="field inline-field"><span>Distribución sintética A/B</span>
             <select id="scenario" data-reset-model>
               <option value="uniform">Uniforme</option>
               <option value="central">Concentrada en 0.5</option>
@@ -205,7 +205,7 @@
         <div><span>Eventos activos</span><strong id="eventStat">0</strong></div>
         <div><span>Clusters</span><strong id="clusterStat">0</strong><small>umbral δ</small></div>
         <div><span>Dispersión</span><strong id="dispersionStat">0</strong></div>
-        <div><span>JDJ A–B</span><strong id="jdjStat">0</strong></div>
+        <div><span>JDJ proyectado*</span><strong id="jdjStat">0</strong><small id="jdjFormulaStat">2Σh/N²</small></div>
         <div><span>Auditor</span><strong id="auditStat">inactivo</strong></div>
         <div><span>Cerca de A</span><strong id="followerAStat">0</strong></div>
         <div><span>Cerca de B</span><strong id="followerBStat">0</strong></div>
@@ -215,11 +215,22 @@
         <div><span>Posiciones únicas</span><strong id="uniqueStat">0</strong></div>
       </section>
 
+      <section class="calculation-strip" aria-label="Cómo se calculan JDJ y el movimiento">
+        <div>
+          <strong>Cómo sale JDJ:</strong>
+          usa la posición actual (x,y), la proyecta sobre el eje A–B y calcula <span id="jdjLiveFormula">2Σh/N²</span>; cada h mide la oposición difusa de una pareja. No es la distancia euclídea directa. La proyección 2D y el factor 2 son adaptaciones declaradas.
+        </div>
+        <div>
+          <strong>Cómo se mueve una persona:</strong>
+          suma contactos, polos y eventos; aplica la tasa por ronda; añade el recentrado si el auditor está activo; divide por la resistencia y suma ese cambio a (x,y). <a href="formula.html#total">Ver el ejemplo completo con números →</a>
+        </div>
+      </section>
+
       <section class="removed-strip"><strong>Preparado para contrastación:</strong> los valores actuales son demostrativos. Cuando se incorporen los datos de COVID, A/B y cada evento deberán recibir posiciones, fechas, duración e intensidad observadas o calibradas; después se comparará la trayectoria simulada con la polarización real.</section>
     </section>
   </main>
 
-  <script src="model.js?v=integrated-3"></script>
-  <script src="app.js?v=integrated-3"></script>
+  <script src="model.js?v=integrated-4"></script>
+  <script src="app.js?v=integrated-4"></script>
 </body>
 </html>

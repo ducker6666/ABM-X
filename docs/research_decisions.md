@@ -5,7 +5,8 @@
 - La web presenta un único modelo integrado; los comparadores históricos dejan de aparecer como opciones configurables.
 - Las columnas observadas A y B son grados de pertenencia y se usan directamente como posición inicial `(A,B)`. No se reinterpretan como distancias.
 - Los polos se fijan en `A=(1,0)` y `B=(0,1)` y permanecen durante toda la simulación. Así conservan el significado del contrato de entrada.
-- El CSV aportado contiene 950 filas, A y B en `[0,1]`, `A+B=1` salvo redondeo y `A=(pos+7)/14`. El archivo describe una dimensión bipolar, no dos actitudes independientes.
+- El contrato de entrada recibe directamente A y B en `[0,1]`; `pos` no entra en el motor. El CSV aportado contiene 950 filas y cumple `A+B=1` salvo redondeo, de modo que ese archivo concreto describe una dimensión bipolar.
+- La población sintética sortea A y B de forma independiente para no imponer la diagonal `A+B=1`. Esta distribución es un escenario nulo, no una afirmación sobre datos reales; un CSV se conserva sin dispersión añadida.
 - La intensidad visible se limita a 0–10 y se interpreta como peso equivalente de fuentes fijas. El límite 10 es un rango de interfaz, no una constante social.
 - Cada polo tiene un radio de alcance explícito. Los eventos adicionales usan la misma operación y se registran por inicio, duración, intensidad y alcance.
 - Cada evento genera un contraevento por reflexión respecto a `(0.5,0.5)`: `C=(1-x_E,1-y_E)`. La igualdad de inicio, intensidad, alcance y duración es una simetría experimental declarada, no una ley social.
@@ -15,7 +16,7 @@
 - Atracción, reactancia y norma común siguen la función de afinidad de Zhang, Hu y Zhang (2025); su extensión a vectores 2D está declarada.
 - La resistencia por radicalidad sigue el compromiso de Duggins (2017). No se cambia el umbral epsilon con una fórmula no publicada.
 - El ruido local sigue a Pineda, Toral y Hernández-García (2013); la pérdida de atención usa un decaimiento exponencial basado en Schweitzer et al. (2020).
-- El auditor usa JDJ proyectado y dispersión. JDJ por sí solo puede dar riesgo medio a un consenso central; exigir dispersión impide intervenir en ese caso.
+- El auditor usa JDJ proyectado y dispersión. JDJ se calcula a partir de la posición actual `(x,y)`, proyectada mediante producto escalar sobre el eje A–B; no usa directamente la distancia euclídea a los polos. JDJ por sí solo puede dar riesgo medio a un consenso central; exigir dispersión impide intervenir en ese caso.
 - La activación JDJ del recentrado y la suma completa de mecanismos son reglas operativas del proyecto, no teorías publicadas como conjunto.
 - Se inspeccionaron los 25 PDF locales de `PhD Tesis` (24 trabajos únicos; el capítulo de Markov está duplicado por idioma). `web/guide.html` registra su uso.
 

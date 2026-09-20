@@ -1,6 +1,10 @@
 # Revisión de cumplimiento del simulador web
 
-> **Documento histórico del simulador anterior.** La implementación activa y sus pruebas se describen en `docs/formula_file_map.md` y `docs/validation_plan.md`.
+> **Documento histórico del simulador anterior.** No debe usarse para explicar
+> la implementación actual ni su JDJ. El contrato activo está en
+> `docs/integrated_model_contract.md`; las fórmulas legibles están en
+> `web/formula.html` y las pruebas actuales en `tests/test_integrated_model.py`
+> y `web/verification.js`.
 
 Fecha de revisión: 2026-06-22.
 

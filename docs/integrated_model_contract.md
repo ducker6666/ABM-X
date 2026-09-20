@@ -23,15 +23,16 @@ d_{iA}=\sqrt{(A_i-1)^2+B_i^2},\qquad
 d_{iB}=\sqrt{A_i^2+(B_i-1)^2}.
 \]
 
-Auditoría del archivo aportado
-`elecciones_23_X_grados_pertenencia.csv`: 950 filas; doce pares A/B distintos;
-valores entre 0 y 1; máximo `|A+B-1|=4.44e-16`; y máximo error frente a
-`A=(pos+7)/14`, `B=(7-pos)/14` igual a `4.44e-16`. Esos residuos son redondeo
-binario, no discrepancias sustantivas.
+La entrada contractual solo requiere A y B normalizados; una columna `pos`, si
+existe, no interviene en el motor. Como comprobación del archivo aportado
+`elecciones_23_X_grados_pertenencia.csv`: contiene 950 filas, doce pares A/B
+distintos, valores entre 0 y 1 y máximo `|A+B-1|=4.44e-16`. Esa última relación
+describe ese conjunto de datos y no se exige a futuros archivos.
 
-La población sintética sigue el mismo contrato: sortea A, fija `B=1-A` y crea
-el punto `(A,B)`. El lector CSV respeta campos entre comillas, comas y saltos de
-línea.
+La población sintética sortea A y B de forma independiente y crea el punto
+`(A,B)`. Es un escenario nulo reproducible que ocupa el plano; no constituye
+una distribución empírica. El lector CSV, en cambio, conserva cada par A/B sin
+añadir dispersión y respeta campos entre comillas, comas y saltos de línea.
 
 ## 2. Escalas visibles
 
@@ -68,7 +69,7 @@ Para un agente móvil que no realiza un salto de ruido:
 
 \[
 \Delta_i(t)=
-\frac{\eta\,[G_i(t)+P_i(t)+E_i(t)]+C_i(t)}{k_i(t)},
+\frac{\eta\,[G_i(t)+P_i(t)+E_i(t)]+R_i(t)}{k_i(t)},
 \]
 
 \[
@@ -78,7 +79,7 @@ x_i(t+1)=\operatorname{clip}_{[0,1]^2}[x_i(t)+\Delta_i(t)].
 - `G_i`: promedio firmado de los contactos de red.
 - `P_i`: desplazamiento ponderado de los polos persistentes.
 - `E_i`: desplazamiento ponderado de eventos activos.
-- `C_i`: recentrado si el auditor está activo; cero en otro caso.
+- `R_i`: recentrado si el auditor está activo; cero en otro caso.
 - `k_i=1+s r_i`: resistencia por extremidad.
 
 Polos y eventos se calculan por separado con la misma regla de fuente:
@@ -93,7 +94,30 @@ El `1` del denominador representa el peso de la posición propia. Si el agente
 es inmóvil, no cambia. Si el sorteo de ruido tiene éxito, esa ronda se sustituye
 por un salto local acotado. En otro caso se aplica la ecuación integrada.
 
-## 5. Correspondencia con el código
+## 5. JDJ proyectado
+
+El JDJ activo no usa directamente la distancia euclídea a los polos. Proyecta
+la posición actual sobre el eje A--B:
+
+\[
+s_i=\operatorname{clip}_{[0,1]}
+\frac{(x_i-R_A)\cdot(R_B-R_A)}{\|R_B-R_A\|^2},\quad
+\mu_A(i)=1-s_i,\quad \mu_B(i)=s_i.
+\]
+
+Después calcula los `N²` pares ordenados, incluidos los pares de una persona
+consigo misma:
+
+\[
+h_{ij}=\max[\mu_A(i)\mu_B(j),\mu_B(i)\mu_A(j)],\qquad
+JDJ_{proj}=\operatorname{clip}_{[0,1]}\frac{2\sum_{ij}h_{ij}}{N^2}.
+\]
+
+Producto y máximo siguen a Guevara et al. (2020). La proyección 2D y el factor
+2 son adaptaciones declaradas. El motor expone `sum(h_ij)` y `N²` para que el
+valor mostrado pueda recalcularse.
+
+## 6. Correspondencia con el código
 
 | Regla | JavaScript | Python | Prueba |
 |---|---|---|---|
@@ -102,6 +126,7 @@ por un salto local acotado. En otro caso se aplica la ecuación integrada.
 | Contraevento | `oppositePosition` | `opposite_position` | `(0.8,0.3)→(0.2,0.7)` |
 | Fuente ponderada | `weightedSourceDisplacement` | `weighted_source_displacement` | intensidad alta mueve más |
 | Actualización | `integratedStep` | `step` | polos, eventos, auditor e inmovilidad |
+| JDJ y sumandos | `jdjProductAxisDetails` | `jdj_axis_details` | `sum(h)=1.60`, `N²=4`, JDJ `0.80` |
 
 Comandos de verificación:
 

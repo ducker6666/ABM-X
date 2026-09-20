@@ -6,12 +6,12 @@ la suma completa como una teoria publicada. Documenta cuatro contribuciones:
     G_i: influencia firmada de contactos (Zhang, Hu y Zhang, 2025),
     P_i: polos obstinados ponderados (HK con senales constantes),
     E_i: eventos temporales declarados,
-    C_i: recentrado de una intervencion explicitamente activada,
+    R_i: recentrado de una intervencion explicitamente activada,
     k_i: compromiso creciente con la extremidad (Duggins, 2017).
 
 Para un agente movil que no realiza un salto de ruido:
 
-    x_i(t+1) = clip[x_i + (eta*(G_i + P_i + E_i) + C_i) / k_i].
+    x_i(t+1) = clip[x_i + (eta*(G_i + P_i + E_i) + R_i) / k_i].
 
 El orden, la extension vectorial y el disparador JDJ son decisiones del
 proyecto. Sus valores deben calibrarse antes de interpretar una sociedad real.
@@ -151,12 +151,15 @@ def load_membership_csv(path: str | Path) -> FloatArray:
 
 
 def initialize_memberships(n_agents: int, seed: int) -> FloatArray:
-    """Poblacion nula: sortea A~U(0,1), fija B=1-A y devuelve (A,B)."""
+    """Poblacion nula: sortea A y B independientemente en U(0,1).
+
+    Es una inicializacion sintetica reproducible, no una afirmacion empirica.
+    Los CSV se cargan sin ruido añadido y conservan exactamente cada par A/B.
+    """
 
     if n_agents < 1:
         raise ValueError("n_agents debe ser positivo")
-    membership_a = np.random.default_rng(seed).random(n_agents)
-    return np.column_stack((membership_a, 1.0 - membership_a))
+    return np.random.default_rng(seed).random((n_agents, 2))
 
 
 def opposite_position(position: FloatArray) -> FloatArray:
@@ -254,6 +257,44 @@ def axis_projection(opinions: FloatArray, signal_a: FloatArray, signal_b: FloatA
     return np.clip((x - a) @ direction / denominator, 0.0, 1.0)
 
 
+def jdj_axis_details(
+    opinions: FloatArray,
+    signal_a: FloatArray,
+    signal_b: FloatArray,
+) -> dict[str, float | int]:
+    """Devuelve JDJ proyectado y los sumandos que permiten auditarlo.
+
+    ``pair_sum`` incluye los N² pares ordenados, incluidos ``i=j``. El valor
+    visible es ``clip(2*pair_sum/N², 0, 1)``. La proyeccion 2D y el factor 2
+    son adaptaciones declaradas, no parte literal del JDJ ordinal original.
+    """
+
+    x = np.asarray(opinions, dtype=np.float64)
+    if len(x) == 0:
+        return {
+            "value": 0.0,
+            "pair_sum": 0.0,
+            "total_pairs": 0,
+            "mean_pair": 0.0,
+            "mean_projection": 0.0,
+        }
+    s = axis_projection(x, signal_a, signal_b)
+    membership_a = 1.0 - s
+    membership_b = s
+    first = membership_a[:, None] * membership_b[None, :]
+    second = membership_b[:, None] * membership_a[None, :]
+    opposition = np.maximum(first, second)
+    pair_sum = float(opposition.sum())
+    total_pairs = int(len(x) ** 2)
+    return {
+        "value": float(np.clip(2.0 * pair_sum / total_pairs, 0.0, 1.0)),
+        "pair_sum": pair_sum,
+        "total_pairs": total_pairs,
+        "mean_pair": pair_sum / total_pairs,
+        "mean_projection": float(s.mean()),
+    }
+
+
 def jdj_axis(opinions: FloatArray, signal_a: FloatArray, signal_b: FloatArray) -> float:
     """Adaptacion bipolar JDJ sobre el eje A--B.
 
@@ -264,15 +305,7 @@ def jdj_axis(opinions: FloatArray, signal_a: FloatArray, signal_b: FloatArray) -
     normalizacion son adaptaciones declaradas.
     """
 
-    x = np.asarray(opinions, dtype=np.float64)
-    if len(x) == 0:
-        return 0.0
-    s = axis_projection(x, signal_a, signal_b)
-    membership_a = 1.0 - s
-    membership_b = s
-    first = membership_a[:, None] * membership_b[None, :]
-    second = membership_b[:, None] * membership_a[None, :]
-    return float(np.clip(2.0 * np.maximum(first, second).mean(), 0.0, 1.0))
+    return float(jdj_axis_details(opinions, signal_a, signal_b)["value"])
 
 
 def dispersion(opinions: FloatArray) -> float:

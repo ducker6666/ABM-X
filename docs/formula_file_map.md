@@ -1,4 +1,8 @@
-# Mapa de fórmulas, código y pruebas — Paper 1
+# Mapa histórico de fórmulas, código y pruebas — modelo de control
+
+> Este mapa conserva la trazabilidad del modelo HK de control. La composición
+> integrada visible en la web se documenta en `docs/integrated_model_contract.md`
+> y `web/formula.html`.
 
 Fecha: 2026-09-20.
 
