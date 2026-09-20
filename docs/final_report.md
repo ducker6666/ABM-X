@@ -1,5 +1,7 @@
 # Informe final
 
+> **Documento histórico del prototipo inicial.** No describe la formulación activa del Paper 1. Consulte `web/paper.html` y `docs/research_decisions.md`.
+
 ## A. Resumen ejecutivo
 
 El archivo exacto `modelo_basado_en_agentes (1).py` no se localizo. El archivo disponible mas cercano, `Modelo base agentes.py`, implementa Vicsek: agentes con posiciones fisicas en un toro, direccion angular, velocidad constante, radio metricamente fisico, ruido angular uniforme y parametro de orden de alineamiento. No implementa un modelo de polarizacion politica, ni confianza acotada, ni red social, ni JDJ, ni estados actitudinales en `[0,1]^d`.

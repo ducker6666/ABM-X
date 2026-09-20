@@ -1,150 +1,109 @@
-# ABM X
+# ABM X — Paper 1
 
-ABM X es una simulación sencilla y visual para estudiar cómo pueden cambiar las opiniones de muchas personas cuando interactúan entre sí.
+Simulador bidimensional de opiniones con confianza acotada y dos señales constantes competidoras. Esta rama recupera la identidad visual del modelo original, pero reduce su dinámica a mecanismos que pueden explicarse, citarse y comprobarse.
 
-## La idea, explicada fácil
+## Decisión científica
 
-Imagina un cuadrado. Cada punto dentro del cuadrado representa a una persona. La posición del punto representa su opinión sobre dos temas diferentes:
+El modelo activo del primer paper contiene únicamente:
 
-- el eje X representa una dimensión de la opinión;
-- el eje Y representa otra dimensión de la opinión.
+1. Opiniones \(x_i(t)\in[0,1]^2\).
+2. Distancia euclídea.
+3. Promedio síncrono de Hegselmann–Krause dentro de un límite de confianza \(\varepsilon\).
+4. Dos señales constantes con pesos \(m_A\) y \(m_B\), siguiendo el modelo de señales/grupos obstinados.
 
-Los puntos empiezan repartidos por el cuadrado y, con el paso del tiempo, pueden moverse. Se mueven porque escuchan a personas con opiniones parecidas, reciben la influencia de polos políticos, reaccionan ante acontecimientos y forman grupos de opinión.
+No están activos la gravedad de clusters, el rebote al centro, la fatiga, la reactancia, los contraeventos, el ruido ni la tolerancia adaptativa. Esas ideas pertenecen al borrador histórico y no al Paper 1.
 
-El programa repite este proceso muchas veces. Cada repetición es un instante de tiempo, llamado `t`. Al observar todos esos instantes podemos estudiar si la sociedad llega a un consenso, se divide en grupos o se vuelve más polarizada.
+La ecuación completa es:
 
-## ¿Qué significa ABM?
+\[
+x_i(t+1)=
+\frac{\sum_{j\in\mathcal N_i(t)}x_j(t)+I_{iA}m_AR_A+I_{iB}m_BR_B}
+{|\mathcal N_i(t)|+I_{iA}m_A+I_{iB}m_B}.
+\]
 
-ABM significa *Agent-Based Model*, o modelo basado en agentes.
+`I_iA` e `I_iB` valen uno solamente cuando la señal correspondiente está a distancia euclídea \(\varepsilon\) o menos.
 
-En este proyecto, un agente es una persona simulada. El programa no intenta adivinar la opinión exacta de una persona real. Construye una población artificial para estudiar una pregunta:
+## Abrir las tres páginas
 
-> ¿Cómo pueden unas reglas sencillas de interacción producir un resultado colectivo, como la polarización?
-
-Esto convierte el programa en un pequeño laboratorio. Podemos cambiar las reglas y observar qué ocurre.
-
-## ¿Qué es la polarización?
-
-La polarización aparece cuando la población se separa en posiciones alejadas, normalmente alrededor de dos polos. Una población en el centro no es necesariamente una población polarizada.
-
-ABM X calcula un índice JDJ para resumir la posición de la población respecto a dos polos. Para cada agente se calcula su distancia euclídea a los dos polos y esa distancia se transforma en un grado de pertenencia a cada uno. Después se aplica la fórmula JDJ sobre esos grados de pertenencia.
-
-El índice es una medida de salida: describe lo que está ocurriendo en la población. No debe interpretarse automáticamente como una verdad sobre la sociedad real.
-
-## Qué puede hacer la simulación
-
-- Simular agentes con opiniones en dos dimensiones.
-- Hacer que los agentes escuchen a vecinos dentro de un radio de confianza.
-- Dar a cada agente una tolerancia, susceptibilidad, anclaje y umbral de inmovilidad.
-- Mantener las opiniones dentro del cuadrado `[0, 1] x [0, 1]`.
-- Añadir dos polos permanentes de influencia.
-- Crear acontecimientos temporales con fuerza, alcance, duración y fatiga.
-- Crear contraeventos o reacciones opuestas.
-- Detectar grupos compactos y representarlos como masas sociales.
-- Comparar modelos clásicos con el modelo extendido.
-- Ejecutar pruebas automáticas y simulaciones reproducibles mediante una semilla.
-- Ver la dinámica en una interfaz web interactiva.
-- Exportar resultados a CSV y Parquet.
-
-## Una aclaración importante
-
-El proyecto combina modelos conocidos de la literatura con extensiones de investigación. La confianza acotada, el anclaje y la susceptibilidad tienen antecedentes en modelos de dinámica de opiniones. La gravedad de los clusters, la fatiga de los eventos, los contraeventos y el rebote hacia el centro son mecanismos experimentales que necesitan calibración y validación con datos reales.
-
-Por tanto, este programa es un laboratorio computacional reproducible. No es una prueba de que una sociedad real se comporte exactamente como la simulación.
-
-## Cómo instalarlo
-
-Se necesita Python 3.10 o una versión posterior.
-
-```bash
-cd ABM-X
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
-
-En Windows, la activación del entorno virtual es:
-
-```powershell
-.venv\\Scripts\\activate
-```
-
-## Cómo comprobar que funciona
-
-Ejecuta las pruebas:
-
-```bash
-python -m pytest
-```
-
-Las pruebas comprueban, entre otras cosas, las fronteras del espacio actitudinal, la reproducibilidad, los modelos base y los ejemplos del índice JDJ.
-
-## Cómo ejecutar modelos
-
-Comparación de modelos base:
-
-```bash
-python experiments/baseline_comparison.py --config data/default_config.yaml
-```
-
-Modelo extendido:
-
-```bash
-python experiments/run_final_model.py --config data/final_model.yaml
-```
-
-Análisis de sensibilidad:
-
-```bash
-python experiments/sensitivity_analysis.py --config data/final_model.yaml
-```
-
-Los resultados se guardan en `outputs/`. Esa carpeta contiene archivos generados y no se sube al repositorio para evitar mezclar resultados de una ejecución con el código del modelo.
-
-## Cómo abrir la versión visual
-
-Desde la carpeta raíz del repositorio, inicia un servidor local:
+Desde la raíz del repositorio:
 
 ```bash
 python -m http.server 8765 --directory web
 ```
 
-Después abre en el navegador:
+Después abre [http://localhost:8765/](http://localhost:8765/).
 
-```text
-http://localhost:8765/
+- Página 1: simulador bidimensional.
+- Página 2: fórmulas, ejemplos, fuentes y correspondencia con el código.
+- Página 3: introducción, pregunta, objetivos, metodología, limitaciones y hoja de ruta del paper.
+
+Para cerrar el servidor, vuelve al Terminal y pulsa `Control + C`.
+
+Si aparece un error 404, comprueba que el comando se ejecuta dentro de la carpeta `project`. También puedes usar una ruta absoluta:
+
+```bash
+python -m http.server 8765 --directory "/Users/zhenboch/PhD Tesis/MBA:ABM:Modelo basado en agentes/project/web"
 ```
 
-La página permite modificar las variables antes de lanzar la simulación. También incluye un enlace a la leyenda matemática, donde se explica qué significa cada variable y qué fórmula utiliza.
+## Código que debe poder defenderse
 
-## Organización del proyecto
+- `src/paper1_model.py`: versión Python de la ecuación, con explicación, fórmulas y ejemplo.
+- `web/model.js`: la misma regla para el simulador web, separada del dibujo.
+- `web/app.js`: interfaz y representación visual; no contiene una segunda teoría.
+- `tests/test_paper1_model.py`: casos matemáticos mínimos.
+- `web/verification.js`: verificación independiente del motor JavaScript.
+- `data/paper1_config.yaml`: protocolo propuesto del experimento.
+- `experiments/run_paper1.py`: ejecución reproducible de condiciones y semillas.
 
-```text
-src/          modelos, métricas y funciones matemáticas
-tests/        pruebas automáticas
-experiments/  experimentos reproducibles
-data/         configuraciones YAML
-docs/         auditoría, modelo matemático y revisión bibliográfica
-references/   referencias y registro de búsquedas
-web/          simulador visual y leyenda matemática
-outputs/      resultados generados localmente
+Los ficheros anteriores como `src/final_model.py`, `src/attitudinal_abm.py` y `src/proposed_model.py` se conservan como historial exploratorio. No definen el Paper 1.
+
+## Verificación
+
+```bash
+python -m pytest
+node web/verification.js
 ```
 
-## Documentación recomendada
+Para verificar el flujo experimental con una ejecución pequeña:
 
-- `docs/code_audit.md`: auditoría del código y supuestos.
-- `docs/mathematical_model.md`: ecuaciones del modelo.
-- `docs/literature_review.md`: revisión de modelos y referencias.
-- `docs/novelty_matrix.md`: antecedentes y posibles contribuciones.
-- `docs/ODD_protocol.md`: descripción formal del modelo basado en agentes.
-- `web/formula.html`: leyenda visual y matemática para entender la interfaz.
+```bash
+python experiments/run_paper1.py --quick
+```
 
-## Reproducibilidad
+El protocolo completo se ejecuta sin `--quick` y guarda `outputs/paper1_results.csv`. La opción rápida solo comprueba que el flujo funciona; no produce resultados publicables.
 
-Las simulaciones utilizan una semilla aleatoria configurable. Para comparar dos ejecuciones hay que conservar la misma configuración YAML, la misma semilla y la misma versión del código.
+## Qué se mediría
 
-La reproducibilidad computacional no significa que el modelo esté validado empíricamente. La validación requiere comparar sus resultados con datos reales y comprobar si las hipótesis explican mejor los patrones observados.
+- Dispersión bidimensional alrededor del centroide.
+- Número de clusters como componentes conexas bajo un umbral declarado.
+- Seguidores y distancia RMS a cada señal.
+- JDJ-Pro proyectado sobre el eje A–B, únicamente como diagnóstico exploratorio.
 
-## Estado del proyecto
+El JDJ publicado es bipolar y unidimensional. Aquí la reducción 2D→1D mediante proyección geométrica está etiquetada como adaptación; nunca mueve agentes y nunca debe presentarse como una versión multidimensional validada.
 
-ABM X es una base de investigación en desarrollo. Sus resultados deben interpretarse como experimentos de simulación. Antes de presentar una conclusión científica, conviene realizar análisis de sensibilidad, estudios de ablación, calibración, validación fuera de muestra y una revisión bibliográfica actualizada.
+## Paper 1 recomendado
+
+Título de trabajo:
+
+> Señales constantes competidoras en un modelo bidimensional de confianza acotada: consenso, fragmentación y medición de la polarización.
+
+La posible contribución es una extensión bidimensional reproducible, con dos señales competidoras y una comparación transparente de medidas. No se afirma novedad absoluta hasta cerrar una revisión sistemática.
+
+## Próximas fases posibles
+
+1. Señales temporales/eventos con una formulación y datos observables.
+2. Red social explícita.
+3. Confianza heterogénea o adaptativa basada en una formulación publicada.
+4. Calibración y validación empírica como eje de una eventual tesis.
+
+Cada extensión debe añadirse por separado, con ablación contra el modelo base.
+
+## Referencias centrales
+
+- Hegselmann & Krause (2002), modelo de confianza acotada HK.
+- Fortunato et al. (2005), opiniones vectoriales bidimensionales.
+- Hegselmann & Krause (2015), señales constantes.
+- Glass & Glass (2021), dos grupos obstinados competidores.
+- Guevara et al. (2020), medida difusa JDJ para riesgo de bipolarización.
+
+Los DOI, URLs y metadatos completos están en `references/references.bib`.

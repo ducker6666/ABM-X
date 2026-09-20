@@ -38,3 +38,7 @@ query,base,date,results,reviewed,included,exclusion_criterion
 "bounded confidence model hypergraphs DOI",web search,2026-06-20,10,2,1,"used SIAM DOI page"
 "adaptive bounded-confidence opinion dynamics networks DOI",web search,2026-06-20,10,2,1,"used Oxford DOI page"
 "opinion formation distribution bounded-confidence various networks DOI",web search,2026-06-20,10,2,1,"used APS DOI page"
+"Vector Opinion Dynamics in a Bounded Confidence Consensus Model DOI",web search,2026-09-20,10,3,1,"primary article and arXiv metadata verified"
+"Social Influence of Competing Groups and Leaders in Opinion Dynamics",web search,2026-09-20,10,3,1,"publisher DOI and author manuscript metadata verified"
+"Measuring Polarization A Fuzzy Set Theoretical Approach JDJ",web search,2026-09-20,10,3,1,"open full text and DOI metadata verified"
+"Hegselmann Krause constant signals strength epsilon",web search,2026-09-20,10,2,1,"primary DOI/source used for exact mechanism"

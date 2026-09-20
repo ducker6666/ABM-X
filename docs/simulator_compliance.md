@@ -1,5 +1,7 @@
 # Revisión de cumplimiento del simulador web
 
+> **Documento histórico del simulador anterior.** La implementación activa y sus pruebas se describen en `docs/formula_file_map.md` y `docs/validation_plan.md`.
+
 Fecha de revisión: 2026-06-22.
 
 Este documento evalúa el simulador `project/web` frente a los puntos de diseño solicitados. La evaluación distingue entre implementación computacional, coherencia matemática y validación científica.
