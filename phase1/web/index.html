@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Simulador reproducible del modelo Hegselmann–Krause de Fase 1.">
+  <title>Fase 1 · Simulador ABM</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Navegación principal">
+      <a class="brand" href="index.html">ABM X <small>Fase 1</small></a>
+      <div class="nav-links">
+        <a href="index.html" aria-current="page">1 · Simulador</a>
+        <a href="formulas.html">2 · Fórmulas</a>
+        <a href="paper.html">3 · Estudio</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Laboratorio reproducible · modelo mínimo</div>
+        <h1>Cómo cambian las opiniones cuando solo escuchamos a quienes sentimos cerca</h1>
+        <p class="lede">Cada punto es una persona simulada. Su posición entre 0 y 1 es su opinión. En cada paso escucha a las personas situadas a una distancia máxima ε y adopta su promedio.</p>
+      </div>
+      <aside class="plain-box">
+        <strong>En palabras sencillas</strong><br>
+        Si dos niños piensan de manera parecida, conversan. Si están demasiado alejados, no se escuchan. Todos deciden su nueva opinión al mismo tiempo.
+      </aside>
+    </section>
+
+    <section class="simulator-grid" aria-label="Simulador">
+      <aside class="panel controls">
+        <h2>Preparar experimento</h2>
+        <div class="field">
+          <label for="agents">Agentes <span>personas</span></label>
+          <input id="agents" type="number" min="2" max="500" value="100">
+          <small>Tamaño de la población artificial.</small>
+        </div>
+        <div class="field">
+          <label for="epsilon">Confianza ε <span id="epsilon-value">0.20</span></label>
+          <input id="epsilon" type="range" min="0" max="1" step="0.01" value="0.20">
+          <small>Distancia máxima para escuchar a otra persona.</small>
+        </div>
+        <div class="field">
+          <label for="steps">Máximo de pasos</label>
+          <input id="steps" type="number" min="1" max="1000" value="100">
+        </div>
+        <div class="field">
+          <label for="seed">Semilla</label>
+          <input id="seed" type="number" min="1" max="4294967295" value="2026">
+          <small>La misma semilla reproduce la misma población.</small>
+        </div>
+        <div class="field">
+          <label for="scenario">Estado inicial</label>
+          <select id="scenario">
+            <option value="uniform">Uniforme en toda la escala</option>
+            <option value="central">Concentrado en el centro</option>
+            <option value="bipolar_balanced">Dos lados 50/50</option>
+            <option value="bipolar_unbalanced">Dos lados 70/30</option>
+            <option value="three_groups">Tres grupos</option>
+          </select>
+          <small>Es una condición experimental declarada, no un resultado.</small>
+        </div>
+        <div class="button-grid">
+          <button id="initialize">Inicializar</button>
+          <button id="start" class="primary">Iniciar</button>
+          <button id="pause" disabled>Pausar</button>
+          <button id="step">Un paso</button>
+          <button id="reset">Reiniciar</button>
+          <button id="export">Exportar CSV</button>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </aside>
+
+      <div>
+        <div class="metrics" aria-label="Métricas actuales">
+          <div class="metric"><span>Tiempo</span><strong data-metric="time">0</strong></div>
+          <div class="metric"><span>Media</span><strong data-metric="mean">0</strong></div>
+          <div class="metric"><span>JDJ producto normalizado</span><strong data-metric="jdj_product_normalized">0</strong></div>
+          <div class="metric"><span>Varianza normalizada</span><strong data-metric="normalized_variance">0</strong></div>
+          <div class="metric"><span>Grupos operativos</span><strong data-metric="clusters">0</strong></div>
+          <div class="metric"><span>Amplitud</span><strong data-metric="span">0</strong></div>
+          <div class="metric"><span>Máx. desplazamiento</span><strong data-metric="max_displacement">0</strong></div>
+          <div class="metric"><span>ε utilizado</span><strong id="epsilon-card">0.2000</strong></div>
+        </div>
+
+        <div class="warning">
+          <strong>Precaución:</strong> JDJ producto normalizado puede valer 1 tanto con dos extremos equilibrados como con todas las personas en el centro. Se muestra precisamente para estudiar esa limitación; no es un diagnóstico automático.
+        </div>
+
+        <div class="chart-grid" style="margin-top: 1rem">
+          <section class="chart-card">
+            <h2>Distribución actual de agentes</h2>
+            <canvas id="population-chart" aria-label="Opiniones actuales de los agentes"></canvas>
+          </section>
+          <section class="chart-card">
+            <h2>Evolución de dos indicadores</h2>
+            <canvas id="history-chart" aria-label="Evolución de JDJ y varianza"></canvas>
+          </section>
+        </div>
+
+        <section class="panel table-wrap" style="margin-top: 1rem">
+          <h2>Registro reciente</h2>
+          <table id="history-table">
+            <thead><tr><th>t</th><th>Media</th><th>Var. norm.</th><th>JDJ norm.</th><th>Grupos</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer>Modelo exploratorio abstracto. No predice por sí solo el comportamiento de una sociedad real.</footer>
+  <script src="model.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

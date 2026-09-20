@@ -1,5 +1,11 @@
 # ABM X
 
+> **Estructura del repositorio.** La versión científicamente mínima y trazable se
+> desarrolla en [`phase1/`](phase1/README.md). Los directorios históricos
+> `src/`, `web/`, `docs/`, `experiments/` y `data/` se conservan como borrador
+> exploratorio y no forman parte del modelo de Fase 1. Véase
+> [`LEGACY_DRAFT.md`](LEGACY_DRAFT.md).
+
 ABM X es una simulación sencilla y visual para estudiar cómo pueden cambiar las opiniones de muchas personas cuando interactúan entre sí.
 
 ## La idea, explicada fácil

@@ -1,0 +1,9 @@
+date,source,query_or_identifier,purpose,status
+2026-09-20,JASSS,"Hegselmann Krause 2002 bounded confidence",Confirmar fuente primaria y dinámica HK,included
+2026-09-20,Europe PMC,"PMC7274663 / 10.1007/978-3-030-50143-3_40",Extraer ecuaciones y metadatos de la familia JDJ,included
+2026-09-20,Taylor and Francis,"10.1080/0022250X.2016.1147443",Distinguir conceptos y medidas de polarización,included
+2026-09-20,PubMed and PLOS,"10.1371/journal.pone.0275283",Identificar comparación matemática reciente de medidas,included
+2026-09-20,Automatica,"10.1016/j.automatica.2023.111302",Localizar revisión moderna de confianza limitada,included
+2026-09-20,SIAM,"10.1137/25M1730818",Comprobar estado reciente de modelos multidimensionales y distancia,included
+2026-09-20,JASSS,"10.18564/jasss.4259",Aplicar protocolo ODD 2020,included
+2026-09-20,Journal of Statistical Software,"10.18637/jss.v008.i14",Documentar generador reproducible entre lenguajes,included

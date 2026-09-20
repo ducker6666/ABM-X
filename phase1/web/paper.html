@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Contexto, objetivo, metodología y límites del estudio ABM de Fase 1.">
+  <title>Fase 1 · Contexto del estudio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Navegación principal">
+      <a class="brand" href="index.html">ABM X <small>Fase 1</small></a>
+      <div class="nav-links">
+        <a href="index.html">1 · Simulador</a>
+        <a href="formulas.html">2 · Fórmulas</a>
+        <a href="paper.html" aria-current="page">3 · Estudio</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="prose">
+    <section class="hero" style="grid-template-columns: 1fr">
+      <div>
+        <div class="eyebrow">Documento para lectores · protocolo provisional</div>
+        <h1>Qué pregunta este estudio y qué no puede demostrar</h1>
+        <p class="lede">La Fase 1 utiliza un modelo conocido y deliberadamente pequeño para estudiar cómo interpretamos las medidas de polarización.</p>
+      </div>
+    </section>
+
+    <article class="article-card">
+      <h2>Introducción</h2>
+      <p>La palabra polarización puede referirse a fenómenos diferentes: separación, dispersión, existencia de dos grupos, distancia entre grupos o equilibrio entre sus tamaños. Una sola cifra puede confundirlos. Bramson y colaboradores distinguen nueve sentidos de polarización y advierten que cada medida observa propiedades diferentes.</p>
+      <p>Los modelos basados en agentes permiten realizar experimentos controlados con poblaciones artificiales. No reproducen automáticamente una sociedad real, pero ayudan a comprobar si una interpretación matemática es coherente bajo condiciones conocidas.</p>
+    </article>
+
+    <article class="article-card">
+      <h2>Problema</h2>
+      <p>Una medida puede devolver un valor alto en configuraciones sociales muy distintas. En particular, la variante producto de la familia JDJ depende, tras la transformación utilizada, de la media de la población. Esto hace necesario estudiarla junto a otros observables y no asignarle etiquetas automáticas como “polarización alta”.</p>
+    </article>
+
+    <article class="article-card">
+      <h2>Pregunta y objetivo</h2>
+      <p><strong>Pregunta:</strong> ¿puede una medida difusa de riesgo de polarización distinguir consenso, fragmentación, extremización y bipolarización cuando se aplica a un modelo clásico de confianza limitada?</p>
+      <p><strong>Objetivo:</strong> construir un experimento completamente reproducible que compare JDJ producto, varianza, amplitud y número operativo de grupos bajo escenarios controlados.</p>
+      <div class="warning">La novedad de esta pregunta todavía debe confirmarse mediante una revisión sistemática. Esta página no afirma que exista ya una contribución original demostrada.</div>
+    </article>
+
+    <article class="article-card">
+      <h2>Metodología</h2>
+      <ol>
+        <li>Crear poblaciones artificiales mediante una semilla reproducible.</li>
+        <li>Aplicar únicamente la dinámica Hegselmann–Krause unidimensional y síncrona.</li>
+        <li>Variar ε y el escenario inicial según un diseño experimental previamente registrado.</li>
+        <li>Repetir cada condición con múltiples semillas.</li>
+        <li>Informar distribución completa, intervalos de incertidumbre y sensibilidad; no solo una ejecución vistosa.</li>
+        <li>Comparar las métricas sin permitir que ninguna realimente la dinámica.</li>
+      </ol>
+    </article>
+
+    <article class="article-card">
+      <h2>Cómo funciona el ABM</h2>
+      <p>Una persona simulada escucha únicamente a quienes se encuentran dentro de su radio de confianza. Después adopta el promedio del grupo escuchado. Todos cambian simultáneamente. Con radios amplios puede aparecer consenso; con radios reducidos pueden persistir varios grupos. Son comportamientos conocidos del modelo HK, no descubrimientos de este proyecto.</p>
+      <p>La página del simulador permite observar esta dinámica y exportar los indicadores. La página de fórmulas permite reconstruir cada cálculo a mano.</p>
+    </article>
+
+    <article class="article-card">
+      <h2>Resultados esperados y criterio de interpretación</h2>
+      <p>No se presupone que JDJ sea correcto o incorrecto. Se contrastará si ordena coherentemente escenarios cuya estructura conocemos porque la hemos construido. Si dos configuraciones conceptualmente diferentes producen el mismo valor, se informará como limitación o como característica del concepto difuso medido.</p>
+      <p>No se utilizarán umbrales arbitrarios de “bajo”, “medio” y “alto”. Cualquier umbral futuro deberá calibrarse contra escenarios de referencia o datos externos.</p>
+    </article>
+
+    <article class="article-card">
+      <h2>Limitaciones</h2>
+      <ul>
+        <li>Una opinión escalar no representa toda la complejidad ideológica.</li>
+        <li>La población no tiene red, instituciones, medios ni desigualdad de influencia.</li>
+        <li>La media de vecinos es una hipótesis conductual idealizada.</li>
+        <li>Los escenarios iniciales no se han calibrado con encuestas reales.</li>
+        <li>La reproducibilidad del código no equivale a validación empírica.</li>
+        <li>El simulador genera hipótesis y examina medidas; no predice elecciones ni diagnostica sociedades concretas.</li>
+      </ul>
+    </article>
+
+    <article class="article-card">
+      <h2>Conclusión provisional</h2>
+      <p>El valor de esta primera fase reside en saber exactamente qué representa cada número. El modelo se mantendrá mínimo hasta completar sus pruebas, el diseño experimental y la revisión de novedad. Las extensiones solo se incorporarán en fases posteriores y de una en una.</p>
+    </article>
+
+    <article class="article-card">
+      <h2>Transparencia y materiales</h2>
+      <p>El motor Python, el motor JavaScript, las pruebas, el protocolo ODD, las decisiones de investigación y la bibliografía se encuentran en la carpeta <code>phase1/</code>. El modelo anterior se conserva como borrador histórico y no se mezcla con estos resultados.</p>
+    </article>
+  </main>
+
+  <footer>Fase 1 · Modelo mínimo antes de añadir complejidad.</footer>
+</body>
+</html>
