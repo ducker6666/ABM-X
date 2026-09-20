@@ -13,6 +13,8 @@ Consulta la [evaluación para artículo y tesis](docs/research_readiness.md).
 
 ### Comprender antes de ampliar
 
+La página Teoría incluye una ficha junto a cada ecuación: significado de símbolos, ejemplo, razón de construcción y alcance de las fuentes. Las fichas se editan en `web/equation_notes.cjs` y se incorporan al HTML estático con `npm run math`; `node scripts/render_math.cjs --check` comprueba que están actualizadas. No añaden código al motor de simulación.
+
 - [Significado de las variables](docs/variable_contract.md): definiciones operativas y qué falta medir en la sociedad.
 - [Protocolo experimental breve](docs/experimental_protocol.md): distinguir polo–grupo de mera amplificación individual. Plan pendiente de ejecución, sin resultados inventados.
 - En el simulador, selecciona una persona y pulsa **Avanzar 1 ronda y explicar** bajo los indicadores. Registra su cálculo real: vecinos, fuerzas, umbral, ruido y límites. No altera las reglas ni añade sorteos.

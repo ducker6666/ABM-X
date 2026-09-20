@@ -227,4 +227,15 @@ test('Inspector: no muestra el cálculo de otra persona ni tras reiniciar',()=>{
   setup([agent(.5,.5)]);e.renderMovementExplanation();
   assert.ok(box.textContent.includes('Agente 1 seleccionado'));
 });
-console.log(`${passed} pruebas del motor web superadas.`);
+test('Documentación: cada ecuación tiene símbolos, ejemplo, razón y referencias enlazadas',()=>{
+  const equations=require('./equations.cjs'),notes=require('./equation_notes.cjs');
+  const html=fs.readFileSync(path.join(__dirname,'formula.html'),'utf8');
+  assert.deepEqual(Object.keys(notes),Object.keys(equations));
+  for(const [id,n] of Object.entries(notes)) {
+    assert.equal(html.split(`<!-- notes:${id} -->`).length,2);
+    for(const key of ['symbols','example','reason','source']) assert.ok(n[key].length,`${id}: ${key}`);
+    for(const [symbol,meaning] of n.symbols) assert.ok(symbol.length && meaning.length);
+    for(const match of n.source.matchAll(/\[(\d+)\]/g)) assert.ok(html.includes(`id="ref${match[1]}"`));
+  }
+});
+console.log(`${passed} pruebas web superadas (motor y documentación).`);

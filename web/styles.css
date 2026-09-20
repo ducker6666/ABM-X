@@ -171,6 +171,14 @@ input[type=range] { accent-color: var(--accent); min-height: 24px; }
 :focus-visible { outline: 3px solid #cf7b19; outline-offset: 3px; }
 .equation { overflow-x: auto; max-width: 100%; background: #f3f7fa; border: 1px solid #dce7ee; border-radius: 10px; padding: 24px 16px; margin: 18px 0; }
 .equation math { font-size: 1.25rem; }
+.equation-notes dl { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(0, 3fr); margin: 16px 0; line-height: 1.65; }
+.equation-notes dt, .equation-notes dd { padding: 12px; margin: 0; border-bottom: 1px solid #dce7ee; }
+.equation-notes dt { font-weight: bold; background: #f3f7fa; overflow-wrap: anywhere; }
+.source-note { padding: 14px; border-left: 4px solid #58778a; background: #f3f7fa; }
+@media (max-width: 600px) {
+  .equation-notes dl { display: block; }
+  .equation-notes dt { border-bottom: 0; }
+}
 .example { background: #f0f7f3; border-left: 4px solid #51876b; padding: 16px 20px; margin: 18px 0; border-radius: 0 8px 8px 0; }
 .example h3 { margin: 0 0 8px; }
 .example li { margin: 8px 0; }
