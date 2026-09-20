@@ -11,59 +11,11 @@ const state = {
   history: [],
   random: null,
   network: null,
+  events: [],
+  eventCounter: 0,
   lastMeanMove: 0,
   lastAudit: false,
-};
-
-const MODEL_INFO = {
-  integrated: {
-    label: "MODELO INTEGRADO",
-    title: "Influencia social, señales y control auditable",
-    description: "Los contactos, polos, compromiso, ruido y auditor pueden actuar a la vez; cada término se calcula por separado.",
-    badges: ["Red social", "Grupos con masa", "Reactancia", "Auditor visible"],
-    readingTitle: "“Gravedad” significa influencia agregada, no física.",
-    readingText: "Un grupo grande pesa más porque contiene más voces. El tamaño del anillo muestra cuántas personas hay; no se aplica una ley de gravitación.",
-  },
-  hk: {
-    label: "CONTROL HK",
-    title: "HK: promedio simultáneo de toda la vecindad",
-    description: "Es el control teórico. Puede producir un único punto porque todos los agentes conectados calculan exactamente el mismo promedio.",
-    badges: ["Euclídea", "Síncrona", "Todos los cercanos", "Sin anclaje"],
-    readingTitle: "Que aparezca un solo punto no es un error de dibujo.",
-    readingText: "En HK, varios agentes pueden ocupar exactamente la misma coordenada. El lienzo superpone sus círculos y parecen uno solo.",
-  },
-  dw: {
-    label: "DEFFUANT–WEISBUCH",
-    title: "Deffuant–Weisbuch: encuentros parciales y aleatorios",
-    description: "Solo una muestra de parejas se encuentra por ronda y cada contacto recorre una fracción μ de la distancia.",
-    badges: ["Euclídea", "Parejas", "Compromiso parcial", "Estocástica"],
-    readingTitle: "La velocidad ahora tiene una interpretación explícita.",
-    readingText: "μ controla cuánto cambia una persona por encuentro y el número de contactos controla cuántas oportunidades de cambio hay por ronda.",
-  },
-  fj: {
-    label: "FRIEDKIN–JOHNSEN",
-    title: "Friedkin–Johnsen: memoria de la opinión inicial",
-    description: "Cada agente conserva el peso g de su posición inicial y asigna 1−g al promedio social aceptado.",
-    badges: ["Euclídea", "Síncrona", "Todos los cercanos", "Con anclaje"],
-    readingTitle: "El desacuerdo puede persistir sin añadir ruido.",
-    readingText: "Las anclas iniciales diferentes impiden que el consenso exacto sea automático. La combinación con confianza acotada está declarada como adaptación.",
-  },
-  network: {
-    label: "FJ SOBRE RED",
-    title: "Anclaje inicial sobre una red social",
-    description: "Cada punto escucha únicamente a contactos conectados y cercanos en opinión. Esta es la vista predeterminada más lenta.",
-    badges: ["Euclídea", "Síncrona", "Red sintética", "Con anclaje"],
-    readingTitle: "La red limita quién puede influir.",
-    readingText: "El anclaje conserva parte de la opinión inicial. Los clusters, el color y el JDJ solo describen: no empujan a nadie.",
-  },
-  temporal: {
-    label: "RED Y SEÑALES TEMPORALES",
-    title: "Red y señales activas en intervalos observables",
-    description: "La red y el anclaje se mantienen; cada señal se enciende y apaga en el intervalo declarado.",
-    badges: ["Euclídea", "Red sintética", "Con anclaje", "Señales temporales"],
-    readingTitle: "La señal no decae mediante una curva inventada.",
-    readingText: "Su intensidad es constante mientras está activa y cero fuera del intervalo. Los tiempos deberán vincularse a eventos reales en una aplicación empírica.",
-  },
+  activeEvents: 0,
 };
 
 const elements = {
@@ -75,6 +27,9 @@ const elements = {
   step: document.getElementById("stepBtn"),
   reset: document.getElementById("resetBtn"),
   export: document.getElementById("exportBtn"),
+  randomEvent: document.getElementById("randomEventBtn"),
+  counterEvent: document.getElementById("counterEventBtn"),
+  eventLog: document.getElementById("eventLog"),
   status: document.getElementById("runStatus"),
 };
 
@@ -92,15 +47,21 @@ function checkedValue(id) {
 
 function config() {
   return {
-    phase: document.getElementById("phase").value,
+    phase: "integrated",
     epsilon: numberValue("epsilon"),
     signalA: [numberValue("signalAx"), numberValue("signalAy")],
     signalB: [numberValue("signalBx"), numberValue("signalBy")],
     signalAWeight: numberValue("signalAWeight"),
     signalBWeight: numberValue("signalBWeight"),
-    compromiseRate: numberValue("compromiseRate"),
-    interactionsPerAgent: numberValue("interactionsPerAgent"),
-    anchorWeight: numberValue("anchorWeight"),
+    signalAReach: numberValue("signalAReach"),
+    signalBReach: numberValue("signalBReach"),
+    signalAPermanent: checkedValue("signalAPermanent"),
+    signalBPermanent: checkedValue("signalBPermanent"),
+    // Constantes heredadas solo para que el validador común siga siendo
+    // compatible con las pruebas de los modelos de control retirados de la UI.
+    compromiseRate: 0.08,
+    interactionsPerAgent: 0.5,
+    anchorWeight: 0.85,
     networkDegree: numberValue("networkDegree"),
     networkRewiring: numberValue("networkRewiring"),
     signalAStart: numberValue("signalAStart"),
@@ -154,20 +115,21 @@ function resetModel() {
   state.accumulator = 0;
   state.lastMeanMove = 0;
   state.lastAudit = false;
+  state.activeEvents = 0;
+  state.events = [];
+  state.eventCounter = 0;
   state.random = Model.mulberry32(seed + 104729);
   state.agents = Model.initialize(
     nAgents,
     seed,
     document.getElementById("scenario").value,
   );
-  state.agents = Model.assignImmobility(state.agents, c.phase === "integrated" ? c.immobileShare : 0, seed + 65537);
-  state.network = ["integrated", "network", "temporal"].includes(c.phase)
-    ? Model.buildSmallWorldNetwork(nAgents, c.networkDegree, c.networkRewiring, seed + 7919)
-    : null;
+  state.agents = Model.assignImmobility(state.agents, c.immobileShare, seed + 65537);
+  state.network = Model.buildSmallWorldNetwork(nAgents, c.networkDegree, c.networkRewiring, seed + 7919);
   state.history = [];
   recordMetrics();
-  updateModelCopy();
-  setStatus(`Preparado: ${MODEL_INFO[c.phase].label.toLowerCase()}, t = 0.`);
+  updateEventLog();
+  setStatus("Preparado: modelo integrado, t = 0.");
   draw();
 }
 
@@ -186,13 +148,16 @@ function executeStep() {
   const result = Model.advance(state.agents, config(), {
     random: state.random,
     network: state.network,
+    events: state.events,
     t: state.t,
   });
   state.agents = result.agents;
   state.lastMeanMove = result.meanMove;
   state.lastAudit = result.auditorActive;
+  state.activeEvents = result.activeEvents;
   state.t += 1;
   recordMetrics();
+  updateEventLog();
 }
 
 function recordMetrics() {
@@ -208,19 +173,7 @@ function recordMetrics() {
 
 function start() {
   state.running = true;
-  const phase = config().phase;
-  const timing = phase === "dw" ? "encuentros aleatorios parciales" : "actualización síncrona";
-  setStatus(`En ejecución: ${MODEL_INFO[phase].label.toLowerCase()}, ${timing}.`);
-}
-
-function updateModelCopy() {
-  const info = MODEL_INFO[config().phase];
-  document.getElementById("modelLabel").textContent = info.label;
-  document.getElementById("phaseTitle").textContent = info.title;
-  document.getElementById("phaseDescription").textContent = info.description;
-  document.getElementById("readingTitle").textContent = info.readingTitle;
-  document.getElementById("readingText").textContent = info.readingText;
-  document.getElementById("scopeBadges").innerHTML = info.badges.map(text => `<span>${text}</span>`).join("");
+  setStatus("En ejecución: actualización síncrona del modelo integrado.");
 }
 
 function pause() {
@@ -287,8 +240,11 @@ function drawOpinionSpace() {
   drawSelectedNetwork();
   drawAxis(c);
   const [activeA, activeB] = Model.signalWeights(c, state.t);
-  drawSignal(c.signalA, activeA, "A", "#176b87", c.epsilon, activeA > 0);
-  drawSignal(c.signalB, activeB, "B", "#c45134", c.epsilon, activeB > 0);
+  const statusA = c.signalAPermanent ? "permanente" : (activeA > 0 ? "activo" : "apagado");
+  const statusB = c.signalBPermanent ? "permanente" : (activeB > 0 ? "activo" : "apagado");
+  drawSignal(c.signalA, activeA, "A", "#176b87", c.signalAReach, activeA > 0, statusA);
+  drawSignal(c.signalB, activeB, "B", "#c45134", c.signalBReach, activeB > 0, statusB);
+  drawEvents(c);
 
   if (document.getElementById("showTrails").checked) {
     ctx.strokeStyle = "rgba(43,41,37,.22)";
@@ -398,7 +354,7 @@ function drawAxis(c) {
   ctx.restore();
 }
 
-function drawSignal(point, weight, label, color, epsilon, active) {
+function drawSignal(point, weight, label, color, reach, active, status) {
   const x = sx(point[0]);
   const y = sy(point[1]);
   ctx.save();
@@ -408,7 +364,7 @@ function drawSignal(point, weight, label, color, epsilon, active) {
   ctx.setLineDash([6, 6]);
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(x, y, epsilon * 696, 0, Math.PI * 2);
+  ctx.arc(x, y, reach * 696, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   ctx.restore();
@@ -428,10 +384,48 @@ function drawSignal(point, weight, label, color, epsilon, active) {
   ctx.fillStyle = "#2a2723";
   ctx.font = "600 13px system-ui";
   const offset = point[0] < 0.5 ? 70 : -70;
-  const timed = ["integrated", "temporal"].includes(config().phase);
-  const temporalState = timed ? (active ? "activa" : "apagada") : "constante";
-  ctx.fillText(`Señal ${label} · ${temporalState} · peso ${weight.toFixed(2)}`, x + offset, y - 20);
+  ctx.fillText(`Polo ${label} · ${status} · intensidad ${weight.toFixed(2)}/10`, x + offset, y - 20);
   ctx.globalAlpha = 1;
+}
+
+function drawEvents(c) {
+  for (const event of state.events) {
+    const weight = Model.activeEventWeight(event, state.t, c.fatigueEnabled, c.fatigueDecay);
+    const active = weight > 0;
+    const x = sx(event.position[0]);
+    const y = sy(event.position[1]);
+    ctx.save();
+    ctx.globalAlpha = active ? 0.22 : 0.06;
+    ctx.fillStyle = event.kind === "counter" ? "#9b5f39" : "#6d4ba3";
+    ctx.strokeStyle = event.kind === "counter" ? "#9b5f39" : "#6d4ba3";
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, event.reach * 696, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = active ? 1 : 0.28;
+    ctx.fillStyle = event.kind === "counter" ? "#9b5f39" : "#6d4ba3";
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.font = "700 11px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(event.label, x, y + 4);
+    ctx.fillStyle = "#2a2723";
+    ctx.font = "600 12px system-ui";
+    const offset = event.position[0] < 0.5 ? 82 : -82;
+    const eventStatus = active ? "activo" : (state.t < event.start ? "pendiente" : "finalizado");
+    ctx.fillText(`${event.kind === "counter" ? "Contraevento" : "Evento"} ${event.label} · ${eventStatus} · ${weight.toFixed(2)}/10`, x + offset, y + 28);
+    ctx.restore();
+  }
 }
 
 function mixColor(first, second, ratio, alpha) {
@@ -489,15 +483,15 @@ function drawMetricHistory() {
 
 function drawFollowerHistory() {
   const canvas = elements.followersCanvas;
-  chartFrame(followersCtx, canvas, "Seguidores exactos de las señales", "Distancia ≤ 0.001, criterio publicado");
+  chartFrame(followersCtx, canvas, "Coincidencias exactas con los polos", "Distancia ≤ 0.001; diagnóstico estricto");
   const max = Math.max(1, ...state.history.flatMap(row => [row.followersA, row.followersB]));
   drawSeries(followersCtx, state.history.map(row => row.followersA), canvas, "#176b87", 0, max);
   drawSeries(followersCtx, state.history.map(row => row.followersB), canvas, "#c45134", 0, max);
   followersCtx.font = "12px system-ui";
   followersCtx.fillStyle = "#176b87";
-  followersCtx.fillText("— señal A", 56, canvas.height - 12);
+  followersCtx.fillText("— polo A", 56, canvas.height - 12);
   followersCtx.fillStyle = "#c45134";
-  followersCtx.fillText("— señal B", 145, canvas.height - 12);
+  followersCtx.fillText("— polo B", 145, canvas.height - 12);
 }
 
 function updateStats() {
@@ -505,6 +499,9 @@ function updateStats() {
   if (!latest) return;
   const values = {
     timeStat: state.t,
+    eventStat: state.events.filter(event => Model.activeEventWeight(
+      event, state.t, config().fatigueEnabled, config().fatigueDecay,
+    ) > 0).length,
     clusterStat: latest.clusters,
     dispersionStat: latest.dispersion.toFixed(4),
     jdjStat: latest.jdj.toFixed(4),
@@ -519,11 +516,54 @@ function updateStats() {
   for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
 }
 
+function addEvent(kind) {
+  const intensity = numberValue("eventIntensity");
+  const reach = numberValue("eventReach");
+  const duration = Math.round(numberValue("eventDuration"));
+  state.eventCounter += 1;
+  const position = kind === "counter"
+    ? [...config().signalB]
+    : [state.random(), state.random()];
+  const prefix = kind === "counter" ? "C" : "E";
+  state.events.push({
+    label: `${prefix}${state.eventCounter}`,
+    kind,
+    position,
+    intensity,
+    reach,
+    start: state.t,
+    duration,
+  });
+  updateEventLog();
+  setStatus(`${kind === "counter" ? "Contraevento" : "Evento aleatorio"} añadido en t = ${state.t}.`);
+  draw();
+}
+
+function updateEventLog() {
+  if (state.events.length === 0) {
+    elements.eventLog.textContent = "Todavía no se ha añadido ningún evento.";
+    return;
+  }
+  const c = config();
+  elements.eventLog.innerHTML = state.events.map(event => {
+    const weight = Model.activeEventWeight(event, state.t, c.fatigueEnabled, c.fatigueDecay);
+    const status = weight > 0 ? `activo · intensidad actual ${weight.toFixed(2)}/10` : (state.t < event.start ? "pendiente" : "finalizado");
+    return `<div><strong>${event.label}</strong> · t=${event.start}–${event.start + event.duration - 1} · ${status}</div>`;
+  }).join("");
+}
+
+function updateScheduleVisibility() {
+  for (const pole of ["A", "B"]) {
+    const permanent = checkedValue(`signal${pole}Permanent`);
+    document.getElementById(`signal${pole}Schedule`).hidden = permanent;
+  }
+}
+
 function exportCsv() {
   const c = config();
-  const rows = ["agent,model,time,x,y,initial_x,initial_y,projection_A_B,immobile,auditor_active"];
+  const rows = ["agent,model,time,x,y,initial_x,initial_y,projection_A_B,immobile,auditor_active,active_events"];
   state.agents.forEach((agent, index) => {
-    rows.push(`${index + 1},${c.phase},${state.t},${agent.x},${agent.y},${agent.anchorX},${agent.anchorY},${Model.axisProjection(agent, c)},${Boolean(agent.immobile)},${state.lastAudit}`);
+    rows.push(`${index + 1},${c.phase},${state.t},${agent.x},${agent.y},${agent.anchorX},${agent.anchorY},${Model.axisProjection(agent, c)},${Boolean(agent.immobile)},${state.lastAudit},${state.activeEvents}`);
   });
   const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
@@ -539,6 +579,9 @@ for (const input of document.querySelectorAll("input[type=range]")) {
 for (const input of document.querySelectorAll("[data-reset-model]")) {
   input.addEventListener("change", resetModel);
 }
+for (const input of document.querySelectorAll("[data-schedule-toggle]")) {
+  input.addEventListener("change", updateScheduleVisibility);
+}
 for (const input of document.querySelectorAll("[data-redraw]")) {
   input.addEventListener("change", draw);
 }
@@ -548,6 +591,8 @@ elements.pause.addEventListener("click", pause);
 elements.step.addEventListener("click", () => { state.running = false; executeStep(); setStatus(`Paso manual completado: t = ${state.t}.`); draw(); });
 elements.reset.addEventListener("click", resetModel);
 elements.export.addEventListener("click", exportCsv);
+elements.randomEvent.addEventListener("click", () => addEvent("random"));
+elements.counterEvent.addEventListener("click", () => addEvent("counter"));
 elements.mainCanvas.addEventListener("click", event => {
   const rect = elements.mainCanvas.getBoundingClientRect();
   const clickX = (event.clientX - rect.left) * elements.mainCanvas.width / rect.width;
@@ -559,10 +604,10 @@ elements.mainCanvas.addEventListener("click", event => {
     if (d < bestDistance) { bestDistance = d; best = index; }
   });
   state.selected = best;
-  document.getElementById("selectedAgentLabel").textContent = String(best + 1);
   draw();
 });
 
 updateControlOutputs();
+updateScheduleVisibility();
 resetModel();
 requestAnimationFrame(animate);

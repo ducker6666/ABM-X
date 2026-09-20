@@ -4,13 +4,14 @@ Este modulo replica la opcion ``integrated`` de ``web/model.js``. No presenta
 la suma completa como una teoria publicada. Documenta cuatro contribuciones:
 
     G_i: influencia firmada de contactos (Zhang, Hu y Zhang, 2025),
-    P_i: fuentes obstinadas ponderadas (HK con senales constantes),
+    P_i: polos obstinados ponderados (HK con senales constantes),
+    E_i: eventos temporales declarados,
     C_i: recentrado de una intervencion explicitamente activada,
     k_i: compromiso creciente con la extremidad (Duggins, 2017).
 
 Para un agente movil que no realiza un salto de ruido:
 
-    x_i(t+1) = clip[x_i + (eta*(G_i + P_i) + C_i) / k_i].
+    x_i(t+1) = clip[x_i + (eta*(G_i + P_i + E_i) + C_i) / k_i].
 
 El orden, la extension vectorial y el disparador JDJ son decisiones del
 proyecto. Sus valores deben calibrarse antes de interpretar una sociedad real.
@@ -30,6 +31,21 @@ FloatArray = NDArray[np.float64]
 
 
 @dataclass(frozen=True)
+class ExternalEvent:
+    """Evento temporal observado o escenario de prueba declarado.
+
+    ``intensity`` usa la misma unidad que los polos: peso equivalente de
+    fuentes fijas. ``reach`` es el radio directo en el espacio de opinion.
+    """
+
+    position: tuple[float, float]
+    intensity: float
+    reach: float
+    start: int
+    duration: int
+
+
+@dataclass(frozen=True)
 class IntegratedConfig:
     epsilon: float = 0.20
     homophily_scale: float = 0.35
@@ -40,6 +56,10 @@ class IntegratedConfig:
     signal_b: tuple[float, float] = (0.90, 0.10)
     signal_a_weight: float = 5.0
     signal_b_weight: float = 5.0
+    signal_a_reach: float = 0.25
+    signal_b_reach: float = 0.25
+    signal_a_permanent: bool = True
+    signal_b_permanent: bool = True
     signal_a_start: int = 0
     signal_a_duration: int = 300
     signal_b_start: int = 80
@@ -66,8 +86,10 @@ class IntegratedConfig:
             raise ValueError("homophily_scale debe ser positivo")
         if not 0 <= self.social_rate <= 1:
             raise ValueError("social_rate debe pertenecer a [0,1]")
-        if min(self.signal_a_weight, self.signal_b_weight) < 0:
-            raise ValueError("los pesos de las senales deben ser no negativos")
+        if min(self.signal_a_weight, self.signal_b_weight) < 0 or max(self.signal_a_weight, self.signal_b_weight) > 10:
+            raise ValueError("las intensidades de los polos deben pertenecer a [0,10]")
+        if min(self.signal_a_reach, self.signal_b_reach) <= 0 or max(self.signal_a_reach, self.signal_b_reach) > 1:
+            raise ValueError("los radios de los polos deben pertenecer a (0,1]")
         if min(self.signal_a_start, self.signal_b_start, self.signal_a_duration, self.signal_b_duration) < 0:
             raise ValueError("los tiempos deben ser no negativos")
         if self.fatigue_decay < 0 or self.commitment_strength < 0:
@@ -125,7 +147,7 @@ def _active(t: int, start: int, duration: int) -> float:
 
 
 def signal_weights(config: IntegratedConfig, t: int) -> tuple[float, float]:
-    """Pesos de eventos con perdida exponencial de atencion.
+    """Intensidad de los polos, permanentes o acotados en el tiempo.
 
     ``m_k(t)=m_k I[start<=t<start+duration] exp[-lambda(t-start)]``.
     El decaimiento representa atencion a informacion antigua, no fatiga
@@ -133,15 +155,31 @@ def signal_weights(config: IntegratedConfig, t: int) -> tuple[float, float]:
     """
 
     weights = (
-        config.signal_a_weight * _active(t, config.signal_a_start, config.signal_a_duration),
-        config.signal_b_weight * _active(t, config.signal_b_start, config.signal_b_duration),
+        config.signal_a_weight * (1.0 if config.signal_a_permanent else _active(t, config.signal_a_start, config.signal_a_duration)),
+        config.signal_b_weight * (1.0 if config.signal_b_permanent else _active(t, config.signal_b_start, config.signal_b_duration)),
     )
     if not config.fatigue_enabled:
         return weights
     return (
-        weights[0] * np.exp(-config.fatigue_decay * max(0, t - config.signal_a_start)),
-        weights[1] * np.exp(-config.fatigue_decay * max(0, t - config.signal_b_start)),
+        weights[0] if config.signal_a_permanent else weights[0] * np.exp(-config.fatigue_decay * max(0, t - config.signal_a_start)),
+        weights[1] if config.signal_b_permanent else weights[1] * np.exp(-config.fatigue_decay * max(0, t - config.signal_b_start)),
     )
+
+
+def event_weight(event: ExternalEvent, t: int, fatigue_enabled: bool, fatigue_decay: float) -> float:
+    """Intensidad activa de un evento temporal.
+
+    Ejemplo: I0=5, inicio=20, lambda=.01, t=40 -> 5*exp(-.2)=4.094.
+    """
+
+    if event.intensity < 0 or event.intensity > 10:
+        raise ValueError("la intensidad del evento debe pertenecer a [0,10]")
+    if event.reach <= 0 or event.reach > 1 or event.start < 0 or event.duration <= 0:
+        raise ValueError("alcance y tiempos del evento no validos")
+    if not _active(t, event.start, event.duration):
+        return 0.0
+    decay = np.exp(-fatigue_decay * (t - event.start)) if fatigue_enabled else 1.0
+    return float(event.intensity * decay)
 
 
 def axis_projection(opinions: FloatArray, signal_a: FloatArray, signal_b: FloatArray) -> FloatArray:
@@ -211,10 +249,11 @@ def step(
     immobile: NDArray[np.bool_],
     rng: np.random.Generator,
     t: int,
+    events: tuple[ExternalEvent, ...] = (),
 ) -> tuple[FloatArray, bool]:
     """Ejecuta una actualizacion sincrona del modelo integrado.
 
-    Orden: inmovilidad, posible ruido, red, polos, auditor, compromiso y
+    Orden: inmovilidad, posible ruido, red, polos/eventos, auditor, compromiso y
     recorte. El resultado booleano indica si el auditor intervino.
     """
 
@@ -262,8 +301,18 @@ def step(
 
         pole = np.zeros(2, dtype=np.float64)
         pole_mass = 0.0
-        for position, weight in ((signal_a, weight_a), (signal_b, weight_b)):
-            if weight > 0 and np.linalg.norm(position - own) <= config.epsilon:
+        sources: list[tuple[FloatArray, float, float]] = [
+            (signal_a, weight_a, config.signal_a_reach),
+            (signal_b, weight_b, config.signal_b_reach),
+        ]
+        for event in events:
+            sources.append((
+                np.asarray(event.position, dtype=np.float64),
+                event_weight(event, t, config.fatigue_enabled, config.fatigue_decay),
+                event.reach,
+            ))
+        for position, weight, reach in sources:
+            if weight > 0 and np.linalg.norm(position - own) <= reach:
                 pole += weight * (position - own)
                 pole_mass += weight
         pole /= 1.0 + pole_mass

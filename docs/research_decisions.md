@@ -2,7 +2,11 @@
 
 ## 2026-09-20 — Recuperación auditable del modelo integrado
 
-- La web deja de organizarse visualmente por fases y recupera una opción integrada como vista predeterminada.
+- La web presenta un único modelo integrado; los comparadores históricos dejan de aparecer como opciones configurables.
+- A y B son polos permanentes por defecto. Pueden convertirse en ventanas temporales desmarcando «permanente».
+- La intensidad visible se limita a 0–10 y se interpreta como peso equivalente de fuentes fijas. El límite 10 es un rango de interfaz, no una constante social.
+- Cada polo tiene un radio de alcance explícito. Los eventos adicionales usan la misma operación y se registran por inicio, duración, intensidad y alcance.
+- El evento aleatorio es un escenario Monte Carlo reproducible; el contraevento se declara manualmente en B. Ninguno se presenta como mecanismo causal automático.
 - “Gravedad de clusters” significa suma normalizada de influencia individual: un grupo pesa por su número de voces, no por una ley física.
 - Atracción, reactancia y norma común siguen la función de afinidad de Zhang, Hu y Zhang (2025); su extensión a vectores 2D está declarada.
 - La resistencia por radicalidad sigue el compromiso de Duggins (2017). No se cambia el umbral epsilon con una fórmula no publicada.

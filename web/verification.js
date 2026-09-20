@@ -99,6 +99,8 @@ function runVerification() {
 
   assert(Model.activeInterval(2, 2, 3) === 1, "el inicio del intervalo es inclusivo");
   assert(Model.activeInterval(5, 2, 3) === 0, "el final del intervalo es exclusivo");
+  approx(Model.activeEventWeight({ intensity: 5, start: 20, duration: 60 }, 40, true, 0.01), 5 * Math.exp(-0.2));
+  approx(Model.activeEventWeight({ intensity: 5, start: 20, duration: 60 }, 80, true, 0.01), 0);
 
   const network = Model.buildSmallWorldNetwork(12, 4, 0.1, 123);
   assert(network.every((neighbors, i) => !neighbors.has(i)), "la red no debe contener lazos");
@@ -138,6 +140,10 @@ function runVerification() {
     immobileShare: 0,
     fatigueEnabled: true,
     fatigueDecay: 0.01,
+    signalAReach: 0.2,
+    signalBReach: 0.2,
+    signalAPermanent: false,
+    signalBPermanent: false,
     signalAStart: 0,
     signalADuration: 200,
     signalBStart: 0,
@@ -156,7 +162,29 @@ function runVerification() {
   assert(Model.distance([integrated.agents[0].x, integrated.agents[0].y], [0.5, 0.5])
     < Model.distance([0, 1], [0.5, 0.5]), "la intervención debe recentrar gradualmente");
 
-  return { ok: true, tests: 26, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
+  const permanentConfig = { ...integratedConfig, signalAPermanent: true, signalAWeight: 5 };
+  approx(Model.signalWeights(permanentConfig, 900)[0], 5);
+
+  const eventConfig = {
+    ...integratedConfig,
+    socialRate: 0.1,
+    auditorEnabled: false,
+    signalAWeight: 0,
+    signalBWeight: 0,
+  };
+  const eventResult = Model.integratedStep([
+    { x: 0.2, y: 0.5, anchorX: 0.2, anchorY: 0.5, immobile: false },
+    { x: 0.8, y: 0.5, anchorX: 0.8, anchorY: 0.5, immobile: false },
+  ], eventConfig, {
+    random: Model.mulberry32(8),
+    network: [new Set(), new Set()],
+    t: 0,
+    events: [{ position: [0.1, 0.5], intensity: 5, reach: 0.25, start: 0, duration: 10 }],
+  });
+  assert(eventResult.agents[0].x < 0.2, "un evento activo debe mover a un agente dentro de su alcance");
+  approx(eventResult.agents[1].x, 0.8);
+
+  return { ok: true, tests: 31, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
 }
 
 if (typeof module !== "undefined" && module.exports) {

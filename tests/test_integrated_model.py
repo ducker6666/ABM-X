@@ -1,9 +1,11 @@
 import numpy as np
 
 from src.integrated_model import (
+    ExternalEvent,
     IntegratedConfig,
     assign_immobility,
     bounded_noise,
+    event_weight,
     jdj_axis,
     radicality,
     signal_weights,
@@ -94,11 +96,41 @@ def test_signal_attention_decays_inside_window():
         signal_a_weight=5.0,
         signal_a_start=0,
         signal_a_duration=200,
+        signal_a_permanent=False,
         signal_b_weight=0.0,
         fatigue_decay=0.01,
     )
     assert signal_weights(cfg, 100)[0] < signal_weights(cfg, 0)[0]
     assert signal_weights(cfg, 200)[0] == 0
+
+
+def test_permanent_poles_do_not_expire_or_decay():
+    cfg = IntegratedConfig(signal_a_weight=5.0, signal_a_permanent=True, fatigue_decay=0.1)
+    assert signal_weights(cfg, 0)[0] == 5.0
+    assert signal_weights(cfg, 900)[0] == 5.0
+
+
+def test_event_has_declared_window_and_attention_decay():
+    event = ExternalEvent(position=(0.2, 0.8), intensity=5.0, reach=0.25, start=20, duration=60)
+    assert event_weight(event, 19, True, 0.01) == 0
+    assert np.isclose(event_weight(event, 40, True, 0.01), 5 * np.exp(-0.2))
+    assert event_weight(event, 80, True, 0.01) == 0
+
+
+def test_active_event_moves_only_agents_inside_its_reach():
+    opinions = np.array([[0.20, 0.50], [0.80, 0.50]])
+    event = ExternalEvent(position=(0.10, 0.50), intensity=5.0, reach=0.25, start=0, duration=10)
+    updated, _ = step(
+        opinions,
+        base_config(),
+        [set(), set()],
+        np.zeros(2, dtype=bool),
+        np.random.default_rng(1),
+        0,
+        events=(event,),
+    )
+    assert updated[0, 0] < opinions[0, 0]
+    assert updated[1, 0] == opinions[1, 0]
 
 
 def test_noise_is_bounded_and_immobility_is_reproducible():

@@ -25,8 +25,8 @@ python -m http.server 8765 --directory "/Users/zhenboch/PhD Tesis/MBA:ABM:Modelo
 La web tiene tres páginas:
 
 1. `index.html`: simulación y controles.
-2. `formula.html`: ecuación, ejemplo, efecto, límite y referencia de cada regla.
-3. `guide.html`: explicación sencilla, lectura de resultados y auditoría de los 25 PDF locales.
+2. `formula.html`: todas las ecuaciones en notación legible, con símbolos y ejemplos numéricos.
+3. `guide.html`: explicación sencilla, guía de cada variable, preparación para datos de COVID y auditoría de los 25 PDF locales.
 
 ## Modelo integrado
 
@@ -34,19 +34,26 @@ Para un agente móvil que no realiza un salto de ruido:
 
 \[
 x_i(t+1)=\operatorname{clip}_{[0,1]^2}\left[
-x_i(t)+\frac{\eta(G_i(t)+P_i(t))+C_i(t)}{k_i(t)}
+x_i(t)+\frac{\eta(G_i(t)+P_i(t)+E_i(t))+C_i(t)}{k_i(t)}
 \right].
 \]
 
 - `G_i`: influencia firmada de los contactos. La suma hace que un grupo con
   más miembros tenga más peso; no se usa gravedad newtoniana.
 - `P_i`: atracción de señales obstinadas con masa declarada.
+- `E_i`: eventos temporales declarados, con intensidad, alcance y duración visibles.
 - `C_i`: recentrado solo cuando interviene el auditor.
 - `k_i`: compromiso creciente con la extremidad.
 
-El orden exacto es inmovilidad, posible ruido, red, señales, auditor,
+El orden exacto es inmovilidad, posible ruido, red, polos/eventos, auditor,
 compromiso y recorte. La composición completa es una hipótesis del proyecto;
 no se presenta como una teoría publicada íntegramente.
+
+La interfaz presenta un único modelo. A y B pueden mantenerse permanentemente
+activos como polos ideológicos. Su intensidad está limitada a 0–10 y significa
+peso equivalente de fuentes fijas; sus radios `rho_A` y `rho_B` controlan los
+círculos de influencia directa. Los botones de evento aleatorio y contraevento
+son pruebas reproducibles del motor, no afirmaciones sobre sucesos reales.
 
 ## Código defendible
 
@@ -55,7 +62,7 @@ no se presenta como una teoría publicada íntegramente.
 - `web/app.js`: controles y representación; no define una segunda dinámica.
 - `tests/test_integrated_model.py`: casos mínimos de signo, masa, JDJ, auditor, ruido e inmovilidad.
 - `web/verification.js`: comprobaciones independientes del motor web.
-- `src/paper1_model.py` y `src/phased_model.py`: controles HK, Deffuant, FJ, red y tiempo conservados para comparar.
+- `src/paper1_model.py` y `src/phased_model.py`: implementaciones históricas conservadas para pruebas; no aparecen como opciones del simulador.
 - `src/calibration.py`: métricas para contrastar un panel empírico real.
 
 Los archivos `src/final_model.py`, `src/attitudinal_abm.py` y

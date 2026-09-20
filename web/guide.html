@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Guía de lectura</title>
-  <link rel="stylesheet" href="styles.css?v=integrated-1" />
+  <link rel="stylesheet" href="styles.css?v=integrated-2" />
 </head>
 <body class="document-body">
   <header class="site-header">
@@ -29,13 +29,47 @@
       <div>
         <span class="guide-kicker">EN UN MINUTO</span>
         <h2>Qué estás viendo</h2>
-        <p>Cada punto es una persona simulada. Su posición resume dos actitudes. Las líneas finas muestran contactos de red; A y B son fuentes persistentes o acontecimientos; los anillos con <code>n=...</code> muestran cuántos puntos forman un grupo visual.</p>
+        <p>Cada punto es una persona simulada. Su posición resume dos actitudes. Las líneas finas muestran contactos de red; A y B son polos persistentes si se marca «permanente»; los eventos temporales aparecen por separado y los anillos con <code>n=...</code> muestran grupos visuales.</p>
       </div>
       <div>
         <span class="guide-kicker">PREGUNTA GENERAL</span>
         <h2>Para qué sirve</h2>
         <p>Sirve para estudiar cómo cambian consenso, fragmentación y bipolarización cuando varían la red, la tolerancia, la influencia de grupos, la reactancia, la atención, la obstinación y una intervención de recentrado.</p>
       </div>
+    </section>
+
+    <section class="guide-section" id="variables">
+      <span class="guide-kicker">GUÍA DE CONTROLES</span>
+      <h2>Qué significa cada variable y dónde se cambia</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Control</th><th>Qué significa</th><th>Qué ocurre al aumentarlo</th></tr></thead>
+        <tbody>
+          <tr><td>Personas, N</td><td>Número de agentes simulados.</td><td>Hay más puntos y mayor coste de cálculo; no garantiza mayor realismo.</td></tr>
+          <tr><td>Duración máxima</td><td>Número máximo de rondas.</td><td>Permite observar una evolución más larga.</td></tr>
+          <tr><td>Semilla</td><td>Número que reproduce los sorteos.</td><td>No tiene un orden «mejor» o «peor»; una semilla distinta produce otra réplica.</td></tr>
+          <tr><td>Distribución inicial</td><td>Forma de la población en t=0.</td><td>No es una escala; se elige uniforme, central o dos grupos.</td></tr>
+          <tr><td>Intensidad A/B</td><td>Peso equivalente de cada fuente fija, limitado a 0–10 en la interfaz.</td><td>El polo tiene más peso frente a las otras influencias.</td></tr>
+          <tr><td>Área A/B, ρ<sub>A</sub>/ρ<sub>B</sub></td><td>Radio visible de influencia directa del polo.</td><td><strong>Amplía el círculo A o B</strong> y alcanza opiniones más alejadas.</td></tr>
+          <tr><td>x<sub>A</sub>, y<sub>A</sub>, x<sub>B</sub>, y<sub>B</sub></td><td>Posiciones horizontal y vertical de los polos, entre 0 y 1.</td><td>Mueve el polo por el espacio de actitudes.</td></tr>
+          <tr><td>Permanente</td><td>Mantiene el polo activo durante toda la simulación.</td><td>Al desmarcarlo aparecen «inicio» y «duración».</td></tr>
+          <tr><td>Intensidad, área y duración del evento</td><td>Propiedades del evento de prueba o contraevento.</td><td>Aumentan respectivamente su peso, alcance espacial o tiempo activo.</td></tr>
+          <tr><td>Tolerancia ε</td><td>Escala de similitud entre personas.</td><td>Más contactos producen asimilación antes de entrar en la zona de contraste.</td></tr>
+          <tr><td>Velocidad social η</td><td>Fracción del desplazamiento aplicada por ronda.</td><td>La población cambia más deprisa; no cambia el tiempo real sin calibración.</td></tr>
+          <tr><td>Homofilia B<sub>H</sub></td><td>Velocidad con la que cae la influencia al aumentar la distancia.</td><td>La influencia se conserva a distancias mayores.</td></tr>
+          <tr><td>Resistencia s</td><td>Reduce el movimiento de posiciones extremas.</td><td>Los agentes extremos responden menos.</td></tr>
+          <tr><td>Umbral JDJ</td><td>Nivel de JDJ requerido para permitir la intervención.</td><td>El auditor se activa con menos frecuencia.</td></tr>
+          <tr><td>Dispersión mínima</td><td>Evita confundir consenso central con división.</td><td>Se exige una separación más extendida antes de intervenir.</td></tr>
+          <tr><td>Recentrado α</td><td>Tamaño del paso hacia (0.5,0.5) cuando interviene el auditor.</td><td>La intervención es más fuerte.</td></tr>
+          <tr><td>Ruido m</td><td>Probabilidad de sustituir la interacción por un salto local.</td><td>Hay más saltos aleatorios.</td></tr>
+          <tr><td>Salto γ</td><td>Tamaño máximo del ruido por coordenada.</td><td>Cada salto puede ser mayor.</td></tr>
+          <tr><td>Proporción inmóvil</td><td>Fracción de agentes obstinados.</td><td>Más posiciones permanecen fijas.</td></tr>
+          <tr><td>Atención λ</td><td>Decaimiento de la intensidad de eventos temporales.</td><td>Los eventos pierden fuerza más deprisa; no afecta a polos permanentes.</td></tr>
+          <tr><td>Contactos k</td><td>Grado inicial de la red Watts–Strogatz.</td><td>Cada persona escucha a más contactos.</td></tr>
+          <tr><td>Reconexión β</td><td>Probabilidad de crear atajos en la red.</td><td>Aparecen más contactos lejanos.</td></tr>
+          <tr><td>Distancia de grupo δ</td><td>Umbral usado solo para dibujar clusters.</td><td>Más puntos se etiquetan como parte del mismo grupo; la dinámica no cambia.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout neutral"><strong>Para los datos de COVID:</strong> primero habrá que definir qué miden los dos ejes, convertir las fechas reales a rondas y decidir qué variables se observan directamente y cuáles deben calibrarse. La coincidencia se evaluará sobre toda la trayectoria, no escogiendo una sola imagen parecida.</div>
     </section>
 
     <section class="guide-section">
@@ -45,7 +79,7 @@
         <div><span>1</span><b>Fija la semilla</b><p>La misma semilla reproduce posiciones, red y agentes inmóviles.</p></div>
         <div><span>2</span><b>Cambia una cosa</b><p>Modifica un mecanismo cada vez para reconocer su efecto.</p></div>
         <div><span>3</span><b>Repite</b><p>Usa muchas semillas; una sola ejecución no es evidencia.</p></div>
-        <div><span>4</span><b>Compara controles</b><p>Ejecuta HK, Deffuant y FJ además del modelo integrado.</p></div>
+        <div><span>4</span><b>Desactiva piezas</b><p>Repite sin reactancia, ruido o auditor para identificar qué mecanismo cambia el resultado.</p></div>
         <div><span>5</span><b>Contrasta datos</b><p>Solo entonces pregunta si una configuración describe un caso real.</p></div>
       </div>
     </section>
@@ -59,7 +93,7 @@
         <article><b>3 · Polo–masa</b><p>Una fuente fija pesa como varias voces y atrae solo dentro de la tolerancia.</p></article>
         <article><b>4 · Recentrado</b><p>Una intervención visible acerca gradualmente posiciones al centro; no ocurre de forma automática.</p></article>
         <article><b>5 · Auditor JDJ</b><p>Observa JDJ y dispersión. Si ambos superan sus límites, enciende el recentrado.</p></article>
-        <article><b>6 · Atención y contraste</b><p>Las señales pierden fuerza; una exposición muy discrepante puede causar reactancia.</p></article>
+        <article><b>6 · Atención y contraste</b><p>Los eventos temporales pierden fuerza; una exposición muy discrepante puede causar reactancia.</p></article>
         <article><b>7 · Ruido e inmovilidad</b><p>Algunas opiniones cambian un poco al azar y una fracción permanece obstinada.</p></article>
         <article><b>8 · Compromiso radical</b><p>Las posiciones más extremas responden menos. No se inventa una nueva tolerancia.</p></article>
         <article><b>9 · Simultaneidad</b><p>Las contribuciones se calculan por separado y luego se suman con un orden fijo.</p></article>
@@ -94,6 +128,30 @@
         <li>Que activar el auditor cause en la realidad el mismo resultado que en la simulación.</li>
         <li>Que un patrón visual sea una prueba estadística o una validación empírica.</li>
       </ul>
+    </section>
+
+    <section class="guide-section" id="covid">
+      <span class="guide-kicker">PRUEBA CON DATOS DE COVID</span>
+      <h2>Cómo se comprobará si la simulación coincide</h2>
+      <p>La comparación no se hará ajustando controles hasta que una imagen “parezca” correcta. Se preparará una serie temporal y se fijará por escrito qué datos alimentan el modelo y cuáles se reservan para evaluarlo.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Dato necesario</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>Fecha o periodo de cada observación</td><td>Convertir tiempo real a rondas sin cambiarlo después de ver el resultado.</td></tr>
+          <tr><td>Polarización observada y su definición</td><td>Construir la trayectoria objetivo y asegurar que mide lo mismo que la salida simulada.</td></tr>
+          <tr><td>Eventos, inicio y duración</td><td>Crear ventanas temporales observadas; no eventos inventados.</td></tr>
+          <tr><td>Dirección y fuerza de cada evento</td><td>Asignar posición e intensidad, con su escala o procedimiento de normalización documentado.</td></tr>
+          <tr><td>Condición inicial</td><td>Inicializar la población con la primera medición disponible.</td></tr>
+          <tr><td>Periodo reservado</td><td>Validar fuera de la muestra usada para calibrar.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="method-flow">
+        <div><span>1</span><b>Definir</b><p>Ejes, unidad temporal y medida de polarización.</p></div>
+        <div><span>2</span><b>Calibrar</b><p>Ajustar parámetros sobre una parte de la serie.</p></div>
+        <div><span>3</span><b>Validar</b><p>Predecir el periodo que no se utilizó en el ajuste.</p></div>
+        <div><span>4</span><b>Rechazar o conservar</b><p>Comparar error y bandas de incertidumbre entre muchas semillas.</p></div>
+      </div>
+      <div class="callout warning"><strong>Criterio de honestidad:</strong> si el modelo no reproduce razonablemente la trayectoria reservada, no se forzará la conclusión. Se documentará qué mecanismo falla y se revisará o rechazará esa especificación.</div>
     </section>
 
     <section class="guide-section">

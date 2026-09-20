@@ -3,12 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ABM X · Fórmulas y mecanismos</title>
-  <link rel="stylesheet" href="styles.css?v=integrated-1" />
-  <script>
-    window.MathJax = { tex: { inlineMath: [["\\(", "\\)"], ["$", "$"]], displayMath: [["\\[", "\\]"]] }, svg: { fontCache: "global" } };
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <title>ABM X · Fórmulas y ejemplos</title>
+  <link rel="stylesheet" href="styles.css?v=integrated-2" />
 </head>
 <body class="document-body">
   <header class="site-header">
@@ -18,82 +14,72 @@
       <a class="active" href="formula.html"><b>2</b> Fórmulas</a>
       <a href="guide.html"><b>3</b> Guía</a>
     </nav>
-    <span class="version-pill">Ecuación · ejemplo · límite</span>
+    <span class="version-pill">Fórmula · números · significado</span>
   </header>
 
   <main class="document-layout">
     <aside class="document-index">
       <p class="eyebrow">CONTENIDO</p>
-      <a href="#lectura">0. Cómo leer esta página</a>
-      <a href="#estado">1. Opinión y separación</a>
-      <a href="#red">2. Red Watts–Strogatz</a>
-      <a href="#grupos">3. Grupos, masa y reactancia</a>
-      <a href="#polos">4. Atracción polo–masa</a>
-      <a href="#jdj">5. Medida JDJ</a>
-      <a href="#auditor">6. Auditor y recentrado</a>
-      <a href="#eventos">7. Atención y contraeventos</a>
-      <a href="#ruido">8. Ruido e inmovilidad</a>
-      <a href="#radicalidad">9. Radicalidad y compromiso</a>
-      <a href="#simultaneo">10. Todo a la vez</a>
-      <a href="#comparadores">11. Modelos de comparación</a>
-      <a href="#salidas">12. Qué se representa</a>
-      <a href="#codigo">13. Fórmula ↔ código</a>
-      <a href="#referencias">14. Referencias</a>
+      <a href="#lectura">0. Cómo leer</a>
+      <a href="#distancia">1. Opinión y distancia</a>
+      <a href="#red">2. Red social</a>
+      <a href="#grupos">3. Grupos y reactancia</a>
+      <a href="#polos">4. Polos A y B</a>
+      <a href="#eventos">5. Eventos</a>
+      <a href="#radicalidad">6. Resistencia</a>
+      <a href="#ruido">7. Ruido e inmovilidad</a>
+      <a href="#jdj">8. JDJ paso a paso</a>
+      <a href="#auditor">9. Auditor</a>
+      <a href="#total">10. Ecuación completa</a>
+      <a href="#salidas">11. Resultados</a>
+      <a href="#codigo">12. Código</a>
+      <a href="#referencias">13. Referencias</a>
     </aside>
 
     <article class="document-content">
       <div class="document-hero">
-        <p class="eyebrow">PÁGINA 2 · MECANISMOS DEL SIMULADOR</p>
-        <h1>Qué calcula cada regla y qué efecto produce</h1>
-        <p class="lead">Cada apartado contiene la ecuación que ejecuta el simulador, un ejemplo numérico, su interpretación social y su límite. Cuando una regla combina fuentes existentes, se dice expresamente.</p>
-        <div class="truth-legend">
-          <span class="truth published">Publicado</span>
-          <span class="truth operational">Adaptación declarada</span>
-          <span class="truth exploratory">Regla de intervención</span>
-        </div>
+        <p class="eyebrow">MECANISMOS DEL SIMULADOR</p>
+        <h1>Cada fórmula explicada con números</h1>
+        <p class="lead">No se necesita interpretar código matemático sin ayuda. Cada apartado dice qué significan sus símbolos, calcula un caso concreto y explica el efecto social.</p>
+        <div class="truth-legend"><span class="truth published">Publicado</span><span class="truth operational">Adaptación declarada</span><span class="truth exploratory">Decisión del modelo</span></div>
       </div>
 
       <section id="lectura" class="doc-section">
         <div class="section-number">0</div>
         <div>
           <h2>Cómo leer esta página</h2>
-          <div class="callout safe"><strong>Regla de honestidad:</strong> una fuente puede respaldar un mecanismo sin demostrar que sus parámetros describen cualquier sociedad. “Publicado” significa que la forma matemática tiene antecedente; no significa que los valores elegidos estén calibrados para España, China u otra población.</div>
-          <p>Las palabras del simulador se traducen a conceptos medibles. “Gravedad” es influencia agregada de muchas voces; “masa” es número o peso de fuentes; “rebote” es una política de recentrado; “fatiga” se representa prudentemente como pérdida de atención. No se atribuyen propiedades físicas a las personas.</p>
-          <p>El modelo integrado es una <strong>composición del proyecto</strong>. Sus piezas tienen antecedentes identificables, pero la combinación completa todavía debe analizarse, calibrarse y validarse.</p>
+          <p>Una fórmula publicada no demuestra que sus valores describan una población concreta. Los valores predeterminados solo permiten probar el programa. Los parámetros de COVID deberán proceder de tus datos o de un ajuste reproducible.</p>
+          <div class="callout safe"><strong>Regla:</strong> «publicado» identifica un antecedente; «adaptación» identifica un cambio geométrico o técnico; «decisión» identifica una regla que evaluamos, pero no presentamos como ley social.</div>
         </div>
       </section>
 
-      <section id="estado" class="doc-section">
+      <section id="distancia" class="doc-section">
         <div class="section-number">1</div>
         <div>
-          <span class="truth published">Opinión vectorial publicada</span>
-          <h2>Opinión y separación entre dos personas</h2>
-          \[
-            x_i(t)=\big(x_{i1}(t),x_{i2}(t)\big)\in[0,1]^2,
-            \qquad d_{ij}=\lVert x_j-x_i\rVert_2.
-          \]
-          <p>Cada persona es un punto con dos actitudes. La separación (d_{ij}) resume cuánto difieren en conjunto. Las dimensiones deben recibir un significado empírico antes de interpretar el eje horizontal o vertical.</p>
-          <div class="worked-example"><strong>Ejemplo:</strong> para (x_i=(0.2,0.3)) y (x_j=(0.5,0.7)), (d_{ij}=\sqrt{0.3^2+0.4^2}=0.5).</div>
-          <div class="child-box"><strong>En sencillo:</strong> cada opinión es una ficha en un tablero. La fórmula mide la línea recta entre dos fichas.</div>
-          <p><strong>Efecto:</strong> esta separación alimenta la tolerancia, la homofilia y la reactancia. Por sí sola no mueve a nadie.</p>
-          <p class="source-line">Antecedentes: Fortunato et al. (2005), opiniones vectoriales; Li, Luo y Chu (2025), discordancia multidimensional ponderada.</p>
+          <span class="truth published">Opinión vectorial</span>
+          <h2>Opinión y distancia entre dos personas</h2>
+          <p>Cada persona tiene dos coordenadas entre 0 y 1. La primera corresponde al eje horizontal y la segunda al vertical.</p>
+          <div class="formula-block">
+            <span class="formula-line">x<sub>i</sub> = (x<sub>i1</sub>, x<sub>i2</sub>)</span>
+            <span class="formula-line">d<sub>ij</sub> = √[(x<sub>j1</sub> − x<sub>i1</sub>)² + (x<sub>j2</sub> − x<sub>i2</sub>)²]</span>
+          </div>
+          <ul class="symbol-list"><li><strong>x<sub>i</sub>:</strong> posición de la persona i.</li><li><strong>d<sub>ij</sub>:</strong> separación entre i y j.</li></ul>
+          <div class="worked-example"><strong>Ejemplo numérico:</strong><ol class="numeric-steps"><li>Persona i = (0.20, 0.30) y persona j = (0.50, 0.70).</li><li>Diferencia horizontal: 0.50 − 0.20 = 0.30.</li><li>Diferencia vertical: 0.70 − 0.30 = 0.40.</li><li>Distancia: √(0.30² + 0.40²) = √0.25 = <strong>0.50</strong>.</li></ol></div>
+          <p><strong>Efecto:</strong> la distancia no mueve a nadie. Se utiliza después para decidir cuánto puede influir una persona, un polo o un evento.</p>
+          <p class="source-line">Antecedentes: Fortunato et al. (2005) y Li, Luo y Chu (2025) para opiniones multidimensionales.</p>
         </div>
       </section>
 
       <section id="red" class="doc-section">
         <div class="section-number">2</div>
         <div>
-          <span class="truth published">Publicado</span>
-          <span class="truth operational">Red sintética</span>
-          <h2>Red sintética Watts–Strogatz</h2>
-          <p>Primero se colocan (N) personas en un anillo. Cada una se conecta con (k/2) vecinos a cada lado. Después, cada una de las (Nk/2) aristas orientadas hacia delante se reconecta con probabilidad β, sin crear lazos ni duplicados.</p>
-          \[
-            |E_0|=\frac{Nk}{2},
-            \qquad \mathbb E[\text{aristas reconectadas}]=\beta\frac{Nk}{2}.
-          \]
-          <div class="worked-example"><strong>Ejemplo:</strong> con (N=10), (k=4) y β=0.10, el anillo tiene 20 aristas y se esperan (0.10\times20=2) reconexiones. En una realización concreta pueden salir 0, 1, 2 o más.</div>
-          <p><strong>Qué hace:</strong> con β=0 predominan vecindarios locales; al aumentar β aparecen atajos que conectan zonas antes lejanas. La red limita quién puede influir en quién.</p>
-          <div class="callout warning"><strong>Qué no significa:</strong> esta red no es una fotografía de una red social real. Solo permite estudiar el mecanismo de conexión de forma reproducible.</div>
+          <span class="truth published">Watts–Strogatz</span>
+          <h2>Quién puede hablar con quién</h2>
+          <p>Las personas se colocan primero en un anillo. Cada persona recibe k contactos. Después, cada enlace puede reconectarse con probabilidad β para crear atajos.</p>
+          <div class="formula-block"><span class="formula-line">enlaces iniciales = N × k ÷ 2</span><span class="formula-line">reconexiones esperadas = β × N × k ÷ 2</span></div>
+          <ul class="symbol-list"><li><strong>N:</strong> número de personas.</li><li><strong>k:</strong> contactos iniciales por persona.</li><li><strong>β:</strong> probabilidad de reconectar cada enlace.</li></ul>
+          <div class="worked-example"><strong>Ejemplo numérico:</strong> con N = 200 y k = 8 se crean 200 × 8 ÷ 2 = <strong>800 enlaces</strong>. Si β = 0.10, se esperan 0.10 × 800 = <strong>80 reconexiones</strong>. Una ejecución concreta puede producir algo más o menos.</div>
+          <p><strong>Efecto:</strong> β bajo conserva vecindarios locales; β mayor introduce contactos lejanos. La red es sintética y deberá sustituirse o calibrarse si existen datos relacionales de COVID.</p>
           <p class="source-line">Fuente: Watts y Strogatz (1998), DOI 10.1038/30918.</p>
         </div>
       </section>
@@ -101,272 +87,166 @@
       <section id="grupos" class="doc-section">
         <div class="section-number">3</div>
         <div>
-          <span class="truth published">Núcleo publicado</span>
-          <span class="truth operational">Extensión vectorial</span>
-          <h2>Autoatracción, masa de grupos y reactancia</h2>
-          <p>Para un contacto (j), el modelo calcula primero un coeficiente firmado:</p>
-          \[
-          D(d)=
-          \begin{cases}
-          1-d/B_T,& d<2B_T,\\
-          -1,& d\ge2B_T,
-          \end{cases}
-          \qquad q(d)=D(d)e^{-d/B_H}.
-          \]
-          <p>(B_T) es la tolerancia y en la interfaz coincide con ε. (B_H) controla cuánto cae la influencia con la separación. Si (q>0), (j) atrae a (i); si (q<0), aparece contraste o reactancia.</p>
-          \[
-            G_i(t)=\frac{1}{|V_i|}\sum_{j\in V_i}q(d_{ij})[x_j(t)-x_i(t)].
-          \]
-          <p>(V_i) son los contactos de (i). Aquí aparece la <strong>masa social</strong>: si tres miembros de un grupo ocupan la misma posición, esa dirección entra tres veces en la suma. No hay una fuerza adicional de “cluster”; el peso emerge del número de voces.</p>
-          <div class="worked-example"><strong>Ejemplo de atracción:</strong> con (B_T=0.20), (B_H=0.40) y (d=0.10), (D=0.5), (e^{-0.25}=0.779) y (q\approx0.389). El contacto acerca las opiniones.</div>
-          <div class="worked-example"><strong>Ejemplo de reactancia:</strong> con los mismos parámetros y (d=0.30), (D=-0.5), (e^{-0.75}=0.472) y (q\approx-0.236). El desplazamiento cambia de signo y aumenta la separación.</div>
-          <p><strong>Efecto esperado:</strong> los contactos parecidos favorecen cohesión interna; contactos muy distintos pueden separar grupos. La evidencia empírica sobre repulsión no es universal: Keijzer, Mäs y Flache encuentran apoyo débil y solo ante desacuerdos muy grandes. Por eso puede desactivarse.</p>
-          <div class="child-box"><strong>En sencillo:</strong> muchas voces cercanas tiran en la misma dirección. Una voz extremadamente contraria puede hacer que alguien se reafirme, pero ese efecto no ocurre siempre en la vida real.</div>
-          <p class="source-line">Ecuaciones base: Zhang, Hu y Zhang (2025), ecuaciones 2–3. Evidencia de la función de respuesta: Keijzer, Mäs y Flache (2024). La aplicación de la distancia 2D es una adaptación declarada.</p>
+          <span class="truth published">Afinidad firmada</span>
+          <span class="truth operational">Extensión 2D</span>
+          <h2>Autoatracción, masa de grupo y reactancia</h2>
+          <p>Cada contacto aporta un vector. Las voces parecidas pueden acercar; una voz muy discrepante puede producir contraste si la reactancia está activada.</p>
+          <div class="formula-block"><span class="formula-line">si d &lt; 2ε: D(d) = 1 − d/ε; en otro caso: D(d) = −1</span><span class="formula-line">q(d) = D(d) × exp(−d/B<sub>H</sub>)</span><span class="formula-line">G<sub>i</sub> = promedio de q(d<sub>ij</sub>) × (x<sub>j</sub> − x<sub>i</sub>) entre los contactos</span></div>
+          <ul class="symbol-list"><li><strong>ε:</strong> tolerancia entre personas.</li><li><strong>B<sub>H</sub>:</strong> caída de influencia con la distancia.</li><li><strong>q:</strong> signo e intensidad de la influencia.</li><li><strong>G<sub>i</sub>:</strong> influencia social total sobre i.</li></ul>
+          <div class="worked-example"><strong>Ejemplo de atracción:</strong> ε = 0.20, B<sub>H</sub> = 0.40 y d = 0.10.<ol class="numeric-steps"><li>D = 1 − 0.10/0.20 = 0.50.</li><li>exp(−0.10/0.40) = exp(−0.25) = 0.779.</li><li>q = 0.50 × 0.779 = <strong>0.389</strong>. Es positivo: acerca.</li></ol></div>
+          <div class="worked-example"><strong>Ejemplo de reactancia:</strong> con d = 0.30, D = 1 − 0.30/0.20 = −0.50; exp(−0.75) = 0.472; q = −0.50 × 0.472 = <strong>−0.236</strong>. Es negativo: separa.</div>
+          <p><strong>Masa de grupo:</strong> si tres contactos del mismo grupo ocupan una posición parecida, esa dirección aparece tres veces. No se introduce gravedad física. La evidencia empírica de reactancia es débil y depende de desacuerdos grandes, por eso existe un interruptor para desactivarla.</p>
+          <p class="source-line">Ecuaciones base: Zhang, Hu y Zhang (2025). Advertencia empírica: Keijzer, Mäs y Flache (2024).</p>
         </div>
       </section>
 
       <section id="polos" class="doc-section">
         <div class="section-number">4</div>
         <div>
-          <span class="truth published">Señales obstinadas publicadas</span>
-          <span class="truth operational">Combinación 2D</span>
-          <h2>Atracción polo–masa</h2>
-          <p>Las señales A y B mantienen su posición. Una señal (R_k) solo afecta directamente a (i) si está dentro de su tolerancia. Su masa (m_k(t)) equivale a repetir esa fuente obstinada (m_k(t)) veces:</p>
-          \[
-            P_i(t)=\frac{\sum_{k\in\{A,B\}}m_k(t)\,
-            \mathbf 1[\lVert R_k-x_i\rVert_2\le\varepsilon]\,(R_k-x_i)}
-            {1+\sum_{k\in\{A,B\}}m_k(t)\,\mathbf 1[\lVert R_k-x_i\rVert_2\le\varepsilon]}.
-          \]
-          <div class="worked-example"><strong>Ejemplo:</strong> una persona está en 0.20, el polo en 0.10 y (m=5). La contribución es (5(0.10-0.20)/(1+5)=-0.0833). Con velocidad social η=0.06, el paso aportado es (-0.005), no un salto inmediato al polo.</div>
-          <p><strong>Efecto:</strong> una señal más pesada influye más, pero solo sobre personas accesibles bajo ε. Su influencia indirecta puede propagarse después por los contactos sociales.</p>
-          <p class="source-line">Antecedentes: Hegselmann y Krause (2015), señales constantes; Glass y Glass (2021), grupos y líderes competidores. La operación componente a componente en 2D es la extensión evaluada aquí.</p>
-        </div>
-      </section>
-
-      <section id="jdj" class="doc-section">
-        <div class="section-number">5</div>
-        <div>
-          <span class="truth published">Operadores publicados</span>
-          <span class="truth exploratory">Proyección 2D</span>
-          <h2>Qué mide JDJ en este simulador</h2>
-          <p>Primero se proyecta cada punto sobre el eje que une A y B:</p>
-          \[
-            s_i=\operatorname{clip}\!\left(
-            \frac{(x_i-R_A)\cdot(R_B-R_A)}{\lVert R_B-R_A\rVert_2^2},0,1\right).
-          \]
-          <p>Después se calculan pertenencias triangulares complementarias a los extremos:</p>
-          \[
-            \mu_A(i)=1-s_i,\qquad \mu_B(i)=s_i.
-          \]
-          \[
-            JDJ_{AB}=\frac{2}{N^2}\sum_{i=1}^{N}\sum_{j=1}^{N}
-            \max\{\mu_A(i)\mu_B(j),\mu_B(i)\mu_A(j)\}.
-          \]
-          <div class="worked-example"><strong>Ejemplo:</strong> si la mitad está exactamente en A y la otra mitad en B, (JDJ_{AB}=1). Si todos están en el centro, cada pertenencia vale 0.5 y (JDJ_{AB}=0.5): el índice interpreta esa ambivalencia como riesgo medio, no como separación observada.</div>
-          <p><strong>Qué afecta:</strong> JDJ no mueve agentes. Solo informa al auditor. La proyección pierde cualquier separación perpendicular al eje A–B y por eso se muestra también la dispersión.</p>
-          <div class="callout warning"><strong>Límite importante:</strong> JDJ puede dar 0.5 a un consenso central aunque la dispersión sea 0. Por eso el auditor exige simultáneamente (JDJ\ge\theta_J) y (D\ge\theta_D). La dispersión impide que el centro active el recentrado.</div>
-          <p class="source-line">Base: Guevara et al. (2020), producto como solapamiento y máximo como agrupación. La proyección 2D y la normalización se declaran como adaptación exploratoria.</p>
-        </div>
-      </section>
-
-      <section id="auditor" class="doc-section">
-        <div class="section-number">6</div>
-        <div>
-          <span class="truth exploratory">Política de control declarada</span>
-          <h2>Auditor JDJ y “rebote” hacia el centro</h2>
-          <p>El auditor solo se activa si coinciden bipolarización y dispersión suficientes:</p>
-          \[
-            a(t)=\mathbf 1[JDJ_{AB}(t)\ge\theta_J\ \land\ D(t)\ge\theta_D].
-          \]
-          <p>Cuando (a(t)=1), se añade una norma común dirigida al centro (c=(0.5,0.5)):</p>
-          \[
-            C_i(t)=a(t)\,\alpha[c-x_i(t)].
-          \]
-          <div class="worked-example"><strong>Ejemplo:</strong> si (x_i=0.80), (c=0.50) y α=0.02, el término vale (0.02(0.50-0.80)=-0.006). Es un paso pequeño hacia el centro.</div>
-          <p><strong>Qué hace:</strong> representa una intervención —por ejemplo, una norma cívica, mediación o recomendación diseñada—, no una reacción automática de la sociedad.</p>
-          <div class="callout warning"><strong>La parte publicada y la parte propia:</strong> la atracción hacia una norma común tiene antecedente en Zhang et al. (2025). Usar JDJ y dos umbrales para encenderla es una regla de control del proyecto. Debe evaluarse como política, no presentarse como ley psicológica.</div>
-          <div class="child-box"><strong>En sencillo:</strong> el auditor es como una alarma. No crea el incendio ni demuestra por qué empezó; solo activa una medida previamente escrita cuando dos indicadores superan sus límites.</div>
+          <span class="truth published">Fuentes obstinadas</span>
+          <span class="truth operational">Alcance separado</span>
+          <h2>Polos permanentes A y B</h2>
+          <p>A y B pueden representar posiciones persistentes —por ejemplo, izquierda y derecha—. Cada polo tiene posición, intensidad y área de influencia propias.</p>
+          <div class="formula-block"><span class="formula-line">P<sub>i</sub> = [Σ I<sub>k</sub> × 1(d<sub>ik</sub> ≤ ρ<sub>k</sub>) × (R<sub>k</sub> − x<sub>i</sub>)] ÷ [1 + Σ I<sub>k</sub> × 1(d<sub>ik</sub> ≤ ρ<sub>k</sub>)]</span></div>
+          <ul class="symbol-list"><li><strong>R<sub>k</sub>:</strong> posición del polo A o B.</li><li><strong>I<sub>k</sub>:</strong> intensidad entre 0 y 10.</li><li><strong>ρ<sub>k</sub>:</strong> radio del círculo de influencia.</li><li><strong>1(condición):</strong> vale 1 si se cumple y 0 si no.</li></ul>
+          <div class="worked-example"><strong>Ejemplo numérico en un eje:</strong><ol class="numeric-steps"><li>Persona x = 0.20; polo R = 0.10; intensidad I = 5; radio ρ = 0.25.</li><li>La distancia 0.10 está dentro del radio 0.25, así que el polo influye.</li><li>Numerador: 5 × (0.10 − 0.20) = −0.50.</li><li>Denominador: 1 + 5 = 6.</li><li>P = −0.50/6 = −0.0833. Con η = 0.06, aporta 0.06 × −0.0833 = <strong>−0.005</strong> en esa ronda.</li></ol></div>
+          <p><strong>Qué significa intensidad 5:</strong> el polo tiene el mismo peso matemático que cinco fuentes fijas iguales. No significa cinco personas reales ni cinco noticias hasta que exista una calibración. El límite 10 es una escala de interfaz, no una constante científica.</p>
+          <p><strong>Cómo ampliar A o B:</strong> aumenta ρ<sub>A</sub> o ρ<sub>B</sub> en «Área A» o «Área B». El círculo dibujado cambia exactamente con ese valor.</p>
+          <p class="source-line">Antecedentes: Hegselmann y Krause (2015) sobre señales constantes; Glass y Glass (2021) sobre grupos obstinados competidores. Permitir ρ diferente para cada fuente es una decisión operativa declarada.</p>
         </div>
       </section>
 
       <section id="eventos" class="doc-section">
-        <div class="section-number">7</div>
+        <div class="section-number">5</div>
         <div>
-          <span class="truth published">Decaimiento con antecedente</span>
-          <span class="truth operational">Ventanas declaradas</span>
-          <h2>Pérdida de atención, eventos y contraeventos</h2>
-          <p>Dentro de su intervalo, el peso de una señal disminuye exponencialmente:</p>
-          \[
-            m_k(t)=m_{k0}\,\mathbf 1[s_k\le t<s_k+d_k]\,
-            e^{-\lambda(t-s_k)}.
-          \]
-          <div class="worked-example"><strong>Ejemplo:</strong> con (m_0=5), λ=0.01 y 100 rondas desde el inicio, (m(100)=5e^{-1}\approx1.84).</div>
-          <p><strong>Interpretación prudente:</strong> el simulador lo llama pérdida de atención. No afirma medir cansancio clínico ni una curva psicológica universal. Schweitzer et al. modelan la pérdida de atención a información antigua mediante un término de decaimiento; aquí se usa su forma exponencial simple.</p>
-          <p>Un <strong>contraevento</strong> es simplemente la segunda señal B, con su propio inicio, duración, posición y peso. No aparece mágicamente en respuesta a A: sus fechas deben fijarse con un acontecimiento observado o con un escenario experimental explícito.</p>
-          <div class="child-box"><strong>En sencillo:</strong> una noticia llama mucho la atención al principio y menos después. Otra noticia puede empezar más tarde y empujar en otra dirección.</div>
-          <p class="source-line">Antecedente del decaimiento de atención: Schweitzer, Krivachy y Garcia (2020), ecuación del campo de información. La ventana y la traducción a masa de señal son decisiones operativas.</p>
-        </div>
-      </section>
-
-      <section id="ruido" class="doc-section">
-        <div class="section-number">8</div>
-        <div>
-          <span class="truth published">Ruido local publicado</span>
-          <span class="truth published">Agentes obstinados</span>
-          <h2>Ruido e inmovilidad combinados</h2>
-          <p>Para una persona móvil, con probabilidad (m) la interacción normal se sustituye por un salto local:</p>
-          \[
-          x_i(t+1)=
-          \begin{cases}
-          \operatorname{clip}[x_i(t)+u_i(t)],&\text{con probabilidad }m,\\
-          \text{actualización social},&\text{con probabilidad }1-m,
-          \end{cases}
-          \quad u_{id}\sim U[-\gamma,\gamma].
-          \]
-          <p>Una fracción (p_0) se marca como obstinada al inicio y no se mueve:</p>
-          \[
-            z_i\sim\operatorname{Bernoulli}(p_0),\qquad z_i=1\Rightarrow x_i(t+1)=x_i(t).
-          \]
-          <div class="worked-example"><strong>Ejemplo:</strong> con 200 personas, (m=0.01) produce en promedio 2 saltos por ronda; (p_0=0.05) produce en promedio 10 agentes inmóviles. Una semilla fija hace reproducible quién salta y quién es obstinado.</div>
-          <p><strong>Efecto:</strong> el ruido evita trayectorias totalmente mecánicas y puede deshacer clusters; los obstinados preservan posiciones. Al actuar juntos pueden mantener diversidad, pero los valores deben someterse a sensibilidad.</p>
-          <p class="source-line">Ruido: Pineda, Toral y Hernández-García (2013), saltos aleatorios acotados. Obstinación: tradición Friedkin–Johnsen y revisión de Noorazar (2020).</p>
+          <span class="truth published">Decaimiento de atención</span>
+          <span class="truth operational">Ventana observada</span>
+          <h2>Eventos, contraeventos y pérdida de atención</h2>
+          <p>Un evento temporal utiliza la misma influencia que un polo, pero solo dentro de su intervalo. Si se activa la pérdida de atención, su intensidad disminuye gradualmente.</p>
+          <div class="formula-block"><span class="formula-line">si inicio ≤ t &lt; inicio + duración:</span><span class="formula-line">I<sub>E</sub>(t) = I<sub>E0</sub> × exp[−λ(t − inicio)]</span><span class="formula-line">fuera de ese intervalo: I<sub>E</sub>(t) = 0</span></div>
+          <ul class="symbol-list"><li><strong>I<sub>E0</sub>:</strong> intensidad inicial, de 0 a 10.</li><li><strong>λ:</strong> velocidad de pérdida de atención.</li><li><strong>t:</strong> ronda actual.</li><li><strong>duración:</strong> rondas en las que existe el evento.</li></ul>
+          <div class="worked-example"><strong>Ejemplo numérico:</strong> intensidad inicial 5, inicio t = 20, duración 60 y λ = 0.01. En t = 40 han pasado 20 rondas: 5 × exp(−0.01 × 20) = 5 × 0.819 = <strong>4.09</strong>. En t = 80 el evento termina y su intensidad pasa a <strong>0</strong>.</div>
+          <p><strong>Evento aleatorio:</strong> el botón elige una posición (x,y) uniforme entre 0 y 1 utilizando la semilla. Es una prueba de Monte Carlo del programa, no una teoría sobre cuándo ocurre una crisis.</p>
+          <div class="worked-example"><strong>Ejemplo numérico de prueba:</strong> si el generador produce x = 0.37 e y = 0.64, el evento aparece en (0.37, 0.64), con la intensidad, radio y duración elegidos en la interfaz.</div>
+          <p><strong>Contraevento:</strong> el botón lo sitúa explícitamente en B. No se afirma que todo evento produzca automáticamente una respuesta. En un estudio de COVID, cada acontecimiento y contraacontecimiento se introducirá con su fecha y datos observados.</p>
+          <p class="source-line">Decaimiento de atención: Schweitzer, Krivachy y Garcia (2020). Ventana, escala 0–10 y botones de prueba: decisiones operativas visibles.</p>
         </div>
       </section>
 
       <section id="radicalidad" class="doc-section">
-        <div class="section-number">9</div>
+        <div class="section-number">6</div>
         <div>
           <span class="truth published">Compromiso por extremidad</span>
           <span class="truth operational">Extensión 2D</span>
-          <h2>Radicalidad y resistencia al cambio</h2>
-          <p>La radicalidad es la distancia normalizada al centro del cuadrado:</p>
-          \[
-            r_i(t)=\operatorname{clip}\left(
-            \frac{\lVert x_i(t)-(0.5,0.5)\rVert_2}{\sqrt{0.5}},0,1\right),
-            \qquad k_i(t)=1+s\,r_i(t).
-          \]
-          <p>La actualización se divide por (k_i). Cuanto más extrema es la posición, menor es el cambio producido por la misma influencia.</p>
-          <div class="worked-example"><strong>Ejemplo:</strong> con (s=1), una persona en el centro tiene (k=1) y conserva todo el paso calculado. En una esquina tiene (r=1), (k=2) y realiza la mitad.</div>
-          <div class="callout safe"><strong>Decisión de rigor:</strong> no se cambia ε con una fórmula inventada. Duggins publica compromiso dependiente de la extremidad, no un umbral de tolerancia 2D dependiente de la radicalidad. Por eso la interfaz dice “compromiso adaptativo”: conserva la intención social de resistencia sin atribuir a la fuente algo que no formula.</div>
-          <p class="source-line">Base: Duggins (2017), (k_i=1+s_i|50-O_i|/50). La distancia radial normalizada es su adaptación geométrica a dos dimensiones.</p>
+          <h2>Resistencia al cambio en posiciones extremas</h2>
+          <div class="formula-block"><span class="formula-line">r<sub>i</sub> = distancia de x<sub>i</sub> al centro ÷ √0.5</span><span class="formula-line">k<sub>i</sub> = 1 + s × r<sub>i</sub></span><span class="formula-line">cambio aplicado = cambio calculado ÷ k<sub>i</sub></span></div>
+          <ul class="symbol-list"><li><strong>r<sub>i</sub>:</strong> extremidad, entre 0 y 1.</li><li><strong>s:</strong> intensidad de la resistencia.</li><li><strong>k<sub>i</sub>:</strong> divisor del movimiento.</li></ul>
+          <div class="worked-example"><strong>Ejemplo numérico:</strong> con s = 1, una persona central tiene r = 0 y k = 1: conserva todo el cambio. Una persona en una esquina tiene r = 1 y k = 2: un cambio calculado de 0.04 se convierte en 0.04/2 = <strong>0.02</strong>.</div>
+          <p>No se inventa una tolerancia adaptativa. Se adapta a dos dimensiones el compromiso dependiente de la extremidad publicado por Duggins.</p>
+          <p class="source-line">Base: Duggins (2017), k<sub>i</sub> = 1 + s<sub>i</sub>|50 − O<sub>i</sub>|/50.</p>
         </div>
       </section>
 
-      <section id="simultaneo" class="doc-section">
+      <section id="ruido" class="doc-section">
+        <div class="section-number">7</div>
+        <div>
+          <span class="truth published">Ruido local y obstinación</span>
+          <h2>Ruido e inmovilidad</h2>
+          <div class="formula-block"><span class="formula-line">con probabilidad m: x<sub>i</sub>(t+1) = recortar[x<sub>i</sub>(t) + u<sub>i</sub>]</span><span class="formula-line">cada coordenada de u<sub>i</sub> se sortea entre −γ y +γ</span><span class="formula-line">si la persona es inmóvil: x<sub>i</sub>(t+1) = x<sub>i</sub>(t)</span></div>
+          <div class="worked-example"><strong>Ejemplo numérico:</strong> con N = 200 y m = 0.01 se esperan 200 × 0.01 = <strong>2 saltos por ronda</strong>. Si γ = 0.02 y una coordenada vale 0.50, después del salto quedará entre 0.48 y 0.52. Con proporción inmóvil 0.05 se esperan 200 × 0.05 = <strong>10 personas obstinadas</strong>.</div>
+          <p><strong>Efecto:</strong> el ruido representa variación no explicada dentro de un límite; la inmovilidad conserva algunas posiciones. Ambos se someten a análisis de sensibilidad.</p>
+          <p class="source-line">Ruido local: Pineda, Toral y Hernández-García (2013). Obstinación: tradición Friedkin–Johnsen y revisión de Noorazar (2020).</p>
+        </div>
+      </section>
+
+      <section id="jdj" class="doc-section">
+        <div class="section-number">8</div>
+        <div>
+          <span class="truth published">Operadores difusos</span>
+          <span class="truth operational">Proyección 2D</span>
+          <h2>JDJ explicado paso a paso</h2>
+          <p>JDJ necesita saber cuánto pertenece cada persona al lado A y al lado B. Primero se coloca cada punto sobre la línea A–B.</p>
+          <div class="formula-block"><span class="formula-line">s<sub>i</sub> = recortar{[(x<sub>i</sub> − R<sub>A</sub>) · (R<sub>B</sub> − R<sub>A</sub>)] ÷ ‖R<sub>B</sub> − R<sub>A</sub>‖², entre 0 y 1}</span><span class="formula-line">pertenencia a A: μ<sub>A</sub>(i) = 1 − s<sub>i</sub></span><span class="formula-line">pertenencia a B: μ<sub>B</sub>(i) = s<sub>i</sub></span></div>
+          <div class="worked-example"><strong>Ejemplo numérico de la proyección:</strong><ol class="numeric-steps"><li>A = (0,1), B = (1,0) y persona x = (0.25,0.75).</li><li>B − A = (1,−1); x − A = (0.25,−0.25).</li><li>Producto: 0.25×1 + (−0.25)×(−1) = 0.50.</li><li>Longitud al cuadrado de A–B: 1² + (−1)² = 2.</li><li>s = 0.50/2 = <strong>0.25</strong>. Su pertenencia es 0.75 a A y 0.25 a B.</li></ol></div>
+          <p>Después se comparan todas las parejas de personas:</p>
+          <div class="formula-block"><span class="formula-line">JDJ = (2/N²) × suma sobre i y j del mayor entre:</span><span class="formula-line">μ<sub>A</sub>(i)×μ<sub>B</sub>(j) y μ<sub>B</sub>(i)×μ<sub>A</sub>(j)</span></div>
+          <div class="worked-example"><strong>Ejemplo numérico de JDJ:</strong> cuatro personas: dos exactamente en A y dos exactamente en B. Hay 16 parejas ordenadas; 8 cruzan A–B y aportan 1. JDJ = (2/16) × 8 = <strong>1</strong>. Si las cuatro están en el centro, cada producto vale 0.25: JDJ = (2/16) × (16×0.25) = <strong>0.5</strong>.</div>
+          <p><strong>Límite:</strong> un centro unido obtiene 0.5 aunque no esté dividido. Por eso el auditor nunca usa JDJ solo: exige también dispersión.</p>
+          <p class="source-line">Producto y máximo: Guevara et al. (2020). Proyección sobre el eje A–B y normalización: adaptación declarada.</p>
+        </div>
+      </section>
+
+      <section id="auditor" class="doc-section">
+        <div class="section-number">9</div>
+        <div>
+          <span class="truth exploratory">Intervención explícita</span>
+          <h2>Auditor y recentrado</h2>
+          <div class="formula-block"><span class="formula-line">auditor = 1 solo si JDJ ≥ umbral JDJ y dispersión ≥ dispersión mínima</span><span class="formula-line">C<sub>i</sub> = auditor × α × [(0.5,0.5) − x<sub>i</sub>]</span></div>
+          <div class="worked-example"><strong>Ejemplo numérico:</strong> JDJ = 0.70, umbral = 0.60, dispersión = 0.08 y mínimo = 0.03: el auditor se activa. Para una coordenada x = 0.80 y α = 0.02, el término es 0.02 × (0.50 − 0.80) = <strong>−0.006</strong>, un paso pequeño hacia el centro.</div>
+          <p><strong>Efecto:</strong> representa una política de mediación o exposición común. El disparador JDJ es una regla del proyecto; no se afirma que la sociedad se recentre automáticamente.</p>
+          <p class="source-line">La atracción hacia una norma común tiene antecedente en Zhang et al. (2025). La activación por dos umbrales es una decisión de control evaluable.</p>
+        </div>
+      </section>
+
+      <section id="total" class="doc-section">
         <div class="section-number">10</div>
         <div>
           <span class="truth operational">Composición del proyecto</span>
-          <h2>Diversos mecanismos activos al mismo tiempo</h2>
-          <p>Si el agente no es inmóvil y no le corresponde un salto de ruido, la actualización integrada es:</p>
-          \[
-            x_i(t+1)=\operatorname{clip}_{[0,1]^2}\!\left[
-            x_i(t)+\frac{\eta\,[G_i(t)+P_i(t)]+C_i(t)}{k_i(t)}
-            \right].
-          \]
-          <div class="table-wrap"><table>
-            <thead><tr><th>Término</th><th>Qué representa</th><th>Origen</th></tr></thead>
-            <tbody>
-              <tr><td>(G_i)</td><td>Autoatracción, masa de contactos y posible reactancia</td><td>Zhang et al.; contraste contrastado por Keijzer et al.</td></tr>
-              <tr><td>(P_i)</td><td>Atracción de señales obstinadas ponderadas</td><td>HK con señales y grupos competidores</td></tr>
-              <tr><td>(C_i)</td><td>Recentrado si interviene el auditor</td><td>Norma común publicada + activación propia</td></tr>
-              <tr><td>(k_i)</td><td>Resistencia creciente con la extremidad</td><td>Duggins + adaptación 2D</td></tr>
-              <tr><td>η</td><td>Velocidad global del cambio social</td><td>Parámetro de discretización declarado</td></tr>
-            </tbody>
-          </table></div>
-          <p><strong>Orden exacto:</strong> inmovilidad → posible ruido → influencia de red → señales → auditor → compromiso → recorte al cuadrado. El orden importa y está fijado para que dos ejecuciones con la misma semilla sean comparables.</p>
-          <div class="callout warning"><strong>Límite:</strong> sumar mecanismos compatibles es una hipótesis de modelado, no una validación. El análisis correcto debe desactivar componentes uno a uno y comparar resultados —un estudio de ablación— antes de atribuir un patrón a una causa.</div>
-        </div>
-      </section>
-
-      <section id="comparadores" class="doc-section">
-        <div class="section-number">11</div>
-        <div>
-          <h2>Modelos clásicos disponibles para comparar</h2>
-          <h3>Hegselmann–Krause</h3>
-          \[
-            \mathcal N_i=\{j:\lVert x_j-x_i\rVert_2\le\varepsilon\},\qquad
-            x_i(t+1)=\frac1{|\mathcal N_i|}\sum_{j\in\mathcal N_i}x_j(t).
-          \]
-          <p>Todos los vecinos aceptados se promedian a la vez. Dos personas que oyen exactamente las mismas voces pueden terminar en la misma coordenada.</p>
-
-          <h3>Deffuant–Weisbuch</h3>
-          \[
-          x_i'=x_i+\mu(x_j-x_i),\qquad x_j'=x_j+\mu(x_i-x_j),
-          \quad d_{ij}\le\varepsilon.
-          \]
-          <div class="worked-example"><strong>Ejemplo:</strong> con 0, 0.2 y μ=0.1, las nuevas opiniones son 0.02 y 0.18. El encuentro es gradual.</div>
-
-          <h3>Friedkin–Johnsen</h3>
-          \[
-            x_i(t+1)=g\,x_i(0)+(1-g)T_i(t).
-          \]
-          <div class="worked-example"><strong>Ejemplo:</strong> ancla 0.2, blanco social 0.6 y (g=0.75) dan (0.75(0.2)+0.25(0.6)=0.3).</div>
-          <p><strong>Para qué sirven:</strong> son controles. Permiten saber si el modelo integrado aporta un comportamiento distinto o si un mecanismo clásico más simple ya lo explica.</p>
+          <h2>Todos los mecanismos en una actualización</h2>
+          <div class="formula-block"><span class="formula-line">nueva opinión = recortar[opinión actual + {η×(grupo + polos + eventos) + recentrado} ÷ resistencia]</span><span class="formula-line">x<sub>i</sub>(t+1) = clip[x<sub>i</sub>(t) + {η(G<sub>i</sub> + P<sub>i</sub> + E<sub>i</sub>) + C<sub>i</sub>} / k<sub>i</sub>]</span></div>
+          <div class="worked-example"><strong>Ejemplo numérico en una coordenada:</strong> influencia del grupo G = 0.03; polos P = −0.01; evento E = 0; recentrado C = −0.006; η = 0.06; resistencia k = 1.5.<ol class="numeric-steps"><li>Influencia social: 0.06 × (0.03 − 0.01) = 0.0012.</li><li>Se añade el recentrado: 0.0012 − 0.006 = −0.0048.</li><li>Se divide por la resistencia: −0.0048/1.5 = <strong>−0.0032</strong>.</li><li>Si la coordenada era 0.80, pasa a <strong>0.7968</strong>.</li></ol></div>
+          <p><strong>Orden exacto:</strong> inmovilidad → posible ruido → contactos → polos y eventos → auditor → resistencia → recorte al cuadrado. Sumar estas piezas es una hipótesis transparente del proyecto, no una teoría publicada como conjunto.</p>
         </div>
       </section>
 
       <section id="salidas" class="doc-section">
-        <div class="section-number">12</div>
+        <div class="section-number">11</div>
         <div>
           <span class="truth operational">Medidas descriptivas</span>
-          <h2>Qué se representa y qué no causa movimiento</h2>
+          <h2>Resultados que aparecen debajo del gráfico</h2>
           <h3>Dispersión</h3>
-          \[
-            \bar x=\frac1N\sum_i x_i,\qquad
-            D=\frac1N\sum_i\lVert x_i-\bar x\rVert_2^2.
-          \]
-          <p>Vale 0 si todas las personas coinciden y aumenta cuando la nube se extiende.</p>
-          <h3>Clusters visibles</h3>
-          <p>Dos puntos se enlazan para el diagnóstico si su separación es menor o igual que δ. Cada componente conexa se muestra con un anillo y una etiqueta <code>n=...</code>. El radio visual crece con (\sqrt n) para que un grupo grande no tape todo el gráfico.</p>
-          <div class="callout neutral"><strong>Separación entre dinámica y dibujo:</strong> el umbral de cluster y los anillos no mueven agentes. La “masa” dinámica procede de las voces que entran en (G_i), no del tamaño dibujado del círculo.</div>
-          <h3>Seguidores y RMSD</h3>
-          \[
-            F_A=\#\{i:\lVert x_i-R_A\rVert_2\le10^{-3}\},\qquad
-            RMSD_A=\sqrt{\frac1N\sum_i\lVert x_i-R_A\rVert_2^2}.
-          \]
-          <p>Seguidores cuenta coincidencias prácticamente exactas; RMSD informa cercanía media aunque nadie llegue exactamente al polo.</p>
+          <div class="formula-block"><span class="formula-line">centro medio = suma de opiniones ÷ N</span><span class="formula-line">dispersión = promedio de la distancia al cuadrado respecto al centro medio</span></div>
+          <div class="worked-example"><strong>Ejemplo numérico en un eje:</strong> opiniones 0 y 1; centro medio = 0.5. Dispersión = [(0−0.5)² + (1−0.5)²]/2 = (0.25+0.25)/2 = <strong>0.25</strong>.</div>
+          <h3>Clusters</h3>
+          <p>Dos puntos se conectan para el dibujo cuando su distancia es menor o igual que δ. Los componentes conectados forman los grupos visibles.</p>
+          <div class="worked-example"><strong>Ejemplo numérico:</strong> con δ = 0.05, puntos separados 0.03 quedan conectados; puntos separados 0.08 no. δ solo cambia el diagnóstico y los anillos: no mueve a las personas.</div>
+          <h3>RMSD respecto a un polo</h3>
+          <div class="formula-block"><span class="formula-line">RMSD<sub>A</sub> = √[promedio de d(x<sub>i</sub>, A)²]</span></div>
+          <div class="worked-example"><strong>Ejemplo numérico:</strong> dos personas están a distancias 0.10 y 0.30 de A. RMSD = √[(0.10²+0.30²)/2] = √0.05 = <strong>0.224</strong>.</div>
         </div>
       </section>
 
       <section id="codigo" class="doc-section">
-        <div class="section-number">13</div>
+        <div class="section-number">12</div>
         <div>
-          <h2>Mapa fórmula ↔ código ↔ comprobación</h2>
-          <div class="table-wrap"><table>
-            <thead><tr><th>Mecanismo</th><th>Función web</th><th>Prueba mínima</th></tr></thead>
-            <tbody>
-              <tr><td>Red pequeña</td><td><code>buildSmallWorldNetwork</code></td><td>sin lazos; aristas simétricas</td></tr>
-              <tr><td>Atracción / reactancia</td><td><code>socialImpactCoefficient</code></td><td>signo positivo cerca y negativo lejos</td></tr>
-              <tr><td>Masa de polos</td><td><code>integratedStep</code></td><td>un peso mayor produce más acercamiento</td></tr>
-              <tr><td>Radicalidad</td><td><code>radicality</code></td><td>centro = 0; esquina = 1</td></tr>
-              <tr><td>Ruido acotado</td><td><code>boundedNoise</code></td><td>salto dentro de γ y de [0,1]²</td></tr>
-              <tr><td>Inmovilidad</td><td><code>assignImmobility</code></td><td>misma semilla, mismos obstinados</td></tr>
-              <tr><td>JDJ sobre A–B</td><td><code>jdjProductAxis</code></td><td>50/50 extremo = 1; centro = 0.5</td></tr>
-              <tr><td>Auditor y composición</td><td><code>integratedStep</code></td><td>solo se activa con ambos umbrales</td></tr>
-            </tbody>
-          </table></div>
-          <p><code>web/model.js</code> contiene las ecuaciones y comentarios; <code>web/app.js</code> dibuja y gestiona controles. Separarlos evita que un cambio de color altere la dinámica. Las verificaciones se ejecutan con <code>node web/verification.js</code>.</p>
+          <h2>Dónde está cada regla en el código</h2>
+          <div class="table-wrap"><table><thead><tr><th>Regla</th><th>JavaScript</th><th>Python</th><th>Comprobación</th></tr></thead><tbody>
+            <tr><td>Distancia</td><td><code>distance</code></td><td><code>numpy.linalg.norm</code></td><td>triángulo 0.3–0.4–0.5</td></tr>
+            <tr><td>Red</td><td><code>buildSmallWorldNetwork</code></td><td><code>phased_model</code></td><td>sin lazos y enlaces simétricos</td></tr>
+            <tr><td>Atracción/reactancia</td><td><code>socialImpactCoefficient</code></td><td><code>social_impact_coefficient</code></td><td>positivo cerca, negativo lejos</td></tr>
+            <tr><td>Polos y eventos</td><td><code>integratedStep</code></td><td><code>step</code></td><td>más intensidad, mayor efecto</td></tr>
+            <tr><td>Atención</td><td><code>activeEventWeight</code></td><td><code>event_weight</code></td><td>cero fuera de la ventana</td></tr>
+            <tr><td>JDJ</td><td><code>jdjProductAxis</code></td><td><code>jdj_axis</code></td><td>división extrema = 1</td></tr>
+            <tr><td>Auditor</td><td><code>integratedStep</code></td><td><code>step</code></td><td>requiere dos umbrales</td></tr>
+          </tbody></table></div>
         </div>
       </section>
 
       <section id="referencias" class="doc-section references-section">
-        <div class="section-number">14</div>
+        <div class="section-number">13</div>
         <div>
           <h2>Referencias primarias utilizadas</h2>
           <ul class="reference-list">
-            <li>Zhang, X. J., Hu, Y. & Zhang, Y. (2025). <a href="https://doi.org/10.3389/fphy.2025.1706465">An affinity-based opinion dynamics model for the evolving pattern of political polarization</a>. <i>Frontiers in Physics, 13</i>.</li>
-            <li>Duggins, P. (2017). <a href="https://doi.org/10.18564/jasss.3316">A Psychologically-Motivated Model of Opinion Change with Applications to American Politics</a>. <i>JASSS, 20</i>(1), 13.</li>
-            <li>Keijzer, M., Mäs, M. & Flache, A. (2024). <a href="https://doi.org/10.18564/jasss.5298">Polarization on Social Media: Testing Effectiveness of Content Recommendations for Negative Influence Models</a>. <i>JASSS, 27</i>(1), 7.</li>
-            <li>Pineda, M., Toral, R. & Hernández-García, E. (2013). <a href="https://doi.org/10.1140/epjb/e2013-40777-7">The noisy Hegselmann-Krause model for opinion dynamics</a>. <i>European Physical Journal B, 86</i>, 490.</li>
-            <li>Schweitzer, F., Krivachy, T. & Garcia, D. (2020). <a href="https://doi.org/10.1155/2020/5282035">An Agent-Based Model of Opinion Polarization Driven by Emotions</a>. <i>Complexity</i>, 5282035.</li>
-            <li>Guevara, J. A., Gómez, D., Robles, J. M. & Montero, J. (2020). <a href="https://doi.org/10.1007/978-3-030-50143-3_40">Measuring Polarization: A Fuzzy Set Theoretical Approach</a>. <i>IPMU 2020</i>, 510–522.</li>
-            <li>Watts, D. J. & Strogatz, S. H. (1998). <a href="https://doi.org/10.1038/30918">Collective dynamics of ‘small-world’ networks</a>. <i>Nature, 393</i>, 440–442.</li>
-            <li>Hegselmann, R. & Krause, U. (2002). <a href="https://www.jasss.org/5/3/2.html">Opinion Dynamics and Bounded Confidence Models, Analysis, and Simulation</a>. <i>JASSS, 5</i>(3).</li>
-            <li>Deffuant, G., Neau, D., Amblard, F. & Weisbuch, G. (2000). <a href="https://doi.org/10.1142/S0219525900000078">Mixing Beliefs among Interacting Agents</a>. <i>Advances in Complex Systems, 3</i>, 87–98.</li>
-            <li>Friedkin, N. E. & Johnsen, E. C. (1990). <a href="https://doi.org/10.1080/0022250X.1990.9990069">Social Influence and Opinions</a>. <i>The Journal of Mathematical Sociology, 15</i>, 193–206.</li>
+            <li>Zhang, X. J., Hu, Y. & Zhang, Y. (2025). <a href="https://doi.org/10.3389/fphy.2025.1706465">An affinity-based opinion dynamics model for the evolving pattern of political polarization</a>.</li>
+            <li>Duggins, P. (2017). <a href="https://doi.org/10.18564/jasss.3316">A Psychologically-Motivated Model of Opinion Change with Applications to American Politics</a>.</li>
+            <li>Keijzer, M., Mäs, M. & Flache, A. (2024). <a href="https://doi.org/10.18564/jasss.5298">Polarization on Social Media</a>.</li>
+            <li>Pineda, M., Toral, R. & Hernández-García, E. (2013). <a href="https://doi.org/10.1140/epjb/e2013-40777-7">The noisy Hegselmann-Krause model for opinion dynamics</a>.</li>
+            <li>Schweitzer, F., Krivachy, T. & Garcia, D. (2020). <a href="https://doi.org/10.1155/2020/5282035">An Agent-Based Model of Opinion Polarization Driven by Emotions</a>.</li>
+            <li>Guevara, J. A. et al. (2020). <a href="https://doi.org/10.1007/978-3-030-50143-3_40">Measuring Polarization: A Fuzzy Set Theoretical Approach</a>.</li>
+            <li>Watts, D. J. & Strogatz, S. H. (1998). <a href="https://doi.org/10.1038/30918">Collective dynamics of small-world networks</a>.</li>
+            <li>Hegselmann, R. & Krause, U. (2015). <a href="https://doi.org/10.3934/nhm.2015.10.477">Opinion Dynamics under the Influence of Radical Groups, Charismatic Leaders, and Other Constant Signals</a>.</li>
+            <li>Glass, C. A. & Glass, D. H. (2021). <a href="https://doi.org/10.1007/s10614-020-10049-7">Social Influence of Competing Groups and Leaders in Opinion Dynamics</a>.</li>
           </ul>
-          <p>La tercera página distingue, además, cuáles de los 25 PDF locales se usaron para cada decisión y cuáles solo sirven como contexto o advertencia metodológica.</p>
         </div>
       </section>
     </article>

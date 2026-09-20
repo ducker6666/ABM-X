@@ -4,22 +4,20 @@
  * Esta parte no dibuja nada: solo implementa la ecuación documentada en
  * formula.html y en src/integrated_model.py. Separar modelo e interfaz permite
  * comprobar que un botón o un color no cambien accidentalmente la teoría.
- * `step` conserva el control HK. `advance` permite comparar modelos clásicos
- * y una composición integrada. Esa composición NO se presenta como una teoría
- * publicada íntegramente: cada término tiene una fuente y la forma de unirlos
- * es una decisión explícita del proyecto, documentada en formula.html.
+ * La interfaz usa una sola composición integrada. Se conservan funciones
+ * clásicas únicamente para pruebas de regresión. La composición NO se presenta
+ * como una teoría publicada íntegramente: cada término tiene una fuente y la
+ * forma de unirlos es una decisión explícita documentada en formula.html.
  *
- * Regla por agente i (actualización síncrona):
+ * Regla integrada por agente i (actualización síncrona):
  *
- * x_i(t+1) = [Σ_{j∈N_i} x_j + I_A m_A R_A + I_B m_B R_B]
- *              / [|N_i| + I_A m_A + I_B m_B]
+ * x_i(t+1) = clip[x_i + {eta(G_i + P_i + E_i) + C_i}/k_i].
  *
- * N_i contiene al propio i y a todos los agentes cuya distancia euclídea es
- * como máximo epsilon. I_A/I_B valen 1 si la señal también está a distancia
- * epsilon o menos. Esta regla sigue HK y el modelo de señales constantes.
- *
- * Ejemplo infantil: dos personas opinan 0.2 y 0.3; una señal situada en 0.1
- * cuenta como dos voces. El promedio es (0.2+0.3+2*0.1)/4 = 0.175.
+ * G_i agrega contactos; P_i agrega los polos permanentes A/B; E_i agrega
+ * eventos temporales; C_i es la intervención del auditor; k_i es resistencia
+ * por extremidad. Cada término y un ejemplo numérico están en formula.html.
+ * Las funciones HK/FJ/DW que aparecen más abajo se conservan solo como
+ * controles de regresión y ya no son opciones de la interfaz.
  */
 
 (function attachABMXModel(globalScope) {
@@ -59,8 +57,13 @@
       throw new Error("epsilon debe ser un número no negativo");
     }
     for (const key of ["signalAWeight", "signalBWeight"]) {
-      if (!Number.isFinite(config[key]) || config[key] < 0) {
-        throw new Error(`${key} debe ser no negativo`);
+      if (!Number.isFinite(config[key]) || config[key] < 0 || config[key] > 10) {
+        throw new Error(`${key} debe pertenecer a [0,10]`);
+      }
+    }
+    for (const key of ["signalAReach", "signalBReach"]) {
+      if (config[key] !== undefined && (!Number.isFinite(config[key]) || config[key] <= 0 || config[key] > 1)) {
+        throw new Error(`${key} debe pertenecer a (0,1]`);
       }
     }
     for (const key of ["signalA", "signalB"]) {
@@ -144,17 +147,18 @@
 
   function signalWeights(config, t) {
     if (config.phase === "integrated") {
+      const permanent = [Boolean(config.signalAPermanent), Boolean(config.signalBPermanent)];
       const windowed = [
-        config.signalAWeight * activeInterval(t, config.signalAStart, config.signalADuration),
-        config.signalBWeight * activeInterval(t, config.signalBStart, config.signalBDuration),
+        config.signalAWeight * (permanent[0] ? 1 : activeInterval(t, config.signalAStart, config.signalADuration)),
+        config.signalBWeight * (permanent[1] ? 1 : activeInterval(t, config.signalBStart, config.signalBDuration)),
       ];
       if (!config.fatigueEnabled) return windowed;
       // Decaimiento de atención: m_k(t)=m_k exp[-lambda(t-s_k)] dentro
       // de su ventana. Es la discretización más simple del término de pérdida
       // de atención -c h(t) descrito por Schweitzer et al. (2020).
       return [
-        windowed[0] * Math.exp(-config.fatigueDecay * Math.max(0, t - config.signalAStart)),
-        windowed[1] * Math.exp(-config.fatigueDecay * Math.max(0, t - config.signalBStart)),
+        permanent[0] ? windowed[0] : windowed[0] * Math.exp(-config.fatigueDecay * Math.max(0, t - config.signalAStart)),
+        permanent[1] ? windowed[1] : windowed[1] * Math.exp(-config.fatigueDecay * Math.max(0, t - config.signalBStart)),
       ];
     }
     if (config.phase !== "temporal") return [config.signalAWeight, config.signalBWeight];
@@ -162,6 +166,14 @@
       config.signalAWeight * activeInterval(t, config.signalAStart, config.signalADuration),
       config.signalBWeight * activeInterval(t, config.signalBStart, config.signalBDuration),
     ];
+  }
+
+  function activeEventWeight(event, t, fatigueEnabled = true, fatigueDecay = 0) {
+    // Un evento declarado solo existe dentro de [inicio, inicio+duracion).
+    // Si se activa la pérdida de atención, su intensidad cae exponencialmente.
+    if (!activeInterval(t, event.start, event.duration)) return 0;
+    const decay = fatigueEnabled ? Math.exp(-fatigueDecay * (t - event.start)) : 1;
+    return event.intensity * decay;
   }
 
   function validatePhasedConfig(config, nAgents) {
@@ -373,13 +385,14 @@
     /*
      * Composición auditable (no una teoría publicada como conjunto):
      *
-     * x_i(t+1)=clip[x_i + eta/k_i (G_i+P_i) + a(t) alpha/k_i(c-x_i)]
+     * x_i(t+1)=clip[x_i + {eta(G_i+P_i+E_i)+C_i}/k_i]
      * k_i=1+s r_i.
      *
      * G_i suma influencia de contactos; por eso un grupo con más miembros
      * aporta más términos ("masa" social) sin introducir gravedad newtoniana.
-     * P_i contiene las señales obstinadas ponderadas. a(t) es la decisión del
-     * auditor: 1 solo si JDJ y dispersión superan los umbrales declarados.
+     * P_i contiene los polos obstinados y E_i los eventos temporales. C_i es
+     * la decisión del auditor: solo existe si JDJ y dispersión superan los
+     * umbrales declarados.
      */
     const beforeJdj = jdjProductAxis(agents, config);
     const beforeDispersion = dispersion(agents);
@@ -412,14 +425,25 @@
       peerX /= peerDenominator;
       peerY /= peerDenominator;
 
-      // Una señal de masa m equivale a m fuentes obstinadas iguales dentro
-      // del límite de confianza. El denominador evita que la escala dependa
-      // de forma descontrolada del valor numérico de m.
+      // Una señal de intensidad m equivale al peso de m fuentes obstinadas
+      // iguales dentro de su alcance rho. Los eventos temporales usan la misma
+      // operación; cambia únicamente su ventana de actividad.
       let poleX = 0;
       let poleY = 0;
       let poleMass = 0;
-      for (const [position, weight] of [[config.signalA, weightA], [config.signalB, weightB]]) {
-        if (weight > 0 && distance([agent.x, agent.y], position) <= config.epsilon) {
+      const sources = [
+        [config.signalA, weightA, config.signalAReach ?? config.epsilon],
+        [config.signalB, weightB, config.signalBReach ?? config.epsilon],
+      ];
+      for (const event of runtime.events ?? []) {
+        sources.push([
+          event.position,
+          activeEventWeight(event, runtime.t, config.fatigueEnabled, config.fatigueDecay),
+          event.reach,
+        ]);
+      }
+      for (const [position, weight, reach] of sources) {
+        if (weight > 0 && distance([agent.x, agent.y], position) <= reach) {
           poleX += weight * (position[0] - agent.x);
           poleY += weight * (position[1] - agent.y);
           poleMass += weight;
@@ -443,7 +467,10 @@
         previousY: agent.y,
       };
     });
-    return { agents: next, auditorActive, jdjBefore: beforeJdj, dispersionBefore: beforeDispersion };
+    const activeEvents = (runtime.events ?? []).filter(event => (
+      activeEventWeight(event, runtime.t, config.fatigueEnabled, config.fatigueDecay) > 0
+    )).length;
+    return { agents: next, auditorActive, activeEvents, jdjBefore: beforeJdj, dispersionBefore: beforeDispersion };
   }
 
   function advance(agents, config, runtime) {
@@ -458,7 +485,12 @@
     else if (config.phase === "dw") next = deffuantRound(agents, config, runtime.random, runtime.t);
     else if (config.phase === "fj") next = friedkinJohnsenStep(agents, config, null, runtime.t);
     else next = friedkinJohnsenStep(agents, config, runtime.network, runtime.t);
-    return { agents: next, meanMove: meanDisplacement(before, next), auditorActive: diagnostics.auditorActive };
+    return {
+      agents: next,
+      meanMove: meanDisplacement(before, next),
+      auditorActive: diagnostics.auditorActive,
+      activeEvents: diagnostics.activeEvents ?? 0,
+    };
   }
 
   function axisProjection(agent, config) {
@@ -543,6 +575,7 @@
 
   const api = {
     activeInterval,
+    activeEventWeight,
     advance,
     assignImmobility,
     axisProjection,
