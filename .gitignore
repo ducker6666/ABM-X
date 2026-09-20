@@ -12,6 +12,8 @@ dist/
 # Resultados generados localmente
 outputs/*
 !outputs/.gitkeep
+phase1/outputs/*
+!phase1/outputs/.gitkeep
 
 # Archivos temporales de editores y sistemas operativos
 *.swp
