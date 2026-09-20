@@ -2,8 +2,8 @@
 module.exports = {
   distancia: String.raw`\begin{aligned}d(u,v)&=\sqrt{(u_x-v_x)^2+(u_y-v_y)^2}\\ \operatorname{clip}(z,l,h)&=\min\{h,\max\{l,z\}\}\end{aligned}`,
   normal: String.raw`\begin{aligned}Z&=\sqrt{-2\ln U_1}\cos(2\pi U_2),\quad U_1,U_2\sim\mathcal U(0,1)\\ X&=m+sZ\end{aligned}`,
-  vecinos: String.raw`\begin{aligned}\mathcal N_i&=\{j\ne i:\|u_j-u_i\|_2\le\varepsilon_i\}\\ L_i&=\begin{cases}\displaystyle\frac{1}{|\mathcal N_i|}\sum_{j\in\mathcal N_i}u_j-u_i,&|\mathcal N_i|>0,\\(0,0),&|\mathcal N_i|=0.\end{cases}\end{aligned}`,
-  polos: String.raw`\begin{aligned}z_k&=-\frac{\|u_i-p_k\|_2^2}{2\rho^2}\\ z_*&=\max(z_A,z_B),\quad w_k=\frac{e^{z_k-z_*}}{e^{z_A-z_*}+e^{z_B-z_*}}\\T_i&=w_Ap_A+w_Bp_B\\P(u_i)&=S(T_i-u_i)\end{aligned}`,
+  vecinos: String.raw`\begin{aligned}\mathcal N_i&=\{j\ne i:d(u_j,u_i)\le\varepsilon_i\}\\L_i&=\frac{\sum_{j\in\mathcal N_i}(u_j-u_i)}{D_i}\end{aligned}`,
+  polos: String.raw`\begin{aligned}b_{ik}&=S\,\mathbf1_{\{d(u_i,p_k)\le\varepsilon_i\}}\,\mathbf1_{\{d(u_i,p_k)\le\rho\}}\\D_i&=1+|\mathcal N_i|+b_{iA}+b_{iB}\\T_i&=\frac{u_i+\sum_{j\in\mathcal N_i}u_j+b_{iA}p_A+b_{iB}p_B}{D_i}\\P_i^{\rm individual}&=\frac{b_{iA}(p_A-u_i)+b_{iB}(p_B-u_i)}{D_i}\\L_i+P_i^{\rm individual}&=T_i-u_i\end{aligned}`,
   calendario: String.raw`\begin{aligned}g&=30+\operatorname{round}\bigl(970(1-f)\bigr)\\D&=20+\operatorname{round}(180c_D)\\I&=\operatorname{clip}\bigl(c_I\mathcal U(0.65,1.35),0,1\bigr)\\t_{\rm primero}&=\operatorname{round}\bigl(g\mathcal U(0,1)\bigr)\\t_{\rm siguiente}&=t+\max\bigl(8,\operatorname{round}(g\mathcal U(0.65,1.35))\bigr)\end{aligned}`,
   contraevento: String.raw`\begin{aligned}\Pr(\text{respuesta}\mid e)&=c_{\rm contra}\\e'&=(1-e_x,1-e_y),\quad t'_0=t_0+3\\D'&=\operatorname{round}(0.65D),\quad I'=0.55I\end{aligned}`,
   eventos: String.raw`\begin{aligned}H&=1+299(1-c_{\rm dec})\\a_e(t)&=\begin{cases}2^{-(t-t_0)/H},&t_0\le t<t_0+D,\\0,&\text{fuera de la ventana}.\end{cases}\\v&=e-u_i,\quad d=\max(\|v\|_2,0.02)\\K&=e^{-d^2/(2\rho_e^2)}\\E_{ie}&=a_eIKv-\mathbf1_{\{\text{bandos distintos}\}}a_eRK\frac{v}{d}\\E_i&=\sum_e E_{ie}\end{aligned}`,

@@ -18,7 +18,7 @@ Sea P(uᵢ) el vector polar individual que ya calcula el motor; cₖ el centro d
 | Individual con ganancia | (1+gₖ)P(uᵢ) | ¿Basta amplificar la influencia individual? |
 | Polo–grupo actual | P(uᵢ)+gₖP(cₖ) | ¿Importa evaluar la fuerza en el grupo? |
 
-Sin grupo asignado, gₖ=0 en las tres condiciones. «Ganancia» es un **control experimental propuesto**, no una teoría publicada ni un ajuste exacto de la norma de la fuerza: iguala el multiplicador, no necesariamente la magnitud resultante. No basta subir «Fuerza polos»: en la revisión actual ese control ya solo escala intensidad; aun así, gₖ depende de cada grupo y no equivale a subir globalmente S.
+Sin grupo asignado, gₖ=0 en las tres condiciones. «Ganancia» es un **control experimental propuesto**, no una teoría publicada ni un ajuste exacto de la norma de la fuerza: iguala el multiplicador, no necesariamente la magnitud resultante. No basta subir «Fuerza polos»: S ahora cuenta aportaciones y cambia también el denominador; gₖ depende de cada grupo. La condición de ganancia debe aplicarse al vector individual ya calculado, no modificando S. El término de centro usa εᵢ y cero vecinos en su denominador (véase bounded_signals.md).
 
 Si todos los miembros coinciden con su centro, las dos últimas expresiones son idénticas. Esa igualdad será una prueba obligatoria del futuro comparador. Para grupos dispersos, no podemos anticipar ni dirección ni tamaño de las diferencias.
 

@@ -13,7 +13,7 @@
           <h1>ABM de polarización</h1>
           <p>
             Población y rondas son recuentos del modelo, no unidades sociales calibradas.
-            Los demás controles usan una escala de 0 a 1; su significado se explica en la guía.
+            La intensidad polar cuenta aportaciones equivalentes (0–10); los demás controles continuos usan 0–1. Cada magnitud tiene su definición en la guía.
           </p>
           <nav class="doc-nav"><a href="index.html" aria-current="page">Simulador</a><a href="formula.html">Teoría</a><a href="guide.html">Guía</a></nav>
           <div class="run-controls">
@@ -77,7 +77,7 @@
           <div><b>Áreas azul/naranja</b><span>campo de alcance de los polos permanentes.</span></div>
           <div><b>Flechas naranjas</b><span>dirección de fuerza polar sobre una muestra; no son trayectorias.</span></div>
           <div><b>Líneas grises</b><span>traza opcional del desplazamiento reciente; no son enlaces sociales.</span></div>
-          <div><b>Círculo negro ε</b><span>vecindad local del agente seleccionado; define quién entra en su media local.</span></div>
+          <div><b>Círculo negro ε</b><span>vecindad local del agente seleccionado; define qué vecinos y señales acepta. Los polos también requieren estar dentro de su alcance de color.</span></div>
           <div><b>Manchas moradas</b><span>campo de masa de clusters detectados; aparece solo si una fuerza de masa está activa.</span></div>
           <div><b>Estrella verde/morada</b><span>evento temporal o contraevento con fatiga.</span></div>
           <div><b>Diagonal A-B</b><span>referencia visual entre polos; JDJ usa similitud euclídea normalizada a ambos polos.</span></div>
@@ -85,6 +85,6 @@
       </section>
     </main>
 
-    <script src="app.js?v=review-1"></script>
+    <script src="app.js?v=bounded-signals-1"></script>
   </body>
 </html>

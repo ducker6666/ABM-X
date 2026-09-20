@@ -1,4 +1,6 @@
-# Revisión de fundamento — 21 de septiembre de 2026
+# Revisión anterior de fundamento — 21 de septiembre de 2026
+
+> HISTÓRICO: la ponderación gaussiana y P=S(T−u) de este documento han sido sustituidas. Véase [señales aceptadas](bounded_signals.md) para el motor vigente. Las reglas no polares deben consultarse en Teoría; esta nota conserva el razonamiento de la revisión anterior.
 
 ## Alcance y criterio
 

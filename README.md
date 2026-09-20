@@ -1,5 +1,7 @@
 # ABM X
 
+**Motor web vigente: señales aceptadas bajo confianza acotada.** Intensidad 3 = tres aportaciones individuales por polo aceptado. Véase [regla, ejemplo y alcance bibliográfico](docs/bounded_signals.md). Se elimina la mezcla polar gaussiana; la propia opinión, vecinos y polos comparten denominador. Los motores Python históricos no son una réplica de esta web.
+
 ## Revisión de interfaz y preparación científica
 
 Las fórmulas se presentan con tipografía matemática y ejemplos por pasos.

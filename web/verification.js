@@ -49,21 +49,25 @@ test('JDJ: puntos fuera del eje, suma directa independiente',()=>{
   near(e.jdjFromFrequencyTable(points),2*sum/points.length**2);
   near(e.jdjFromFrequencyTable([agent(0,0)]),2*(1-1/Math.sqrt(2))**2);
 });
-test('Polos: softmax estable con radio mínimo',()=>{
-  const c={...defaults,poleRadius:.02};
-  const p=e.poleForce(agent(.2,.2),c);
-  near(p.wA,.5); near(p.wB,.5); near(p.targetX,.5); near(p.targetY,.5);
-  near(p.x,.21); near(p.y,.21);
-  const extreme=e.poleForce(agent(0,1),c); near(extreme.wA+extreme.wB,1);
-  assert.ok(Number.isFinite(extreme.x));
+test('Polos: aceptación A, B, ambos y ninguno',()=>{
+  const c={...defaults,poleStrength:3,poleRadius:1};
+  for(const [x,y,eps,aa,ab] of [[.1,.9,.3,true,false],[.9,.1,.3,false,true],[.5,.5,1,true,true],[.5,.5,.3,false,false]]){
+    const p=e.poleForce(agent(x,y,{eps0:eps}),c);
+    assert.equal(p.acceptedA,aa);assert.equal(p.acceptedB,ab);
+    near(p.denominator,1+3*(Number(aa)+Number(ab)));
+  }
+  const p=e.poleForce(agent(.9,.1,{eps0:.3}),c);
+  near(p.x,.075);near(p.y,-.075);
+  const m=setup([agent(.9,.1,{eps0:.3,mu:.6})],{...c});
+  e.step();near(m.agents[0].x,.903375);near(m.agents[0].y,.096625);
 });
 test('JDJ no se recorta con polos coincidentes',()=>{
   setup([agent(.5,.5)],{poleA:[.5,.5],poleB:[.5,.5]});
   near(e.jdjFromFrequencyTable(e.state.model.agents),2);
 });
-test('Movimiento documentado: (0.4,0.5) → (0.40855,0.5)',()=>{
-  const m=setup([agent(.4,.5,{anchorX:.3,lambda:.1,mu:.6,alpha:.1}),agent(.6,.5)]);
-  e.step(); near(m.agents[0].x,.40855); near(m.agents[0].y,.5);
+test('Movimiento documentado: (0.4,0.5) → (0.40405,0.5)',()=>{
+  const m=setup([agent(.4,.5,{anchorX:.3,lambda:.1,mu:.6,alpha:.05}),agent(.6,.5)]);
+  e.step(); near(m.agents[0].x,.40405); near(m.agents[0].y,.5);
 });
 test('Actualización síncrona: invertir orden no cambia posiciones',()=>{
   const points=[[.2,.5],[.4,.5],[.6,.5]];
@@ -71,7 +75,7 @@ test('Actualización síncrona: invertir orden no cambia posiciones',()=>{
   const forward=m.agents.map(a=>a.x);
   const reverse=setup(points.slice().reverse().map(p=>agent(...p))); e.step();
   reverse.agents.slice().reverse().forEach((a,i)=>near(a.x,forward[i]));
-  near(forward[0],.2225); near(forward[1],.4); near(forward[2],.5775);
+  near(forward[0],.215); near(forward[1],.4); near(forward[2],.585);
 });
 test('Inmovilidad: fuerza menor al umbral no mueve sin ruido',()=>{
   const m=setup([agent(.4,.5,{alpha:.3}),agent(.6,.5)]); e.step(); near(m.agents[0].x,.4);
@@ -113,28 +117,24 @@ test('Ruido reproducible incluso con inmovilidad',()=>{
 });
 test('Sensibilidad suave: μ=0.60 → 0.61 cambia el movimiento exacto',()=>{
   const run=mu=>{const m=setup([agent(.4,.5,{mu}),agent(.6,.5)]);e.step();return m.agents[0].x-.4;};
-  near(run(.6),.009); near(run(.61),.00915);
+  near(run(.6),.0045); near(run(.61),.004575);
 });
 test('Umbral estricto: igualdad no activa movimiento',()=>{
   const m=setup([agent(.25,.5,{alpha:.25}),agent(.5,.5)]);e.step();near(m.agents[0].x,.25);
 });
 test('Tolerancia: salto por entrada de vecino, no suavizado oculto',()=>{
   const run=eps=>{const m=setup([agent(.25,.5,{eps0:eps}),agent(.5,.5)]);e.step();return m.agents[0].x;};
-  near(run(.249),.25);near(run(.25),.26875);
+  near(run(.249),.25);near(run(.25),.259375);
 });
 test('Ruido: misma semilla y doble amplitud, doble perturbación',()=>{
   const run=noise=>{const m=setup([agent(.5,.5)],{noise});e.step();return m.agents[0].x-.5;};
   near(run(.2),2*run(.1));
 });
-test('Polos: barrido de fuerza y radio contra ecuación independiente',()=>{
-  for (const strength of [0,.01,.49,.5,.51,1]) for (const radius of [.02,.3,.31,1]) {
-    const c={...defaults,poleStrength:strength,poleRadius:radius};
-    const a=agent(.35,.55), actual=e.poleForce(a,c);
-    const dA=(a.x-c.poleA[0])**2+(a.y-c.poleA[1])**2;
-    const dB=(a.x-c.poleB[0])**2+(a.y-c.poleB[1])**2;
-    const wA=1/(1+Math.exp((dA-dB)/(2*radius**2)));
-    const gain=strength;
-    near(actual.wA,wA);near(actual.x,gain*(wA*c.poleA[0]+(1-wA)*c.poleB[0]-a.x));
+test('Polos: barrido de intensidad, radio y número de vecinos',()=>{
+  for(const strength of [0,1,3,10])for(const radius of [0,.14,.2,.7,1])for(const n of [0,1,20]){
+    const a=agent(.9,.1,{eps0:.3}),c={...defaults,poleStrength:strength,poleRadius:radius};
+    const p=e.poleForce(a,c,n),b=Math.hypot(.1,-.1)<=radius?strength:0;
+    near(p.x,b*.1/(1+n+b));near(p.y,-b*.1/(1+n+b));
   }
 });
 test('Evento: fuerza neta del ejemplo de reactancia',()=>{
@@ -168,14 +168,11 @@ test('Suma completa: vecinos + polos + masa + evento + centro + anclaje',()=>{
       auditThreshold:0,auditBalanceThreshold:0,auditPatience:1,centerRebound:.1});
   m.events=[{x:.3,y:.5,start:0,duration:10,strength:.1,radius:.4,reactance:.02,decay:0}];
   // Evaluación independiente de las ecuaciones publicadas en la página.
-  const pole=(x,y)=>{
-    const w=1/(1+Math.exp((((x-1)**2+y*y)-(x*x+(y-1)**2))/(2*.5**2)));
-    const gain=.2;return [gain*(w-x),gain*(1-w-y)];
-  };
+  const pole=(x,y)=>[0,0]; // Ambos polos quedan fuera de ε=.5 y ρ=.5.
   const p=pole(.6,.5), pc=pole(.61,.5);
   const mass=.4*.1*Math.exp(-(.01**2)/(2*.6**2))*.01/(.01**2+.128**2);
   const event=Math.exp(-(.3**2)/(2*.4**2))*(-.1*.3+.02);
-  const fx=.02+p[0]+.3*pc[0]+mass+event-.01-.005;
+  const fx=.01+p[0]+.3*pc[0]+mass+event-.01-.005;
   const fy=p[1]+.3*pc[1];
   e.step(); near(m.agents[0].x,.6+.075*.6*fx);near(m.agents[0].y,.5+.075*.6*fy);
 });
@@ -187,12 +184,12 @@ test('Gráfico JDJ: valores mayores que 1 no se recortan al dibujar',()=>{
   assert.ok(labels.includes('2.00'));
 });
 test('Inspector: vecinos, suma y ejemplo numérico real',()=>{
-  const m=setup([agent(.4,.5,{anchorX:.3,lambda:.1,mu:.6,alpha:.1}),agent(.6,.5)]);
+  const m=setup([agent(.4,.5,{anchorX:.3,lambda:.1,mu:.6,alpha:.05}),agent(.6,.5)]);
   e.step(); const r=m.movement;
   assert.equal(r.agent,1); assert.equal(r.t,0);
   assert.equal(JSON.stringify(r.neighbors),'[2]');
-  near(r.total[0],.19); near(r.directed[0],.00855);
-  near(r.to[0],.40855); near(r.to[0],m.agents[0].x);
+  near(r.total[0],.09); near(r.directed[0],.00405);
+  near(r.to[0],.40405); near(r.to[0],m.agents[0].x);
   for(let k=0;k<2;k++) near(r.forces.reduce((s,row)=>s+row[k+1],0),r.total[k]);
 });
 test('Inspector: ruido bajo umbral, límite y borde se explican por separado',()=>{
@@ -238,25 +235,39 @@ test('Documentación: cada ecuación tiene símbolos, ejemplo, razón y referenc
     for(const match of n.source.matchAll(/\[(\d+)\]/g)) assert.ok(html.includes(`id="ref${match[1]}"`));
   }
 });
-test('Revisión polar: pesos independientes de S y fuerza proporcional',()=>{
-  const a=agent(.3,.6),c={...defaults,poleRadius:.7};
-  const p=e.poleForce(a,{...c,poleStrength:.7}),half=e.poleForce(a,{...c,poleStrength:.35});
-  near(p.wA,half.wA);near(p.wB,half.wB);near(p.x,2*half.x);near(p.y,2*half.y);
-  const off=e.poleForce(a,{...c,poleStrength:0});near(off.x,0);near(off.y,0);
+test('Radio ampliado: no cambia aporte si no cambia aceptación',()=>{
+  const a=agent(.9,.1,{eps0:.3}),c={...defaults,poleStrength:3};
+  const low=e.poleForce(a,{...c,poleRadius:.2}),high=e.poleForce(a,{...c,poleRadius:1});
+  near(low.x,high.x);near(low.y,high.y);assert.ok(high.x>0 && high.y<0);
 });
-test('Revisión polar: simetría y mínimo cuadrático con pesos congelados',()=>{
-  const a=agent(.3,.6),p=e.poleForce(a,defaults);
-  const swapped=e.poleForce(a,{...defaults,poleA:defaults.poleB,poleB:defaults.poleA});
-  near(p.x,swapped.x);near(p.y,swapped.y);
-  const loss=(x,y)=>p.wA*((x-defaults.poleA[0])**2+(y-defaults.poleA[1])**2)+p.wB*((x-defaults.poleB[0])**2+(y-defaults.poleB[1])**2);
-  const best=loss(p.targetX,p.targetY);
-  for(const dx of [-.1,0,.1])for(const dy of [-.1,0,.1])near(loss(p.targetX+dx,p.targetY+dy)-best,dx*dx+dy*dy);
+test('Intensidad tres equivale a tres opiniones fijas aceptadas',()=>{
+  const a=agent(.8,.1,{eps0:.5}),b=agent(.7,.2),c=agent(.9,.2);
+  const m=setup([a,b,c],{poleA:[1,0],poleB:[0,1],poleStrength:3,poleRadius:1});
+  e.step();
+  const tx=(.8+.7+.9+3)/6,ty=(.1+.2+.2)/6;
+  near(a.x,.8+.075*(tx-.8));near(a.y,.1+.075*(ty-.1));
+  near(m.movement.polar.denominator,6);
+});
+test('Frontera incluida y coincidencia con radio cero',()=>{
+  const c={...defaults,poleA:[1,0],poleB:[0,1],poleStrength:1,poleRadius:.25};
+  const p=e.poleForce(agent(.75,0,{eps0:.25}),c);
+  assert.equal(p.acceptedA,true);near(p.x,.125);
+  const zero=e.poleForce(agent(1,0,{eps0:0}),{...c,poleRadius:0});
+  assert.equal(zero.acceptedA,true);near(zero.x,0);near(zero.y,0);
+});
+test('Ambos polos aceptados: media conjunta, no repulsión inventada',()=>{
+  const m=setup([agent(.4,.4,{eps0:1})],{poleStrength:1,poleRadius:1});
+  e.step();near(m.agents[0].x,.4+.075*(1.4/3-.4));
+});
+test('Sin señales ni vecinos: opinión propia permanece',()=>{
+  const m=setup([agent(.5,.5,{eps0:.1})],{poleStrength:10});
+  e.step();near(m.agents[0].x,.5);near(m.agents[0].y,.5);
 });
 test('Acoplamiento: peso n/N sin suelo y sin dependencia del exponente de gravedad',()=>{
   const run=gamma=>{
-    const m=setup([agent(.6,.5,{eps0:0}),agent(.6,.5,{eps0:0}),agent(0,0,{eps0:0})],
+    const m=setup([agent(.9,.1,{eps0:.3}),agent(.9,.1,{eps0:.3}),agent(0,0,{eps0:.3})],
       {poleStrength:.2,clusterPoleCoupling:.7,clusterMinSize:2,clusterDetectRadius:.02,clusterMassExponent:gamma});
-    const p=e.poleForce(m.agents[0],m.cfg);e.step();
+    const p=e.poleForce(m.agents[0],m.cfg);assert.ok(p.x>0);e.step();
     near(m.movement.forces[2][1],.7*(2/3)*p.x);near(m.movement.forces[2][2],.7*(2/3)*p.y);
     return m.agents.map(a=>[a.x,a.y]);
   };

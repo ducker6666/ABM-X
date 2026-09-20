@@ -11,7 +11,7 @@ const seeds=[11,22,33,44,55,66];
 function run(seed, parameter, delta=0){
   for(const p of e.PARAMS) e.state.controls.set(p.id,{input:{value:String(p.value)}});
   for(const [key,value] of Object.entries({seed,nAgents:80,steps:120})) e.state.controls.get(key).input.value=String(value);
-  if(parameter) { const input=e.state.controls.get(parameter).input;input.value=String(Math.max(0,Math.min(1,Number(input.value)+delta))); }
+  if(parameter) { const input=e.state.controls.get(parameter).input;input.value=String(Math.max(0,Math.min(parameter==='poleStrength'?10:1,Number(input.value)+delta))); }
   e.resetModel();for(let t=0;t<120;t++) e.step();
   const result=e.polarizationStats();
   if(e.state.model.agents.some(a=>!Number.isFinite(a.x+a.y)||a.x<0||a.x>1||a.y<0||a.y>1)) throw new Error('Estado fuera del dominio');
@@ -20,15 +20,15 @@ function run(seed, parameter, delta=0){
 }
 const baseline=seeds.map(seed=>run(seed));
 const results=[];
-for(const parameter of parameters) for(const delta of [-.01,.01]){
+for(const parameter of parameters) for(const delta of (parameter==='poleStrength'?[-1,1]:[-.01,.01])){
   const runs=seeds.map((seed,i)=>({seed,...run(seed,parameter,delta),baselineJdj:baseline[i].jdj}));
   const differences=runs.map(r=>r.jdj-r.baselineJdj);
   results.push({parameter,delta,meanJdjChange:differences.reduce((a,b)=>a+b,0)/seeds.length,
     minChange:Math.min(...differences),maxChange:Math.max(...differences),runs});
 }
-const report={version:'Revisión de fundamento 2026-09-21',purpose:'Diagnóstico local exploratorio, no validación empírica ni sensibilidad global. Se recortan controles a [0,1]: delta negativo en cero no cambia el parámetro.',
+const report={version:'Señales aceptadas bajo confianza acotada 2026-09-21',purpose:'Diagnóstico local exploratorio, no validación empírica ni sensibilidad global. Intensidad en [0,10] con incrementos de 1; resto en [0,1] con incrementos de .01: delta negativo en cero no cambia el parámetro.',
   agents:80,rounds:120,seeds,baseline,results};
-const output=path.join(__dirname,'../docs/web_sensitivity_review.json');
+const output=path.join(__dirname,'../docs/web_sensitivity_bounded.json');
 fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 console.table(results.map(({parameter,delta,meanJdjChange,minChange,maxChange})=>({parameter,delta,meanJdjChange,minChange,maxChange})));
-console.log('78 ejecuciones; resultados y semillas en docs/web_sensitivity_review.json (no sobrescribe histórico)');
+console.log('78 ejecuciones; resultados y semillas en docs/web_sensitivity_bounded.json (no sobrescribe histórico)');

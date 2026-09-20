@@ -29,29 +29,27 @@ module.exports = {
   },
   vecinos: {
     symbols: [
-      ['i, j; uᵢ, uⱼ', 'Persona estudiada, otra persona y sus respectivas posiciones al comienzo de la ronda.'],
-      ['Nᵢ (caligráfica)', 'Conjunto de personas aceptadas como vecinas de i; no es el total N de la población.'],
-      ['{j ≠ i : …}', 'Se lee «las personas j diferentes de i que cumplen la condición». Excluimos a la propia persona.'],
-      ['‖uⱼ−uᵢ‖₂, εᵢ, ≤', 'Distancia euclídea, tolerancia individual y «menor o igual». Al estar justo en ε, el vecino sí entra.'],
-      ['|Nᵢ|; Σⱼ∈Nᵢ', 'Número de vecinos; sumar las posiciones de todos los vecinos. Dividir por su número obtiene la media por coordenada.'],
-      ['Lᵢ; (0,0)', 'Vector desde la posición propia a esa media; sin vecinos no propone ningún cambio.']
+      ['i, j; uᵢ, uⱼ', 'Persona estudiada, otra persona y sus posiciones al comienzo de la ronda.'],
+      ['Nᵢ; |Nᵢ|', 'Vecinos distintos de i dentro de su tolerancia; las barras indican cuántos hay.'],
+      ['d; εᵢ; ≤', 'Distancia euclídea, tolerancia y menor o igual. La frontera se incluye.'],
+      ['Σ; Dᵢ; Lᵢ', 'Suma; peso total definido abajo; contribución de los vecinos al desplazamiento deseado. Sin vecinos la suma vale cero.']
     ],
-    example: 'Con vecinos (0.5,0.5) y (0.6,0.5), la media es (0.55,0.5). Desde (0.4,0.5), L=(0.15,0). El 0.15 no es todavía la distancia que se recorrerá.',
-    reason: 'El radio representa una regla de aceptación por semejanza; la media da el mismo peso a cada vecino aceptado. Restar la posición actual convierte un destino en una dirección de cambio. El corte brusco y los pesos iguales son supuestos: no describen todas las formas reales de escuchar.',
-    source: 'Antecedente: Hegselmann–Krause, [1]. Excluirse de la media y combinar el vector con otras fuerzas y velocidad es una adaptación del simulador, no la ecuación completa original.'
+    example: 'Persona (0.4,0.5), vecinos (0.5,0.5) y (0.6,0.5), sin señales aceptadas: D=1+2=3. L=((0.1,0)+(0.2,0))/3=(0.1,0). El destino conjunto es (0.5,0.5), pero el paso gradual todavía reduce el movimiento.',
+    reason: 'Cada persona aceptada cuenta una vez y la propia opinión también cuenta una vez. Al introducir señales, sus pesos se añaden al mismo denominador: no se suman dos medias independientes.',
+    source: 'Confianza acotada [1] y señales de intensidad equivalente [2], secciones 1.1–1.3. Extender a dos dimensiones y avanzar gradualmente son adaptaciones.'
   },
   polos: {
     symbols: [
-      ['k ∈ {A,B}; pₖ; uᵢ', 'k identifica uno de los dos polos; pₖ es su posición; uᵢ es la posición de la persona.'],
-      ['S; ρ (rho)', 'Control Fuerza polos y escala Radio polos. ρ tiene mínimo efectivo 0.02 y no es un corte de alcance.'],
-      ['zₖ; z*', 'zₖ es la puntuación negativa de distancia cuadrada dividida por 2ρ²; z* es la mayor de las dos puntuaciones. Se elimina q: la selectividad depende solo de ρ.'],
-      ['eᶻ; wₖ', 'Exponencial de base e≈2.71828, no un evento. wₖ es el peso relativo del polo, entre 0 y 1; wA+wB=1.'],
-      ['Tᵢ; P(uᵢ)', 'Tᵢ es el destino medio de los polos ponderados; P es el vector de fuerza calculado desde uᵢ.'],
-      ['S(Tᵢ−uᵢ)', 'Se resta la posición actual al destino y se multiplica por S. No hay factor adicional por dominio de un polo.']
+      ['pₖ; k ∈ {A,B}', 'Posición de cada polo; k identifica A o B.'],
+      ['S', 'Intensidad común de cada señal: 1 cuenta como una aportación individual; 3 como tres. Cero la desactiva. El rango 0–10 es un rango de exploración de la interfaz, no una ley social.'],
+      ['ρ; εᵢ', 'Alcance del emisor y tolerancia del receptor, respectivamente. Ambos límites deben cumplirse.'],
+      ['1{condición}; bᵢₖ', 'Indicador: 1 si se cumple, 0 si no. b es el peso efectivo: S si la señal llega y se acepta, cero en otro caso.'],
+      ['Dᵢ; 1+|Nᵢ|', 'Peso total. El 1 es la propia opinión; cada vecino aporta una unidad. No es un coeficiente ajustado.'],
+      ['Tᵢ; P individual; Lᵢ', 'Media conjunta; parte debida a polos; parte debida a vecinos. Su suma es T menos la posición actual.']
     ],
-    example: 'En u=(0.2,0.2), con A=(0,1) y B=(1,0), las distancias empatan: wA=wB=0.5 y T=(0.5,0.5). Si S=0.7, P=0.7×(0.3,0.3)=(0.21,0.21). Si S=0.35, los pesos no cambian y la fuerza queda exactamente a la mitad.',
-    reason: 'Supuestos explícitos: polos intercambiables, preferencia suave por cercanía y un destino que minimiza desacuerdo cuadrático ponderado. Con los pesos fijados en esta ronda, el mínimo de Σwₖ‖v−pₖ‖² se obtiene resolviendo 2Σwₖ(v−pₖ)=0: v=T. Se propone responder linealmente S(T−u). La gaussiana es una elección de familia de pesos, no la única posible. El 2 de 2ρ² fija la convención: a distancia ρ la afinidad sin normalizar es exp(−1/2)≈0.6065. S y ρ se estudian como parámetros, no como constantes humanas. No se afirma descenso de una energía global cuando los pesos se recalculan.',
-    source: '[2] respalda estudiar señales persistentes, no esta regla gaussiana. [3] respalda únicamente la evaluación estable de softmax. La media se deriva algebraicamente bajo los supuestos indicados; la interpretación social aún requiere contraste. Se retiran q=1+6S y 0.35+0.65D porque añadían supuestos sin respaldo específico.'
+    example: 'En u=(0.9,0.1), A=(0,1), B=(1,0): dA≈1.273 y dB≈0.141. Con ε=0.3 y ρ=0.7 solo B se acepta. Sin vecinos, S=3 da D=1+3=4; T=((0.9,0.1)+3(1,0))/4=(0.975,0.025). P=(0.075,−0.075). Con μ=0.6, sin otros efectos, el paso es 0.075×0.6×P=(0.003375,−0.003375): nueva posición (0.903375,0.096625). Ampliar ρ a 1 no altera este cálculo: A sigue fuera de ε.',
+    reason: 'Es una media de aportaciones, no una gravedad física. Mayor intensidad aumenta el peso de una señal aceptada frente a personas, con saturación por el denominador; no vence el rechazo. Si ninguna señal se acepta, no hay aporte polar. Si ambas se aceptan, ambas entran y pueden compensarse. Un polo persistente no implica influencia universal ni consenso inevitable.',
+    source: 'Hegselmann y Krause (2015), [2], secciones 1.2–1.3: señal recibida dentro de la confianza, que cuenta tantas veces como su intensidad. El artículo formula el caso escalar; dos dimensiones, dos señales simultáneas, alcance emisor adicional y paso gradual son adaptaciones explícitas, no resultados empíricos del artículo. Se elimina la mezcla gaussiana/softmax anterior, incluidos q, 6 y 0.35/0.65.'
   },
   calendario: {
     symbols: [
@@ -110,11 +108,11 @@ module.exports = {
   },
   acoplamiento: {
     symbols: [
-      ['P(uᵢ); P(cₖ)', 'La misma función polar evaluada en la persona y en el centro de su grupo, respectivamente.'],
+      ['P(uᵢ); P(cₖ)', 'P(uᵢ) usa los vecinos de la persona. P(cₖ) evalúa la señal en el centro del grupo con la tolerancia εᵢ de esa persona y cero vecinos: denominador 1+bA+bB. Es una señal colectiva adicional, no la media individual.'],
       ['κ; fₖ=nₖ/N; Pᵢ', 'Control Atracción polo-grupo, proporción de población del grupo y fuerza polar final. Este término no usa la masa elevada a γ de la gravedad.']
     ],
     example: 'Con κ=0.7 y un grupo de 20 de 100 personas, κf=0.7×0.2=0.14. Si P(c)=(0.10,0), se suma (0.014,0). Con κ=0 no hay aporte colectivo.',
-    reason: 'Hipótesis opcional: cada miembro aporta una señal colectiva representada por el centro. Asignar a cada persona igual peso 1/N y sumar nₖ aportes κP(c)/N produce κ(nₖ/N)P(c). Esa derivación justifica el tamaño relativo, no demuestra que una comunidad real funcione así. Si persona y centro coinciden, equivale a amplificar la fuerza individual: se mantiene el control de ganancia en el protocolo.',
+    reason: 'Hipótesis opcional: cada miembro aporta una señal colectiva representada por el centro. Asignar a cada persona igual peso 1/N y sumar nₖ aportes κP(c)/N produce κ(nₖ/N)P(c). Esa derivación justifica el tamaño relativo, no demuestra que una comunidad real funcione así. Incluso si persona y centro coinciden, los denominadores pueden diferir: el centro no cuenta vecinos. El grupo puede mediar una señal que la persona no acepta directamente. Es una hipótesis adicional que exige evaluación separada; no está activa por defecto.',
     source: 'Adaptación propia derivada de aditividad e igual peso por miembro; [2] solo aporta el antecedente de señales. No hay fuente atribuida para esta regla colectiva exacta. Desactivada de inicio y pendiente de contraste. Se elimina el suelo 0.35 y su complemento 0.65.'
   },
   tolerancia: {

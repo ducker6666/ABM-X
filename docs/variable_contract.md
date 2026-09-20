@@ -13,7 +13,10 @@ Este contrato describe **el motor actual de `web/app.js`**, no los motores Pytho
 | μA, μB | Pertenencias derivadas: 1 − distancia al polo / √2, limitadas a [0,1] | Que deban sumar 1 o ser iguales a x e y |
 | t | Número entero de rondas de actualización síncrona | Días, semanas o velocidad social real |
 | dt=0.075 | Multiplicador numérico del movimiento dirigido | Duración física de una ronda |
-| εᵢ | Radio de aceptación: entran en la media local otros agentes a distancia ≤ εᵢ | Red de amistades o probabilidad de escuchar |
+| εᵢ | Radio de aceptación de vecinos y polos: distancia ≤ εᵢ; los polos además requieren distancia ≤ ρ | Red de amistades o probabilidad de escuchar |
+| S | Aportaciones equivalentes por polo aceptado: 1 cuenta como una persona, 3 como tres. Control común, rango ilustrativo 0–10 | Fuerza empírica conocida o garantía de dominancia |
+| ρ | Alcance máximo de exposición a cada polo, común a ambos | Aceptación automática: ε también debe cumplirse |
+| Dᵢ | 1 propia + número de vecinos + pesos de señales aceptadas | Normalización independiente de cada fuerza |
 | μᵢ | Susceptibilidad individual: multiplica la respuesta dirigida | Pertenencia μA/μB; se reutiliza la letra, no la magnitud |
 | αᵢ | Umbral: hay movimiento dirigido solo si la norma de la fuerza total supera αᵢ | Inmovilidad absoluta: el ruido se añade después |
 | λᵢ | Coeficiente del retorno hacia la posición inicial propia | Retorno al centro o aplicación literal de Friedkin–Johnsen |

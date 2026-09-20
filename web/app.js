@@ -24,8 +24,8 @@ const PARAMS = [
   { group: "Polos permanentes", id: "poleAy", label: "Polo A y", value: 1.00 },
   { group: "Polos permanentes", id: "poleBx", label: "Polo B x", value: 1.00 },
   { group: "Polos permanentes", id: "poleBy", label: "Polo B y", value: 0.00 },
-  { group: "Polos permanentes", id: "poleStrength", label: "Fuerza polos", value: 0.70 },
-  { group: "Polos permanentes", id: "poleRadius", label: "Radio polos", value: 0.70 },
+  { group: "Polos permanentes", id: "poleStrength", label: "Intensidad de cada polo · aportaciones", kind: "count", min: 0, max: 10, step: 1, value: 1 },
+  { group: "Polos permanentes", id: "poleRadius", label: "Alcance de cada polo ρ", value: 0.70 },
 
   { group: "Eventos aleatorios", id: "eventProbability", label: "Frecuencia eventos · escenario", value: 0.00 },
   { group: "Eventos aleatorios", id: "eventStrength", label: "Fuerza evento", value: 0.80 },
@@ -174,7 +174,7 @@ function cfg() {
     poleA: [raw("poleAx"), raw("poleAy")],
     poleB: [raw("poleBx"), raw("poleBy")],
     poleStrength: raw("poleStrength"),
-    poleRadius: Math.max(0.02, raw("poleRadius")),
+    poleRadius: raw("poleRadius"),
     eventFrequency: raw("eventProbability"),
     eventStrength: raw("eventStrength"),
     eventRadius: Math.max(0.02, raw("eventRadius")),
@@ -483,33 +483,23 @@ function maybeEvents() {
   }
 }
 
-function poleForce(a, c) {
-  const dax = c.poleA[0] - a.x, day = c.poleA[1] - a.y;
-  const dbx = c.poleB[0] - a.x, dby = c.poleB[1] - a.y;
-  // K(d)=exp(-d²/(2*rho²)): rho es la distancia donde K/K(0)=exp(-1/2).
-  // Pesos normalizados independientes de S; T=Σw*p minimiza Σw*||v-p||².
-  // P=S*(T-u) es un ajuste lineal declarado, no una ley social validada.
-  // Softmax estable: restar el máximo conserva wA+wB=1 incluso con radio .02.
-  // Antes, +1e-9 dominaba los pesos minúsculos y creaba un destino falso (0,0).
-  // Referencia matemática: Blanchard, Higham & Higham, DOI 10.1093/imanum/draa038.
-  const zA = -(dax * dax + day * day) / (2 * c.poleRadius ** 2);
-  const zB = -(dbx * dbx + dby * dby) / (2 * c.poleRadius ** 2);
-  const shift = Math.max(zA, zB);
-  const sA = Math.exp(zA - shift), sB = Math.exp(zB - shift);
-  const denomPoles = sA + sB;
-  const wA = sA / denomPoles;
-  const wB = sB / denomPoles;
-  const poleTargetX = wA * c.poleA[0] + wB * c.poleB[0];
-  const poleTargetY = wA * c.poleA[1] + wB * c.poleB[1];
-  const poleMagnitude = c.poleStrength;
-  return {
-    x: poleMagnitude * (poleTargetX - a.x),
-    y: poleMagnitude * (poleTargetY - a.y),
-    targetX: poleTargetX,
-    targetY: poleTargetY,
-    wA,
-    wB,
-  };
+function poleForce(a, c, neighborCount = 0) {
+  // HK (2015), secciones 1.2–1.3: una señal aceptada cuenta S veces.
+  // Adaptaciones: dos dimensiones, dos señales y alcance emisor rho.
+  // La persona cuenta una vez; cada vecino, una vez; cada señal aceptada, S.
+  // Ejemplo aislado: u=(.9,.1), B=(1,0), S=3: P=3*(B-u)/4=(.075,-.075).
+  const epsilon = a.eps ?? a.eps0;
+  const dA = hypot(a.x-c.poleA[0], a.y-c.poleA[1]);
+  const dB = hypot(a.x-c.poleB[0], a.y-c.poleB[1]);
+  const acceptedA = dA <= epsilon && dA <= c.poleRadius;
+  const acceptedB = dB <= epsilon && dB <= c.poleRadius;
+  const bA = acceptedA ? c.poleStrength : 0;
+  const bB = acceptedB ? c.poleStrength : 0;
+  const denominator = 1 + neighborCount + bA + bB;
+  const wA = bA / denominator, wB = bB / denominator;
+  const x = wA*(c.poleA[0]-a.x)+wB*(c.poleB[0]-a.x);
+  const y = wA*(c.poleA[1]-a.y)+wB*(c.poleB[1]-a.y);
+  return {x, y, wA, wB, denominator, acceptedA, acceptedB, dA, dB};
 }
 
 function clusterForceEnabled(c) {
@@ -551,8 +541,8 @@ function step() {
     a.eps = clamp(a.eps0 * (1 - c.radicalToleranceLoss * radicality) * (1 - c.massToleranceLoss * massInertia), 0, 1);
 
     let localX = 0, localY = 0, count = 0;
-    // Confianza acotada (HK, 2002), adaptada: L=media(vecinos sin i)-posición.
-    // En (.4,.5), un vecino (.6,.5) aporta L=(.2,0), no un salto inmediato.
+    // Vecinos distintos de i; la propia persona entra con peso 1 en D.
+    // Sin señales: desde (.4,.5), vecino (.6,.5), L=(.6-.4)/2=.1.
     for (const j of nearby(spatial, a.x, a.y, a.eps)) {
       if (j === i) continue;
       const b = agents[j];
@@ -562,14 +552,14 @@ function step() {
         if (explain) neighbors.push(j + 1);
       }
     }
-    if (count) { localX = localX / count - a.x; localY = localY / count - a.y; }
-
-    const pf = poleForce(a, c);
+    const pf = poleForce(a, c, count);
+    localX = (localX - count*a.x) / pf.denominator;
+    localY = (localY - count*a.y) / pf.denominator;
     let poleX = pf.x;
     let poleY = pf.y;
     let collectivePole = null;
     if (ownCluster && c.clusterPoleCoupling > 0) {
-      const cpf = poleForce({ x: ownCluster.x, y: ownCluster.y }, c);
+      const cpf = poleForce({ x: ownCluster.x, y: ownCluster.y, eps: a.eps }, c);
       // Cada miembro tiene peso 1/N: suma n_k/N=f_k, sin suelo artificial.
       const massGain = c.clusterPoleCoupling * ownCluster.massShare;
       poleX += massGain * cpf.x;
@@ -650,7 +640,7 @@ function step() {
         eps0: a.eps0, eps: a.eps, radicality, mass: massInertia,
         closure: c.radicalToleranceLoss, inertia: c.massToleranceLoss,
         neighbors, group: ownCluster ? {size: ownCluster.size, center: [ownCluster.x, ownCluster.y]} : null,
-        polar: {strength: c.poleStrength, radius: c.poleRadius, weights: [pf.wA, pf.wB], target: [pf.targetX, pf.targetY], collective: collectivePole},
+        polar: {strength: c.poleStrength, radius: c.poleRadius, distances: [pf.dA, pf.dB], accepted: [pf.acceptedA, pf.acceptedB], denominator: pf.denominator, weights: [pf.wA, pf.wB], target: [a.x+localX+pf.x, a.y+localY+pf.y], collective: collectivePole},
         forces: [
           ["Vecinos parecidos", localX, localY],
           ["Polo sobre la persona", pf.x, pf.y],
@@ -755,7 +745,7 @@ function renderMovementExplanation() {
     <p class="control-notice">Fotografía del último paso calculado para esta persona. Los controles actuales pueden haber cambiado después. Se muestran 6 decimales; el motor no redondea estos cálculos.${state.pendingReset ? " Hay atributos pendientes de reiniciar." : ""}</p>
     <details open><summary>1. ¿A quién escuchó?</summary>
       <p>Su tolerancia inicial ${f(r.eps0)} se ajustó así: ε = limitar[${f(r.eps0)} × (1 − ${f(r.closure)} × ${f(r.radicality)}) × (1 − ${f(r.inertia)} × ${f(r.mass)}), 0, 1] = <b>${f(r.eps)}</b>.</p>
-      <p>Escuchó a ${r.neighbors.length} vecinos a distancia euclídea ≤ ε. Se promedian sus posiciones y se resta la posición propia.${r.group ? ` Grupo propio: ${r.group.size} personas, centro ${v(r.group.center)}, masa ${f(r.mass)}.` : " No se le asignó un grupo."}</p>
+      <p>Escuchó a ${r.neighbors.length} vecinos a distancia euclídea ≤ ε. Se suman las diferencias respecto a su posición y se dividen por D, que incluye propia opinión, vecinos y señales aceptadas.${r.group ? ` Grupo propio: ${r.group.size} personas, centro ${v(r.group.center)}, masa ${f(r.mass)}.` : " No se le asignó un grupo."}</p>
       <details><summary>Identificadores de los vecinos</summary><p>${r.neighbors.join(", ") || "Ninguno: la fuerza local es cero."}</p></details>
     </details>
     <details open><summary>2. ¿Qué empujó y hacia dónde?</summary>
@@ -764,7 +754,7 @@ function renderMovementExplanation() {
       ${r.forces.map(([name,x,y]) => `<tr><td>${name}</td><td>${f(x)}</td><td>${f(y)}</td></tr>`).join("")}
       <tr><th>Total F</th><th>${f(r.total[0])}</th><th>${f(r.total[1])}</th></tr></tbody></table></div>
       <p>«Polo–grupo» es el añadido calculado en el centro del grupo; no incluye de nuevo la fuerza polar individual. Eventos muestra el saldo de atracción y reactancia, no su magnitud por separado.</p>
-      <p><b>Detalle polar real:</b> con radio ${f(r.polar.radius)}, los pesos fueron A=${f(r.polar.weights[0])} y B=${f(r.polar.weights[1])}. Destino T=${v(r.polar.target)}. La fila individual es S(T−u) = ${f(r.polar.strength)} × (${v(r.polar.target)} − ${v(r.from)}). Ya no intervienen ni q ni el factor 0.35/0.65.</p>
+      <p><b>Detalle polar real:</b> alcance ρ=${f(r.polar.radius)}, tolerancia ε=${f(r.eps)}. Distancias a A=${f(r.polar.distances[0])}, B=${f(r.polar.distances[1])}. A aceptado: ${r.polar.accepted[0] ? 'sí' : 'no'}; B: ${r.polar.accepted[1] ? 'sí' : 'no'}. Cada señal aceptada cuenta ${f(r.polar.strength)} aportaciones. Denominador común D=${f(r.polar.denominator)}: 1 propia + ${r.neighbors.length} vecinos + señales aceptadas. Pesos polares A=${f(r.polar.weights[0])}, B=${f(r.polar.weights[1])}. La contribución polar es wA(A−u)+wB(B−u); se suma a los vecinos divididos por el mismo D. Los pesos polares solos no tienen por qué sumar 1. Destino conjunto de propia opinión, vecinos y polos: T=${v(r.polar.target)}; todavía no es el paso final.</p>
       ${r.polar.collective ? `<p><b>Aporte colectivo:</b> κ × proporción = ${f(r.polar.collective.coupling)} × ${f(r.polar.collective.share)} = ${f(r.polar.collective.gain)}. Multiplica la fuerza del centro ${v(r.polar.collective.vector)}; no la fuerza individual.</p>` : "<p>Sin aporte colectivo en este paso.</p>"}
     </details>
     <details open><summary>3. De fuerzas a movimiento</summary>
@@ -921,7 +911,8 @@ function drawPoleVectors() {
   ctx.lineWidth = 1.8;
   for (let i = 0; i < m.agents.length; i += stride) {
     const a = m.agents[i];
-    const pf = poleForce(a, c);
+    const count = m.agents.filter((b,j)=>j!==i && hypot(b.x-a.x,b.y-a.y)<=a.eps).length;
+    const pf = poleForce(a, c, count);
     const x1 = sx(a.x), y1 = sy(a.y);
     const x2 = x1 + pf.x * 120;
     const y2 = y1 - pf.y * 120;
