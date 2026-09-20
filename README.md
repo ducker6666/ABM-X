@@ -103,7 +103,7 @@ Los resultados se guardan en `outputs/`. Esa carpeta contiene archivos generados
 
 ## Cómo abrir la versión visual
 
-Desde la carpeta `project`, inicia un servidor local:
+Desde la carpeta raíz del repositorio, inicia un servidor local:
 
 ```bash
 python -m http.server 8765 --directory web
