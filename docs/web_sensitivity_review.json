@@ -1,0 +1,738 @@
+{
+  "version": "Revisión de fundamento 2026-09-21",
+  "purpose": "Diagnóstico local exploratorio, no validación empírica ni sensibilidad global. Se recortan controles a [0,1]: delta negativo en cero no cambia el parámetro.",
+  "agents": 80,
+  "rounds": 120,
+  "seeds": [
+    11,
+    22,
+    33,
+    44,
+    55,
+    66
+  ],
+  "baseline": [
+    {
+      "jdj": 0.6791809141193077,
+      "separation": 0.1282296556699295,
+      "clusters": 0,
+      "effectiveParameter": null
+    },
+    {
+      "jdj": 0.6781386524686821,
+      "separation": 0.12796827197029925,
+      "clusters": 0,
+      "effectiveParameter": null
+    },
+    {
+      "jdj": 0.6865709614904288,
+      "separation": 0.13932522242353246,
+      "clusters": 0,
+      "effectiveParameter": null
+    },
+    {
+      "jdj": 0.690631879470584,
+      "separation": 0.1452745525310804,
+      "clusters": 0,
+      "effectiveParameter": null
+    },
+    {
+      "jdj": 0.6703800509780796,
+      "separation": 0.11621493921975992,
+      "clusters": 0,
+      "effectiveParameter": null
+    },
+    {
+      "jdj": 0.6725098470105416,
+      "separation": 0.11895707113283353,
+      "clusters": 0,
+      "effectiveParameter": null
+    }
+  ],
+  "results": [
+    {
+      "parameter": "poleStrength",
+      "delta": -0.01,
+      "meanJdjChange": 0.0002754974304688222,
+      "minChange": 0.00023598230334331838,
+      "maxChange": 0.00031670095920621755,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.679416896422651,
+          "separation": 0.1285652122241217,
+          "clusters": 0,
+          "effectiveParameter": 0.69,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6784445221793083,
+          "separation": 0.12840819855552943,
+          "clusters": 0,
+          "effectiveParameter": 0.69,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6868141086588306,
+          "separation": 0.13968989251301075,
+          "clusters": 0,
+          "effectiveParameter": 0.69,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.6909485804297902,
+          "separation": 0.14575801567964755,
+          "clusters": 0,
+          "effectiveParameter": 0.69,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6706190276754593,
+          "separation": 0.11654358940837288,
+          "clusters": 0,
+          "effectiveParameter": 0.69,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6728221547543973,
+          "separation": 0.11938918063533477,
+          "clusters": 0,
+          "effectiveParameter": 0.69,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "poleStrength",
+      "delta": 0.01,
+      "meanJdjChange": -0.00027029492991518617,
+      "minChange": -0.0003094893122264075,
+      "maxChange": -0.00020426967568110133,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6789266741980498,
+          "separation": 0.12786788879272257,
+          "clusters": 0,
+          "effectiveParameter": 0.71,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6778821273779478,
+          "separation": 0.1276000104617045,
+          "clusters": 0,
+          "effectiveParameter": 0.71,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6862614721782024,
+          "separation": 0.1388618515524473,
+          "clusters": 0,
+          "effectiveParameter": 0.71,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.6903371463750295,
+          "separation": 0.14482548599297423,
+          "clusters": 0,
+          "effectiveParameter": 0.71,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6701757813023985,
+          "separation": 0.11593466364889222,
+          "clusters": 0,
+          "effectiveParameter": 0.71,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6722073345265047,
+          "separation": 0.11853939836776924,
+          "clusters": 0,
+          "effectiveParameter": 0.71,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "epsilonMean",
+      "delta": -0.01,
+      "meanJdjChange": 0.0009776447411659062,
+      "minChange": 0.0003051154163545844,
+      "maxChange": 0.0020000972769961267,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6800253251497376,
+          "separation": 0.12943040320684154,
+          "clusters": 0,
+          "effectiveParameter": 0.29,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.679054753436986,
+          "separation": 0.12927932019111768,
+          "clusters": 0,
+          "effectiveParameter": 0.29,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6868760769067834,
+          "separation": 0.13977802599136976,
+          "clusters": 0,
+          "effectiveParameter": 0.29,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.6909478068761948,
+          "separation": 0.14576178020546163,
+          "clusters": 0,
+          "effectiveParameter": 0.29,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6718642673273798,
+          "separation": 0.11825467037569912,
+          "clusters": 0,
+          "effectiveParameter": 0.29,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6745099442875377,
+          "separation": 0.12174308303332526,
+          "clusters": 0,
+          "effectiveParameter": 0.29,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "epsilonMean",
+      "delta": 0.01,
+      "meanJdjChange": -0.0036135608290331356,
+      "minChange": -0.01610039105707395,
+      "maxChange": -0.00022282639852988506,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.677747701444366,
+          "separation": 0.1261779904402111,
+          "clusters": 0,
+          "effectiveParameter": 0.31,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6771412402186089,
+          "separation": 0.12654215049066647,
+          "clusters": 0,
+          "effectiveParameter": 0.31,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6861330818116974,
+          "separation": 0.1386747309277627,
+          "clusters": 0,
+          "effectiveParameter": 0.31,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.6904090530720541,
+          "separation": 0.1449357400714059,
+          "clusters": 0,
+          "effectiveParameter": 0.31,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.667890408063231,
+          "separation": 0.11283234513598131,
+          "clusters": 0,
+          "effectiveParameter": 0.31,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6564094559534677,
+          "separation": 0.0967014581454271,
+          "clusters": 0,
+          "effectiveParameter": 0.31,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "mu",
+      "delta": -0.01,
+      "meanJdjChange": 0.0002935491214720402,
+      "minChange": 0.00025465498430343736,
+      "maxChange": 0.00036826965737901673,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6794790684913834,
+          "separation": 0.12861676007765396,
+          "clusters": 0,
+          "effectiveParameter": 0.59,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6784170999943473,
+          "separation": 0.12833801268685285,
+          "clusters": 0,
+          "effectiveParameter": 0.59,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6868750000492128,
+          "separation": 0.13976354906048488,
+          "clusters": 0,
+          "effectiveParameter": 0.59,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.691000149127963,
+          "separation": 0.14581774306642648,
+          "clusters": 0,
+          "effectiveParameter": 0.59,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6706377806087046,
+          "separation": 0.11654235080081218,
+          "clusters": 0,
+          "effectiveParameter": 0.59,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.672764501994845,
+          "separation": 0.11927297908874608,
+          "clusters": 0,
+          "effectiveParameter": 0.59,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "mu",
+      "delta": 0.01,
+      "meanJdjChange": -0.0003268583740931123,
+      "minChange": -0.00040970648175908675,
+      "maxChange": -0.00021159753683619442,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6788232864116914,
+          "separation": 0.12775268089561315,
+          "clusters": 0,
+          "effectiveParameter": 0.61,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6778525950539073,
+          "separation": 0.1275851234117981,
+          "clusters": 0,
+          "effectiveParameter": 0.61,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6862230757228935,
+          "separation": 0.13882003409568436,
+          "clusters": 0,
+          "effectiveParameter": 0.61,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.690283604134547,
+          "separation": 0.14476076141858069,
+          "clusters": 0,
+          "effectiveParameter": 0.61,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6701684534412434,
+          "separation": 0.11594878319260175,
+          "clusters": 0,
+          "effectiveParameter": 0.61,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6721001405287825,
+          "separation": 0.1184224241757778,
+          "clusters": 0,
+          "effectiveParameter": 0.61,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "noise",
+      "delta": -0.01,
+      "meanJdjChange": 0,
+      "minChange": 0,
+      "maxChange": 0,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6791809141193077,
+          "separation": 0.1282296556699295,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6781386524686821,
+          "separation": 0.12796827197029925,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6865709614904288,
+          "separation": 0.13932522242353246,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.690631879470584,
+          "separation": 0.1452745525310804,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6703800509780796,
+          "separation": 0.11621493921975992,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6725098470105416,
+          "separation": 0.11895707113283353,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "noise",
+      "delta": 0.01,
+      "meanJdjChange": 0.0000461855455462327,
+      "minChange": -0.000008377245697133162,
+      "maxChange": 0.00014237139884631933,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6792183447230024,
+          "separation": 0.12820844229607614,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.678130275222985,
+          "separation": 0.12785846501895454,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6866002997969574,
+          "separation": 0.1392693737177724,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.6906597146331155,
+          "separation": 0.14519203482535256,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6705224223769259,
+          "separation": 0.1163001630257928,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6725583620579152,
+          "separation": 0.1189226805888434,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "radicalToleranceLoss",
+      "delta": -0.01,
+      "meanJdjChange": 0,
+      "minChange": 0,
+      "maxChange": 0,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6791809141193077,
+          "separation": 0.1282296556699295,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6781386524686821,
+          "separation": 0.12796827197029925,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6865709614904288,
+          "separation": 0.13932522242353246,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.690631879470584,
+          "separation": 0.1452745525310804,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6703800509780796,
+          "separation": 0.11621493921975992,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6725098470105416,
+          "separation": 0.11895707113283353,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "radicalToleranceLoss",
+      "delta": 0.01,
+      "meanJdjChange": 0.00015127246029017494,
+      "minChange": 0.00003396468974237177,
+      "maxChange": 0.00022180434155305573,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6793304452476343,
+          "separation": 0.1284421932425021,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6783580566925059,
+          "separation": 0.12828508099853042,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6866517486662821,
+          "separation": 0.1394443671477989,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.6906658441603264,
+          "separation": 0.14532635628085694,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6706018553196327,
+          "separation": 0.11651903586470687,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6727119902129836,
+          "separation": 0.11923647903897591,
+          "clusters": 0,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "clusterStrength",
+      "delta": -0.01,
+      "meanJdjChange": 0,
+      "minChange": 0,
+      "maxChange": 0,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6791809141193077,
+          "separation": 0.1282296556699295,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6781386524686821,
+          "separation": 0.12796827197029925,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6865709614904288,
+          "separation": 0.13932522242353246,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.690631879470584,
+          "separation": 0.1452745525310804,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6703800509780796,
+          "separation": 0.11621493921975992,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6725098470105416,
+          "separation": 0.11895707113283353,
+          "clusters": 0,
+          "effectiveParameter": 0,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    },
+    {
+      "parameter": "clusterStrength",
+      "delta": 0.01,
+      "meanJdjChange": -0.011546903703558098,
+      "minChange": -0.013200933533670467,
+      "maxChange": -0.010376668022419322,
+      "runs": [
+        {
+          "seed": 11,
+          "jdj": 0.6682035178731852,
+          "separation": 0.11298269196938457,
+          "clusters": 2,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6791809141193077
+        },
+        {
+          "seed": 22,
+          "jdj": 0.6670199664291981,
+          "separation": 0.11254495032472608,
+          "clusters": 2,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6781386524686821
+        },
+        {
+          "seed": 33,
+          "jdj": 0.6752708898617166,
+          "separation": 0.12298010874846661,
+          "clusters": 2,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6865709614904288
+        },
+        {
+          "seed": 44,
+          "jdj": 0.6802552114481647,
+          "separation": 0.12987834225296563,
+          "clusters": 2,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.690631879470584
+        },
+        {
+          "seed": 55,
+          "jdj": 0.6571791174444092,
+          "separation": 0.09892041563051182,
+          "clusters": 2,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6703800509780796
+        },
+        {
+          "seed": 66,
+          "jdj": 0.6602021802596015,
+          "separation": 0.10257930798651864,
+          "clusters": 2,
+          "effectiveParameter": 0.01,
+          "baselineJdj": 0.6725098470105416
+        }
+      ]
+    }
+  ]
+}

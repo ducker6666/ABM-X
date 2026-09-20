@@ -18,12 +18,12 @@ La página Teoría incluye una ficha junto a cada ecuación: significado de sím
 - [Significado de las variables](docs/variable_contract.md): definiciones operativas y qué falta medir en la sociedad.
 - [Protocolo experimental breve](docs/experimental_protocol.md): distinguir polo–grupo de mera amplificación individual. Plan pendiente de ejecución, sin resultados inventados.
 - En el simulador, selecciona una persona y pulsa **Avanzar 1 ronda y explicar** bajo los indicadores. Registra su cálculo real: vecinos, fuerzas, umbral, ruido y límites. No altera las reglas ni añade sorteos.
-`node experiments/web_sensitivity.cjs` reproduce el diagnóstico local de 78
+`node experiments/web_sensitivity.cjs` genera un nuevo diagnóstico local de 78
 ejecuciones. No constituye validación empírica ni sensibilidad global.
 
-## Simulador original: documentación vigente
+## Simulador revisado: documentación vigente
 
-La web conserva su formato original. Consulta [Teoría](web/formula.html) para
+La web conserva su formato original, pero la revisión de fundamento cambia la fuerza polar y los atributos. Ver [decisiones y pendientes](docs/model_rationale.md). Consulta [Teoría](web/formula.html) para
 las ecuaciones, ejemplos numéricos, referencias y límites; [Guía](web/guide.html)
 explica todos los controles. La [auditoría](docs/theory_audit.md) registra las
 correcciones de cálculo y distingue hipótesis propias de fórmulas publicadas.

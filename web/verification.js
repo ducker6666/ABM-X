@@ -53,7 +53,7 @@ test('Polos: softmax estable con radio mínimo',()=>{
   const c={...defaults,poleRadius:.02};
   const p=e.poleForce(agent(.2,.2),c);
   near(p.wA,.5); near(p.wB,.5); near(p.targetX,.5); near(p.targetY,.5);
-  near(p.x,.0735); near(p.y,.0735);
+  near(p.x,.21); near(p.y,.21);
   const extreme=e.poleForce(agent(0,1),c); near(extreme.wA+extreme.wB,1);
   assert.ok(Number.isFinite(extreme.x));
 });
@@ -132,8 +132,8 @@ test('Polos: barrido de fuerza y radio contra ecuación independiente',()=>{
     const a=agent(.35,.55), actual=e.poleForce(a,c);
     const dA=(a.x-c.poleA[0])**2+(a.y-c.poleA[1])**2;
     const dB=(a.x-c.poleB[0])**2+(a.y-c.poleB[1])**2;
-    const wA=1/(1+Math.exp((1+6*strength)*(dA-dB)/(2*radius**2)));
-    const gain=strength*(.35+.65*Math.abs(2*wA-1));
+    const wA=1/(1+Math.exp((dA-dB)/(2*radius**2)));
+    const gain=strength;
     near(actual.wA,wA);near(actual.x,gain*(wA*c.poleA[0]+(1-wA)*c.poleB[0]-a.x));
   }
 });
@@ -169,8 +169,8 @@ test('Suma completa: vecinos + polos + masa + evento + centro + anclaje',()=>{
   m.events=[{x:.3,y:.5,start:0,duration:10,strength:.1,radius:.4,reactance:.02,decay:0}];
   // Evaluación independiente de las ecuaciones publicadas en la página.
   const pole=(x,y)=>{
-    const w=1/(1+Math.exp(2.2*(((x-1)**2+y*y)-(x*x+(y-1)**2))/(2*.5**2)));
-    const gain=.2*(.35+.65*Math.abs(2*w-1));return [gain*(w-x),gain*(1-w-y)];
+    const w=1/(1+Math.exp((((x-1)**2+y*y)-(x*x+(y-1)**2))/(2*.5**2)));
+    const gain=.2;return [gain*(w-x),gain*(1-w-y)];
   };
   const p=pole(.6,.5), pc=pole(.61,.5);
   const mass=.4*.1*Math.exp(-(.01**2)/(2*.6**2))*.01/(.01**2+.128**2);
@@ -237,5 +237,42 @@ test('Documentación: cada ecuación tiene símbolos, ejemplo, razón y referenc
     for(const [symbol,meaning] of n.symbols) assert.ok(symbol.length && meaning.length);
     for(const match of n.source.matchAll(/\[(\d+)\]/g)) assert.ok(html.includes(`id="ref${match[1]}"`));
   }
+});
+test('Revisión polar: pesos independientes de S y fuerza proporcional',()=>{
+  const a=agent(.3,.6),c={...defaults,poleRadius:.7};
+  const p=e.poleForce(a,{...c,poleStrength:.7}),half=e.poleForce(a,{...c,poleStrength:.35});
+  near(p.wA,half.wA);near(p.wB,half.wB);near(p.x,2*half.x);near(p.y,2*half.y);
+  const off=e.poleForce(a,{...c,poleStrength:0});near(off.x,0);near(off.y,0);
+});
+test('Revisión polar: simetría y mínimo cuadrático con pesos congelados',()=>{
+  const a=agent(.3,.6),p=e.poleForce(a,defaults);
+  const swapped=e.poleForce(a,{...defaults,poleA:defaults.poleB,poleB:defaults.poleA});
+  near(p.x,swapped.x);near(p.y,swapped.y);
+  const loss=(x,y)=>p.wA*((x-defaults.poleA[0])**2+(y-defaults.poleA[1])**2)+p.wB*((x-defaults.poleB[0])**2+(y-defaults.poleB[1])**2);
+  const best=loss(p.targetX,p.targetY);
+  for(const dx of [-.1,0,.1])for(const dy of [-.1,0,.1])near(loss(p.targetX+dx,p.targetY+dy)-best,dx*dx+dy*dy);
+});
+test('Acoplamiento: peso n/N sin suelo y sin dependencia del exponente de gravedad',()=>{
+  const run=gamma=>{
+    const m=setup([agent(.6,.5,{eps0:0}),agent(.6,.5,{eps0:0}),agent(0,0,{eps0:0})],
+      {poleStrength:.2,clusterPoleCoupling:.7,clusterMinSize:2,clusterDetectRadius:.02,clusterMassExponent:gamma});
+    const p=e.poleForce(m.agents[0],m.cfg);e.step();
+    near(m.movement.forces[2][1],.7*(2/3)*p.x);near(m.movement.forces[2][2],.7*(2/3)*p.y);
+    return m.agents.map(a=>[a.x,a.y]);
+  };
+  assert.equal(JSON.stringify(run(.5)),JSON.stringify(run(2)));
+});
+test('Tolerancia cero: sin suelo artificial ni vecinos próximos no coincidentes',()=>{
+  const m=setup([agent(.5,.5,{eps0:0}),agent(.501,.5,{eps0:0})]);e.step();
+  near(m.agents[0].eps,0);assert.equal(m.movement.neighbors.length,0);near(m.agents[0].x,.5);
+});
+test('Inicialización revisada: atributos exactos y base sin hipótesis adicionales',()=>{
+  for(const p of e.PARAMS)e.state.controls.set(p.id,{input:{value:String(p.value)}});
+  vm.runInContext('draw=()=>{}; resetModel();',context);
+  const m=e.state.model;
+  for(const a of m.agents){near(a.mu,.6);near(a.alpha,0);near(a.lambda,0);near(a.eps0,.3);}
+  for(const key of ['noise','eventFrequency','clusterStrength','clusterPoleCoupling','centerRebound','radicalToleranceLoss','massToleranceLoss'])near(m.cfg[key],0);
+  e.state.controls.get('mu').input.value='0';vm.runInContext('resetModel();',context);e.step();
+  for(const a of e.state.model.agents){near(a.x,a.anchorX);near(a.y,a.anchorY);}
 });
 console.log(`${passed} pruebas web superadas (motor y documentación).`);

@@ -11,14 +11,14 @@ const PARAMS = [
   { group: "Visualización y diagnóstico", id: "showPoleArrows", label: "Mostrar flechas polos", value: 1.00 },
 
   { group: "Micro: tolerancia e inmovilidad", id: "epsilonMean", label: "Apertura local / tolerancia ε", value: 0.30 },
-  { group: "Micro: tolerancia e inmovilidad", id: "epsilonHeterogeneity", label: "Heterogeneidad de ε", value: 0.30 },
-  { group: "Micro: tolerancia e inmovilidad", id: "alpha", label: "Inmovilidad α", value: 0.10 },
+  { group: "Micro: tolerancia e inmovilidad", id: "epsilonHeterogeneity", label: "Heterogeneidad relativa de ε", value: 0.00 },
+  { group: "Micro: tolerancia e inmovilidad", id: "alpha", label: "Umbral α · hipótesis", value: 0.00 },
   { group: "Micro: tolerancia e inmovilidad", id: "mu", label: "Susceptibilidad μ", value: 0.60 },
-  { group: "Micro: tolerancia e inmovilidad", id: "lambda", label: "Anclaje λ", value: 0.10 },
-  { group: "Micro: tolerancia e inmovilidad", id: "noise", label: "Ruido", value: 0.10 },
+  { group: "Micro: tolerancia e inmovilidad", id: "lambda", label: "Anclaje λ · adaptación", value: 0.00 },
+  { group: "Micro: tolerancia e inmovilidad", id: "noise", label: "Ruido · escenario", value: 0.00 },
 
-  { group: "Tolerancia adaptativa", id: "radicalToleranceLoss", label: "Cierre por radicalidad", value: 0.40 },
-  { group: "Tolerancia adaptativa", id: "massToleranceLoss", label: "Inercia de masa", value: 0.20 },
+  { group: "Tolerancia adaptativa · hipótesis", id: "radicalToleranceLoss", label: "Cierre por distancia al centro", value: 0.00 },
+  { group: "Tolerancia adaptativa · hipótesis", id: "massToleranceLoss", label: "Inercia de masa", value: 0.00 },
 
   { group: "Polos permanentes", id: "poleAx", label: "Polo A x", value: 0.00 },
   { group: "Polos permanentes", id: "poleAy", label: "Polo A y", value: 1.00 },
@@ -27,7 +27,7 @@ const PARAMS = [
   { group: "Polos permanentes", id: "poleStrength", label: "Fuerza polos", value: 0.70 },
   { group: "Polos permanentes", id: "poleRadius", label: "Radio polos", value: 0.70 },
 
-  { group: "Eventos aleatorios", id: "eventProbability", label: "Frecuencia eventos", value: 0.70 },
+  { group: "Eventos aleatorios", id: "eventProbability", label: "Frecuencia eventos · escenario", value: 0.00 },
   { group: "Eventos aleatorios", id: "eventStrength", label: "Fuerza evento", value: 0.80 },
   { group: "Eventos aleatorios", id: "eventRadius", label: "Radio evento", value: 0.40 },
   { group: "Eventos aleatorios", id: "eventDuration", label: "Duración evento", value: 0.40 },
@@ -35,18 +35,18 @@ const PARAMS = [
   { group: "Eventos aleatorios", id: "eventReactance", label: "Reactancia evento", value: 0.20 },
   { group: "Eventos aleatorios", id: "counterEvent", label: "Contraevento", value: 0.40 },
 
-  { group: "Clusters con masa", id: "clusterStrength", label: "Fuerza masa cluster", value: 0.40 },
+  { group: "Clusters con masa", id: "clusterStrength", label: "Fuerza masa cluster · hipótesis", value: 0.00 },
   { group: "Clusters con masa", id: "clusterDetectRadius", label: "Radio detección cluster", value: 0.10 },
   { group: "Clusters con masa", id: "clusterGravityRadius", label: "Radio gravedad cluster", value: 0.60 },
   { group: "Clusters con masa", id: "clusterMassExponent", label: "Exponente masa", value: 0.70 },
   { group: "Clusters con masa", id: "clusterMinSize", label: "Tamaño mínimo cluster", kind: "count", min: 3, max: 1000, step: 1, value: 20 },
-  { group: "Clusters con masa", id: "clusterSelfAttraction", label: "Autoatracción cluster", value: 0.10 },
-  { group: "Clusters con masa", id: "clusterPoleCoupling", label: "Atracción polo-masa", value: 0.70 },
+  { group: "Clusters con masa", id: "clusterSelfAttraction", label: "Autoatracción cluster · hipótesis", value: 0.00 },
+  { group: "Clusters con masa", id: "clusterPoleCoupling", label: "Atracción polo-grupo · hipótesis", value: 0.00 },
 
   { group: "Auditor JDJ y rebote", id: "auditThreshold", label: "Umbral JDJ", value: 0.60 },
   { group: "Auditor JDJ y rebote", id: "auditBalanceThreshold", label: "Umbral 50/50", value: 0.70 },
   { group: "Auditor JDJ y rebote", id: "auditPatience", label: "Paciencia auditor", value: 0.20 },
-  { group: "Auditor JDJ y rebote", id: "centerRebound", label: "Fuerza centro", value: 0.50 },
+  { group: "Auditor JDJ y rebote", id: "centerRebound", label: "Fuerza centro · intervención", value: 0.00 },
 ];
 
 const state = {
@@ -232,16 +232,18 @@ function resetModel() {
     const spread = left ? [0.15, 0.14] : [0.14, 0.13];
     const x = clamp(normal(center[0], spread[0]), 0.02, 0.98);
     const y = clamp(normal(center[1], spread[1]), 0.02, 0.98);
-    const eps0 = clamp(normal(c.epsilonMean, 0.25 * c.epsilonHeterogeneity), 0.02, 1);
+    // h es dispersión relativa explícita: sigma = epsilonMean * h.
+    const eps0 = clamp(normal(c.epsilonMean, c.epsilonMean * c.epsilonHeterogeneity), 0, 1);
     agents.push({
       x, y,
       previousX: x, previousY: y,
       anchorX: x, anchorY: y,
       eps0,
       eps: eps0,
-      mu: clamp(normal(c.mu, 0.08), 0.02, 1),
-      alpha: clamp(normal(c.alpha, 0.05), 0, 1),
-      lambda: clamp(normal(c.lambda, 0.04), 0, 1),
+      // Valores exactos de los controles: cero desactiva realmente el término.
+      mu: c.mu,
+      alpha: c.alpha,
+      lambda: c.lambda,
       clusterId: -1,
     });
   }
@@ -484,12 +486,14 @@ function maybeEvents() {
 function poleForce(a, c) {
   const dax = c.poleA[0] - a.x, day = c.poleA[1] - a.y;
   const dbx = c.poleB[0] - a.x, dby = c.poleB[1] - a.y;
-  const poleSharpness = 1 + 6 * c.poleStrength;
+  // K(d)=exp(-d²/(2*rho²)): rho es la distancia donde K/K(0)=exp(-1/2).
+  // Pesos normalizados independientes de S; T=Σw*p minimiza Σw*||v-p||².
+  // P=S*(T-u) es un ajuste lineal declarado, no una ley social validada.
   // Softmax estable: restar el máximo conserva wA+wB=1 incluso con radio .02.
   // Antes, +1e-9 dominaba los pesos minúsculos y creaba un destino falso (0,0).
   // Referencia matemática: Blanchard, Higham & Higham, DOI 10.1093/imanum/draa038.
-  const zA = -poleSharpness * (dax * dax + day * day) / (2 * c.poleRadius ** 2);
-  const zB = -poleSharpness * (dbx * dbx + dby * dby) / (2 * c.poleRadius ** 2);
+  const zA = -(dax * dax + day * day) / (2 * c.poleRadius ** 2);
+  const zB = -(dbx * dbx + dby * dby) / (2 * c.poleRadius ** 2);
   const shift = Math.max(zA, zB);
   const sA = Math.exp(zA - shift), sB = Math.exp(zB - shift);
   const denomPoles = sA + sB;
@@ -497,8 +501,7 @@ function poleForce(a, c) {
   const wB = sB / denomPoles;
   const poleTargetX = wA * c.poleA[0] + wB * c.poleB[0];
   const poleTargetY = wA * c.poleA[1] + wB * c.poleB[1];
-  const poleCommitment = Math.abs(wA - wB);
-  const poleMagnitude = c.poleStrength * (0.35 + 0.65 * poleCommitment);
+  const poleMagnitude = c.poleStrength;
   return {
     x: poleMagnitude * (poleTargetX - a.x),
     y: poleMagnitude * (poleTargetY - a.y),
@@ -545,7 +548,7 @@ function step() {
     // Ej.: .3*(1-.4*.5)*(1-.2*.2)=.2304. No es una ley psicológica.
     const ownCluster = m.clusters.find(cl => cl.id === a.clusterId);
     const massInertia = ownCluster ? ownCluster.mass : 0;
-    a.eps = clamp(a.eps0 * (1 - c.radicalToleranceLoss * radicality) * (1 - c.massToleranceLoss * massInertia), 0.01, 1);
+    a.eps = clamp(a.eps0 * (1 - c.radicalToleranceLoss * radicality) * (1 - c.massToleranceLoss * massInertia), 0, 1);
 
     let localX = 0, localY = 0, count = 0;
     // Confianza acotada (HK, 2002), adaptada: L=media(vecinos sin i)-posición.
@@ -564,11 +567,14 @@ function step() {
     const pf = poleForce(a, c);
     let poleX = pf.x;
     let poleY = pf.y;
+    let collectivePole = null;
     if (ownCluster && c.clusterPoleCoupling > 0) {
       const cpf = poleForce({ x: ownCluster.x, y: ownCluster.y }, c);
-      const massGain = c.clusterPoleCoupling * (0.35 + 0.65 * ownCluster.mass);
+      // Cada miembro tiene peso 1/N: suma n_k/N=f_k, sin suelo artificial.
+      const massGain = c.clusterPoleCoupling * ownCluster.massShare;
       poleX += massGain * cpf.x;
       poleY += massGain * cpf.y;
+      if (explain) collectivePole = {share: ownCluster.massShare, coupling: c.clusterPoleCoupling, gain: massGain, vector: [cpf.x, cpf.y]};
     }
 
     let eventX = 0, eventY = 0;
@@ -644,6 +650,7 @@ function step() {
         eps0: a.eps0, eps: a.eps, radicality, mass: massInertia,
         closure: c.radicalToleranceLoss, inertia: c.massToleranceLoss,
         neighbors, group: ownCluster ? {size: ownCluster.size, center: [ownCluster.x, ownCluster.y]} : null,
+        polar: {strength: c.poleStrength, radius: c.poleRadius, weights: [pf.wA, pf.wB], target: [pf.targetX, pf.targetY], collective: collectivePole},
         forces: [
           ["Vecinos parecidos", localX, localY],
           ["Polo sobre la persona", pf.x, pf.y],
@@ -709,6 +716,21 @@ function drawCanvasLabel(text, x, y, options = {}) {
 let lastExplanationKey = null;
 let lastExplanationTrace = null;
 function renderMovementExplanation() {
+  const scope = document.getElementById("modelScope");
+  if (scope && state.model) {
+    const c = state.model.cfg;
+    const active = [
+      [c.eventFrequency > 0 || state.model.events.length > 0, "eventos sintéticos"],
+      [c.clusterStrength > 0, "gravedad de grupos"],
+      [c.clusterPoleCoupling > 0, "acoplamiento colectivo"],
+      [c.radicalToleranceLoss > 0 || c.massToleranceLoss > 0, "cierre adaptativo"],
+      [c.centerRebound > 0, "intervención del auditor"],
+      [c.noise > 0, "ruido"],
+      [state.model.agents.some(a => a.alpha > 0 || a.lambda > 0), "umbral/anclaje"]
+    ].filter(([enabled]) => enabled).map(([,label]) => label);
+    const text = active.length ? `Extensiones activas sin calibración social: ${active.join(", ")}.` : "Base exploratoria: promedio local y polos. Parámetros de escenario, no valores humanos calibrados.";
+    if (scope.textContent !== text) scope.textContent = text;
+  }
   const box = document.getElementById("movementDetails");
   const m = state.model;
   if (!box || !m) return;
@@ -732,7 +754,7 @@ function renderMovementExplanation() {
     <p><b>De ${v(r.from)} a ${v(r.to)}.</b> En x: ${direction(moved[0], "derecha", "izquierda")}; en y: ${direction(moved[1], "arriba", "abajo")}.</p>
     <p class="control-notice">Fotografía del último paso calculado para esta persona. Los controles actuales pueden haber cambiado después. Se muestran 6 decimales; el motor no redondea estos cálculos.${state.pendingReset ? " Hay atributos pendientes de reiniciar." : ""}</p>
     <details open><summary>1. ¿A quién escuchó?</summary>
-      <p>Su tolerancia inicial ${f(r.eps0)} se ajustó así: ε = limitar[${f(r.eps0)} × (1 − ${f(r.closure)} × ${f(r.radicality)}) × (1 − ${f(r.inertia)} × ${f(r.mass)}), 0.01, 1] = <b>${f(r.eps)}</b>.</p>
+      <p>Su tolerancia inicial ${f(r.eps0)} se ajustó así: ε = limitar[${f(r.eps0)} × (1 − ${f(r.closure)} × ${f(r.radicality)}) × (1 − ${f(r.inertia)} × ${f(r.mass)}), 0, 1] = <b>${f(r.eps)}</b>.</p>
       <p>Escuchó a ${r.neighbors.length} vecinos a distancia euclídea ≤ ε. Se promedian sus posiciones y se resta la posición propia.${r.group ? ` Grupo propio: ${r.group.size} personas, centro ${v(r.group.center)}, masa ${f(r.mass)}.` : " No se le asignó un grupo."}</p>
       <details><summary>Identificadores de los vecinos</summary><p>${r.neighbors.join(", ") || "Ninguno: la fuerza local es cero."}</p></details>
     </details>
@@ -742,6 +764,8 @@ function renderMovementExplanation() {
       ${r.forces.map(([name,x,y]) => `<tr><td>${name}</td><td>${f(x)}</td><td>${f(y)}</td></tr>`).join("")}
       <tr><th>Total F</th><th>${f(r.total[0])}</th><th>${f(r.total[1])}</th></tr></tbody></table></div>
       <p>«Polo–grupo» es el añadido calculado en el centro del grupo; no incluye de nuevo la fuerza polar individual. Eventos muestra el saldo de atracción y reactancia, no su magnitud por separado.</p>
+      <p><b>Detalle polar real:</b> con radio ${f(r.polar.radius)}, los pesos fueron A=${f(r.polar.weights[0])} y B=${f(r.polar.weights[1])}. Destino T=${v(r.polar.target)}. La fila individual es S(T−u) = ${f(r.polar.strength)} × (${v(r.polar.target)} − ${v(r.from)}). Ya no intervienen ni q ni el factor 0.35/0.65.</p>
+      ${r.polar.collective ? `<p><b>Aporte colectivo:</b> κ × proporción = ${f(r.polar.collective.coupling)} × ${f(r.polar.collective.share)} = ${f(r.polar.collective.gain)}. Multiplica la fuerza del centro ${v(r.polar.collective.vector)}; no la fuerza individual.</p>` : "<p>Sin aporte colectivo en este paso.</p>"}
     </details>
     <details open><summary>3. De fuerzas a movimiento</summary>
       <ol><li><b>Umbral:</b> longitud de F = ${f(r.norm)}; α = ${f(r.alpha)}. ${r.norm > r.alpha ? "Supera α: hay respuesta dirigida." : "No supera α: respuesta dirigida cero; aún puede haber ruido."}</li>
@@ -812,7 +836,7 @@ function drawMain() {
   stats.pol.textContent = ps.jdj.toFixed(3);
   stats.jdj.textContent = ps.separation.toFixed(3);
   stats.balance.textContent = ps.balance.toFixed(3);
-  stats.audit.textContent = m.highPolCount >= c.auditPatience ? "centro activo" : "inactivo";
+  stats.audit.textContent = c.centerRebound === 0 ? "sin intervención" : m.highPolCount >= c.auditPatience ? "centro activo" : "inactivo";
   stats.events.textContent = String(activeEvents);
   stats.clusters.textContent = String(m.clusters.length);
   const selected = m.agents[m.highlighted];

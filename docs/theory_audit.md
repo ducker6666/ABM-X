@@ -1,5 +1,7 @@
 # Auditoría del simulador original — 20 septiembre 2026
 
+> HISTÓRICO: las verificaciones y expresiones de esta auditoría corresponden a versiones anteriores. La revisión de fundamento vigente, sus cambios y pendientes están en [model_rationale.md](model_rationale.md).
+
 Actualización posterior: ver `research_readiness.md`. Las fórmulas Unicode se
 han sustituido por MathML generado desde LaTeX; sigue sin haber dependencias de
 red durante el uso. El eje temporal del historial y el recorte gráfico de JDJ

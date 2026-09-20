@@ -1,5 +1,7 @@
 # Evaluación para artículo y tesis
 
+> HISTÓRICO: describe la versión del 20/09/2026. La revisión del 21/09 cambia dinámica y valores iniciales. Las cifras de sensibilidad de este documento no corresponden al motor actual. Véase [fundamento revisado](model_rationale.md). El script actual genera un informe nuevo separado.
+
 Fecha: 20 de septiembre de 2026. Alcance: motor web original, no todos los modelos
 Python históricos. Esta es una evaluación del estado del proyecto, no un artículo
 con resultados empíricos ni una garantía de aceptación editorial.

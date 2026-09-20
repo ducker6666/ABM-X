@@ -10,7 +10,7 @@ La hipótesis no es «más fuerza produce más movimiento». Es que la **posici�
 
 ## 2. Tres condiciones comparables
 
-Sea P(uᵢ) el vector polar individual que ya calcula el motor; cₖ el centro del grupo; y gₖ=κ(0.35+0.65Mₖ).
+Sea P(uᵢ) el vector polar individual que ya calcula el motor; cₖ el centro del grupo; y gₖ=κfₖ, con fₖ=nₖ/N.
 
 | Condición | Término polar | Pregunta |
 |---|---|---|
@@ -18,7 +18,7 @@ Sea P(uᵢ) el vector polar individual que ya calcula el motor; cₖ el centro d
 | Individual con ganancia | (1+gₖ)P(uᵢ) | ¿Basta amplificar la influencia individual? |
 | Polo–grupo actual | P(uᵢ)+gₖP(cₖ) | ¿Importa evaluar la fuerza en el grupo? |
 
-Sin grupo asignado, gₖ=0 en las tres condiciones. «Ganancia» es un **control experimental propuesto**, no una teoría publicada ni un ajuste exacto de la norma de la fuerza: iguala el multiplicador, no necesariamente la magnitud resultante. No basta subir «Fuerza polos»: ese control altera también los pesos relativos de los polos.
+Sin grupo asignado, gₖ=0 en las tres condiciones. «Ganancia» es un **control experimental propuesto**, no una teoría publicada ni un ajuste exacto de la norma de la fuerza: iguala el multiplicador, no necesariamente la magnitud resultante. No basta subir «Fuerza polos»: en la revisión actual ese control ya solo escala intensidad; aun así, gₖ depende de cada grupo y no equivale a subir globalmente S.
 
 Si todos los miembros coinciden con su centro, las dos últimas expresiones son idénticas. Esa igualdad será una prueba obligatoria del futuro comparador. Para grupos dispersos, no podemos anticipar ni dirección ni tamaño de las diferencias.
 
@@ -29,7 +29,7 @@ Si todos los miembros coinciden con su centro, las dos últimas expresiones son 
 - Mantener los dos polos y demás controles por defecto; desactivar eventos (frecuencia=0), ruido=0 y retorno del auditor (fuerza centro=0) para aislar primero el mecanismo. Publicar todos los valores efectivos, no solo los deslizadores.
 - Mantener la detección de grupos bajo el mismo algoritmo y parámetros en las tres condiciones, incluso al apagar el acoplamiento. Sus grupos pueden divergir después como consecuencia de sus trayectorias: eso forma parte del efecto total.
 - Inicialización del piloto: las dos nubes actuales, con posiciones y atributos idénticos dentro de cada comparación. No cambiar parámetros durante la ejecución.
-- Tras el piloto, fijar por escrito un estudio de robustez: grupos más compactos/dispersos, otra población, otros radios y umbrales, y alternativas a las constantes del acoplamiento. Separar esos análisis del contraste principal; no escoger solo escenarios favorables.
+- Tras el piloto, fijar por escrito un estudio de robustez: grupos más compactos/dispersos, otra población, otros radios y umbrales, y alternativas a la ponderación por tamaño relativo. Separar esos análisis del contraste principal; no escoger solo escenarios favorables.
 
 Para ruido o eventos posteriores, reutilizar realizaciones previamente generadas e idénticas por ronda/agente, no confiar solo en una semilla compartida si las ramas del programa consumen sorteos distintos. Probar eventos y auditor en experimentos separados. El auditor responde al JDJ y puede producir una reducción por construcción.
 

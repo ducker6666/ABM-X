@@ -44,14 +44,14 @@ module.exports = {
     symbols: [
       ['k ∈ {A,B}; pₖ; uᵢ', 'k identifica uno de los dos polos; pₖ es su posición; uᵢ es la posición de la persona.'],
       ['S; ρ (rho)', 'Control Fuerza polos y escala Radio polos. ρ tiene mínimo efectivo 0.02 y no es un corte de alcance.'],
-      ['q; zₖ; z*', 'q controla contraste; zₖ es una puntuación negativa basada en distancia cuadrada; z* es la mayor puntuación de los dos polos. No son probabilidades.'],
+      ['zₖ; z*', 'zₖ es la puntuación negativa de distancia cuadrada dividida por 2ρ²; z* es la mayor de las dos puntuaciones. Se elimina q: la selectividad depende solo de ρ.'],
       ['eᶻ; wₖ', 'Exponencial de base e≈2.71828, no un evento. wₖ es el peso relativo del polo, entre 0 y 1; wA+wB=1.'],
       ['Tᵢ; P(uᵢ)', 'Tᵢ es el destino medio de los polos ponderados; P es el vector de fuerza calculado desde uᵢ.'],
-      ['|wA−wB|', 'Valor absoluto de la diferencia: mide cuánto domina un peso al otro, sin signo.']
+      ['S(Tᵢ−uᵢ)', 'Se resta la posición actual al destino y se multiplica por S. No hay factor adicional por dominio de un polo.']
     ],
-    example: 'Con pesos iguales, |0.5−0.5|=0: el factor interno es 0.35. Con pesos 1 y 0, el factor es 1. Por eso la fuerza no desaparece cuando empatan; apunta al destino medio.',
-    reason: 'La distancia cuadrada penaliza polos lejanos; softmax convierte puntuaciones en pesos comparables. Restar z* deja el cociente igual y evita problemas numéricos. 0.35+0.65×contraste interpola entre una fuerza basal y una mayor cuando domina un polo. q=1+6S liga intensidad y selectividad por diseño: S cambia ambas, lo que complica su interpretación aislada.',
-    source: 'Señales persistentes como antecedente: [2]. Cálculo estable de softmax: [3]. La composición y los números 6, 0.35 y 0.65 son elecciones propias sin calibración conocida; ninguna de esas referencias valida esta fuerza social exacta.'
+    example: 'En u=(0.2,0.2), con A=(0,1) y B=(1,0), las distancias empatan: wA=wB=0.5 y T=(0.5,0.5). Si S=0.7, P=0.7×(0.3,0.3)=(0.21,0.21). Si S=0.35, los pesos no cambian y la fuerza queda exactamente a la mitad.',
+    reason: 'Supuestos explícitos: polos intercambiables, preferencia suave por cercanía y un destino que minimiza desacuerdo cuadrático ponderado. Con los pesos fijados en esta ronda, el mínimo de Σwₖ‖v−pₖ‖² se obtiene resolviendo 2Σwₖ(v−pₖ)=0: v=T. Se propone responder linealmente S(T−u). La gaussiana es una elección de familia de pesos, no la única posible. El 2 de 2ρ² fija la convención: a distancia ρ la afinidad sin normalizar es exp(−1/2)≈0.6065. S y ρ se estudian como parámetros, no como constantes humanas. No se afirma descenso de una energía global cuando los pesos se recalculan.',
+    source: '[2] respalda estudiar señales persistentes, no esta regla gaussiana. [3] respalda únicamente la evaluación estable de softmax. La media se deriva algebraicamente bajo los supuestos indicados; la interpretación social aún requiere contraste. Se retiran q=1+6S y 0.35+0.65D porque añadían supuestos sin respaldo específico.'
   },
   calendario: {
     symbols: [
@@ -111,11 +111,11 @@ module.exports = {
   acoplamiento: {
     symbols: [
       ['P(uᵢ); P(cₖ)', 'La misma función polar evaluada en la persona y en el centro de su grupo, respectivamente.'],
-      ['κ; Mₖ; Pᵢ', 'Control Atracción polo-masa, masa del grupo y fuerza polar final incluida la aportación colectiva.']
+      ['κ; fₖ=nₖ/N; Pᵢ', 'Control Atracción polo-grupo, proporción de población del grupo y fuerza polar final. Este término no usa la masa elevada a γ de la gravedad.']
     ],
-    example: 'Con κ=0.7 y M=0.2, la ganancia añadida es 0.7×(0.35+0.65×0.2)=0.336. Si P(c)=(0.10,0), se suma (0.0336,0), no se sustituye la fuerza individual.',
-    reason: 'Se ensaya que personas del mismo grupo compartan un componente de respuesta polar calculado desde su posición colectiva. El término 0.35 mantiene un aporte basal y 0.65 aumenta ese aporte con la masa. Si persona y centro coinciden, solo amplifica la fuerza individual: por eso hace falta comparar con un control de ganancia.',
-    source: 'Hipótesis propia; [2] respalda el interés por señales persistentes, no esta fórmula colectiva. No hay evidencia aportada que privilegie 0.35/0.65. La explicación es una lectura de su estructura, no una reconstrucción documentada de por qué se escogieron originalmente esos números.'
+    example: 'Con κ=0.7 y un grupo de 20 de 100 personas, κf=0.7×0.2=0.14. Si P(c)=(0.10,0), se suma (0.014,0). Con κ=0 no hay aporte colectivo.',
+    reason: 'Hipótesis opcional: cada miembro aporta una señal colectiva representada por el centro. Asignar a cada persona igual peso 1/N y sumar nₖ aportes κP(c)/N produce κ(nₖ/N)P(c). Esa derivación justifica el tamaño relativo, no demuestra que una comunidad real funcione así. Si persona y centro coinciden, equivale a amplificar la fuerza individual: se mantiene el control de ganancia en el protocolo.',
+    source: 'Adaptación propia derivada de aditividad e igual peso por miembro; [2] solo aporta el antecedente de señales. No hay fuente atribuida para esta regla colectiva exacta. Desactivada de inicio y pendiente de contraste. Se elimina el suelo 0.35 y su complemento 0.65.'
   },
   tolerancia: {
     symbols: [
@@ -123,19 +123,19 @@ module.exports = {
       ['εᵢ⁰; εᵢ', 'Tolerancia inicial individual y tolerancia efectiva de esta ronda. El superíndice 0 indica inicial, no elevar a cero.'],
       ['cr; cm; Mᵢ', 'Controles de cierre e inercia de masa; masa del grupo propio, o cero si no lo hay.']
     ],
-    example: 'ε⁰=0.3, cr=0.4, r=0.5, cm=0.2, M=0.2: 0.3×0.8×0.96=0.2304. Si el producto fuese 0, clip lo elevaría al mínimo 0.01.',
-    reason: 'Cada factor entre 0 y 1 reduce proporcionalmente la apertura inicial. El producto combina dos reducciones y clip evita un radio nulo. Es una hipótesis de cierre; podría estar equivocada. Estar lejos del centro geométrico no basta para diagnosticar radicalismo social.',
-    source: '[7] estudia confianza acotada con red adaptativa, no esta ecuación ni la relación propuesta entre masa y tolerancia. Producto, definición de r y mínimo 0.01 son decisiones propias.'
+    example: 'ε⁰=0.3, cr=0.4, r=0.5, cm=0.2, M=0.2: 0.3×0.8×0.96=0.2304. Si el producto es cero, ε=0: solo admite opiniones exactamente coincidentes. Se elimina el suelo anterior 0.01.',
+    reason: 'Cada factor entre 0 y 1 reduce proporcionalmente la apertura inicial. El producto supone reducciones multiplicativas independientes; no es una consecuencia de HK. Estar lejos del centro geométrico no basta para diagnosticar radicalismo social. Ambos controles empiezan a cero para que la tolerancia base no imponga esa hipótesis.',
+    source: '[7] estudia confianza acotada con red adaptativa, no esta ecuación ni la relación propuesta entre masa y tolerancia. Producto y definición de r son hipótesis propias todavía pendientes de contraste.'
   },
   atributos: {
     symbols: [
       ['ε̄; h; εᵢ⁰', 'Control de tolerancia media, heterogeneidad de tolerancia y valor inicial sorteado para la persona.'],
-      ['cμ, cα, cλ; μᵢ, αᵢ, λᵢ', 'Centros de las distribuciones configurados y atributos individuales de susceptibilidad, umbral y anclaje. μᵢ no es pertenencia a un polo.'],
-      ['Zᵢ, Z′ᵢ, Z″ᵢ, Z‴ᵢ', 'Sorteos normales estándar independientes. Las primas distinguen sorteos; no son derivadas.']
+      ['cμ, cα, cλ; μᵢ, αᵢ, λᵢ', 'Valores exactos de los controles y atributos individuales de susceptibilidad, umbral y anclaje. Son iguales para toda la población al reiniciar; cero desactiva el término. μᵢ no es pertenencia a un polo.'],
+      ['Zᵢ; h', 'Sorteo normal estándar y desviación relativa de tolerancia: σ=ε̄h. h=0 elimina esa heterogeneidad.']
     ],
-    example: 'Con cμ=0.6 y Z′=1, μᵢ=0.68. Con cμ=0 y Z′=−1, el valor −0.08 se recorta a 0.02. Por eso cero en el control no significa cero para todas las personas.',
-    reason: 'Se introduce diversidad individual sin añadir una red ni perfiles observados. 0.25h, 0.08, 0.05 y 0.04 fijan dispersiones asumidas; los recortes mantienen atributos admisibles. Tras recortar, el promedio real de la población no tiene por qué coincidir con el control.',
-    source: 'Generación normal: [9]. Dispersiones, independencia de atributos y límites: supuestos experimentales propios, no distribuciones sociales medidas.'
+    example: 'Con ε̄=0.3 y h=0.2, σ=0.06; un sorteo Z=1 da ε⁰=0.36. Con h=0, todas las personas empiezan con ε⁰=0.3. Con cμ=0.6, μᵢ=0.6, sin dispersión oculta.',
+    reason: 'Se eliminan dispersiones fijas 0.08, 0.05 y 0.04 y el suelo 0.02 de susceptibilidad. La heterogeneidad de tolerancia se expresa respecto a su media para que el control tenga significado directo. La forma normal sigue siendo una hipótesis de distribución, desactivada de inicio. Tras recortar, la media efectiva puede diferir de ε̄.',
+    source: 'Generación normal: [9]. Homogeneidad base y heterogeneidad relativa opcional son diseños experimentales explícitos, no estimaciones de una población real.'
   },
   jdj: {
     symbols: [

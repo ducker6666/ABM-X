@@ -18,7 +18,7 @@ Este contrato describe **el motor actual de `web/app.js`**, no los motores Pytho
 | αᵢ | Umbral: hay movimiento dirigido solo si la norma de la fuerza total supera αᵢ | Inmovilidad absoluta: el ruido se añade después |
 | λᵢ | Coeficiente del retorno hacia la posición inicial propia | Retorno al centro o aplicación literal de Friedkin–Johnsen |
 | Cluster k | Agrupación geométrica detectada por el algoritmo actual; centro cₖ y tamaño nₖ | Comunidad social observada, identidad colectiva o vínculos estables |
-| Mₖ | Masa numérica (nₖ/N)^γ; γ=0.5+1.5×control | Personas, poder real o masa física |
+| Mₖ | Masa numérica (nₖ/N)^γ para gravedad; el acoplamiento usa directamente nₖ/N; γ=0.5+1.5×control | Personas, poder real o masa física |
 | κ | Control «Atracción polo-masa»: escala la fuerza polar evaluada en cₖ | Evidencia de que las personas obedecen a una identidad de grupo |
 | Fuerzas | Vectores de cambio propuestos; se suman componente a componente antes del umbral | Newtons, causas identificadas o efectos sociales estimados |
 | Ruido | Sorteos gaussianos independientes por coordenada, desviación 0.012×control | Error de medición o volatilidad empírica ya estimada |
@@ -33,7 +33,7 @@ Ejemplo que evita confusiones: en u=(0.2,0.4), con los polos **por defecto de es
 - Escuchar opiniones próximas tiene como antecedente la confianza acotada de Hegselmann–Krause (2002). La implementación con velocidad, umbral y otros términos es una **adaptación**, no HK literal.
 - Persistencia respecto a la opinión inicial tiene antecedentes en Friedkin–Johnsen. Este anclaje aditivo no reproduce sin más aquel modelo.
 - Distancias, medias, suma de vectores y límites son operaciones matemáticas explícitas. Su corrección aritmética no valida una interpretación social.
-- Masa, acoplamiento polo–grupo, cierre por distancia al centro y auditor son **hipótesis operativas propias**. Las constantes 0.35 y 0.65 del acoplamiento no son estimaciones empíricas ni una ley publicada. Deben someterse a contraste y sensibilidad.
+- Masa, acoplamiento polo–grupo, cierre por distancia al centro y auditor son **hipótesis operativas propias**. La revisión elimina el suelo 0.35 y usa κ(nₖ/N): se deduce de asignar igual peso 1/N a cada miembro, pero la hipótesis colectiva sigue sin validar.
 - Decaimiento y reactancia tienen antecedentes conceptuales; la regla concreta de eventos y contraeventos sigue siendo una decisión de modelización. Las referencias y límites de atribución se detallan en la página Teoría.
 
 ## Antes de usar datos reales
