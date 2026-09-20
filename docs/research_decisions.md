@@ -3,10 +3,14 @@
 ## 2026-09-20 — Recuperación auditable del modelo integrado
 
 - La web presenta un único modelo integrado; los comparadores históricos dejan de aparecer como opciones configurables.
-- A y B son polos permanentes por defecto. Pueden convertirse en ventanas temporales desmarcando «permanente».
+- Las columnas observadas A y B son grados de pertenencia y se usan directamente como posición inicial `(A,B)`. No se reinterpretan como distancias.
+- Los polos se fijan en `A=(1,0)` y `B=(0,1)` y permanecen durante toda la simulación. Así conservan el significado del contrato de entrada.
+- El CSV aportado contiene 950 filas, A y B en `[0,1]`, `A+B=1` salvo redondeo y `A=(pos+7)/14`. El archivo describe una dimensión bipolar, no dos actitudes independientes.
 - La intensidad visible se limita a 0–10 y se interpreta como peso equivalente de fuentes fijas. El límite 10 es un rango de interfaz, no una constante social.
 - Cada polo tiene un radio de alcance explícito. Los eventos adicionales usan la misma operación y se registran por inicio, duración, intensidad y alcance.
-- El evento aleatorio es un escenario Monte Carlo reproducible; el contraevento se declara manualmente en B. Ninguno se presenta como mecanismo causal automático.
+- Cada evento genera un contraevento por reflexión respecto a `(0.5,0.5)`: `C=(1-x_E,1-y_E)`. La igualdad de inicio, intensidad, alcance y duración es una simetría experimental declarada, no una ley social.
+- El modo aleatorio sortea de forma reproducible posición, inicio, intensidad, alcance y duración. El modo manual permite escribir posición y tiempo. Ambos crean la pareja opuesta.
+- La interfaz usa 0–10 para fuerzas, pesos y distancias configurables, porcentajes para probabilidades/proporciones y 0–1 solo para coordenadas observadas. Cada conversión interna está documentada; no se equiparan magnitudes distintas.
 - “Gravedad de clusters” significa suma normalizada de influencia individual: un grupo pesa por su número de voces, no por una ley física.
 - Atracción, reactancia y norma común siguen la función de afinidad de Zhang, Hu y Zhang (2025); su extensión a vectores 2D está declarada.
 - La resistencia por radicalidad sigue el compromiso de Duggins (2017). No se cambia el umbral epsilon con una fórmula no publicada.

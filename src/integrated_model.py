@@ -19,7 +19,9 @@ proyecto. Sus valores deben calibrarse antes de interpretar una sociedad real.
 
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 from numpy.typing import NDArray
@@ -52,8 +54,10 @@ class IntegratedConfig:
     social_rate: float = 0.06
     reactance_enabled: bool = True
 
-    signal_a: tuple[float, float] = (0.10, 0.90)
-    signal_b: tuple[float, float] = (0.90, 0.10)
+    # Con columnas observadas A y B, los polos naturales son pertenencia total
+    # a A y nula a B, y viceversa.
+    signal_a: tuple[float, float] = (1.0, 0.0)
+    signal_b: tuple[float, float] = (0.0, 1.0)
     signal_a_weight: float = 5.0
     signal_b_weight: float = 5.0
     signal_a_reach: float = 0.25
@@ -108,6 +112,61 @@ class IntegratedConfig:
 
 def _clip(value: FloatArray) -> FloatArray:
     return np.clip(value, 0.0, 1.0)
+
+
+def position_from_memberships(membership_a: float, membership_b: float) -> FloatArray:
+    """Convierte una fila A/B en posicion sin inventar otra transformacion.
+
+    A y B son grados de pertenencia observados, no distancias. Por tanto:
+
+        x_i(0) = (A_i, B_i).
+
+    La distancia euclidea se calcula despues. Ejemplo: A=6/7 y B=1/7
+    producen exactamente el punto (6/7, 1/7).
+    """
+
+    values = np.asarray([membership_a, membership_b], dtype=np.float64)
+    if not np.all(np.isfinite(values)) or np.any(values < 0) or np.any(values > 1):
+        raise ValueError("A y B deben pertenecer a [0,1]")
+    return values
+
+
+def load_membership_csv(path: str | Path) -> FloatArray:
+    """Lee un CSV con cabeceras A y B, incluidas celdas de texto multilínea."""
+
+    positions: list[FloatArray] = []
+    with Path(path).open(newline="", encoding="utf-8-sig") as handle:
+        reader = csv.DictReader(handle)
+        normalized = {name.strip().lower(): name for name in (reader.fieldnames or [])}
+        if "a" not in normalized or "b" not in normalized:
+            raise ValueError('el CSV necesita columnas llamadas "A" y "B"')
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                positions.append(position_from_memberships(float(row[normalized["a"]]), float(row[normalized["b"]])))
+            except (TypeError, ValueError) as error:
+                raise ValueError(f"fila {row_number}: A/B no válidos") from error
+    if not positions:
+        raise ValueError("el CSV no contiene filas A/B")
+    return np.vstack(positions)
+
+
+def initialize_memberships(n_agents: int, seed: int) -> FloatArray:
+    """Poblacion nula: sortea A~U(0,1), fija B=1-A y devuelve (A,B)."""
+
+    if n_agents < 1:
+        raise ValueError("n_agents debe ser positivo")
+    membership_a = np.random.default_rng(seed).random(n_agents)
+    return np.column_stack((membership_a, 1.0 - membership_a))
+
+
+def opposite_position(position: FloatArray) -> FloatArray:
+    """Refleja un evento respecto a (0.5,0.5): C=(1-x,1-y)."""
+
+    values = np.asarray(position, dtype=np.float64)
+    if values.shape != (2,):
+        raise ValueError("la posición debe tener dos coordenadas")
+    point = position_from_memberships(values[0], values[1])
+    return 1.0 - point
 
 
 def radicality(opinion: FloatArray) -> float:
@@ -242,6 +301,31 @@ def bounded_noise(opinion: FloatArray, radius: float, rng: np.random.Generator) 
     return _clip(np.asarray(opinion, dtype=np.float64) + jump)
 
 
+def weighted_source_displacement(
+    opinion: FloatArray,
+    sources: list[tuple[FloatArray, float, float]],
+) -> FloatArray:
+    """Desplazamiento de fuentes mediante una media ponderada con peso propio 1.
+
+    Para fuentes activas dentro de su alcance:
+
+        S_i = sum_k w_k (R_k-x_i) / (1 + sum_k w_k).
+
+    El 1 conserva el peso de la posicion propia. Una intensidad mayor aumenta
+    el paso sin permitir que una sola media ponderada sobrepase su objetivo.
+    """
+
+    own = np.asarray(opinion, dtype=np.float64)
+    numerator = np.zeros(2, dtype=np.float64)
+    mass = 0.0
+    for position, weight, reach in sources:
+        target = np.asarray(position, dtype=np.float64)
+        if weight > 0 and np.linalg.norm(target - own) <= reach:
+            numerator += weight * (target - own)
+            mass += weight
+    return numerator / (1.0 + mass)
+
+
 def step(
     opinions: FloatArray,
     config: IntegratedConfig,
@@ -299,26 +383,26 @@ def step(
             ) * delta
         group /= max(1, len(candidates))
 
-        pole = np.zeros(2, dtype=np.float64)
-        pole_mass = 0.0
-        sources: list[tuple[FloatArray, float, float]] = [
+        pole_sources: list[tuple[FloatArray, float, float]] = [
             (signal_a, weight_a, config.signal_a_reach),
             (signal_b, weight_b, config.signal_b_reach),
         ]
-        for event in events:
-            sources.append((
+        event_sources = [
+            (
                 np.asarray(event.position, dtype=np.float64),
                 event_weight(event, t, config.fatigue_enabled, config.fatigue_decay),
                 event.reach,
-            ))
-        for position, weight, reach in sources:
-            if weight > 0 and np.linalg.norm(position - own) <= reach:
-                pole += weight * (position - own)
-                pole_mass += weight
-        pole /= 1.0 + pole_mass
+            )
+            for event in events
+        ]
+        pole = weighted_source_displacement(own, pole_sources)
+        event_displacement = weighted_source_displacement(own, event_sources)
 
         commitment = 1.0 + config.commitment_strength * radicality(own) if config.adaptive_commitment else 1.0
         center = config.center_strength * (0.5 - own) if auditor_active else np.zeros(2)
-        next_opinions[i] = _clip(own + (config.social_rate * (group + pole) + center) / commitment)
+        # Formula final: las tres influencias se suman; el recentrado se añade;
+        # la resistencia divide el resultado; por ultimo se suma a (x,y).
+        delta = (config.social_rate * (group + pole + event_displacement) + center) / commitment
+        next_opinions[i] = _clip(own + delta)
 
     return next_opinions, auditor_active

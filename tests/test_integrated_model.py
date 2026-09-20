@@ -6,7 +6,11 @@ from src.integrated_model import (
     assign_immobility,
     bounded_noise,
     event_weight,
+    initialize_memberships,
     jdj_axis,
+    load_membership_csv,
+    opposite_position,
+    position_from_memberships,
     radicality,
     signal_weights,
     social_impact_coefficient,
@@ -28,6 +32,33 @@ def base_config(**changes):
     )
     values.update(changes)
     return IntegratedConfig(**values)
+
+
+def test_membership_columns_are_the_initial_coordinates():
+    point = position_from_memberships(6 / 7, 1 / 7)
+    assert np.allclose(point, [6 / 7, 1 / 7])
+    assert np.isclose(np.linalg.norm(point - np.array([1.0, 0.0])), np.sqrt(2) / 7)
+
+
+def test_synthetic_population_generates_a_then_b_equals_one_minus_a():
+    first = initialize_memberships(20, 123)
+    second = initialize_memberships(20, 123)
+    assert np.array_equal(first, second)
+    assert np.allclose(first.sum(axis=1), 1.0)
+
+
+def test_membership_csv_supports_quoted_multiline_text(tmp_path):
+    path = tmp_path / "memberships.csv"
+    path.write_text('id,text,A,B\n1,"texto, con coma",0.75,0.25\n2,"dos\nlíneas",0.2,0.8\n', encoding="utf-8")
+    positions = load_membership_csv(path)
+    assert np.allclose(positions, [[0.75, 0.25], [0.2, 0.8]])
+
+
+def test_counterevent_is_exactly_opposite_through_the_center():
+    event = np.array([0.8, 0.3])
+    counter = opposite_position(event)
+    assert np.allclose(counter, [0.2, 0.7])
+    assert np.allclose((event + counter) / 2, [0.5, 0.5])
 
 
 def test_social_impact_attracts_near_and_repels_far():

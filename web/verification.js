@@ -72,6 +72,29 @@ function runVerification() {
   const first = Model.initialize(5, 123, "uniform");
   const second = Model.initialize(5, 123, "uniform");
   assert(JSON.stringify(first) === JSON.stringify(second), "la semilla debe reproducir la inicialización");
+  first.forEach(agent => approx(agent.x + agent.y, 1));
+
+  const membershipPoint = Model.agentFromMemberships(6 / 7, 1 / 7, { sourceId: "fila-1" });
+  approx(membershipPoint.x, 6 / 7);
+  approx(membershipPoint.y, 1 / 7);
+  approx(Model.distance([membershipPoint.x, membershipPoint.y], [1, 0]), Math.SQRT2 / 7);
+
+  const parsedMemberships = Model.parseMembershipCsv('id,text,A,B\n1,"texto, con coma",0.75,0.25\n2,"dos\nlíneas",0.2,0.8\n');
+  assert(parsedMemberships.length === 2, "el lector CSV debe respetar comas y saltos entre comillas");
+  approx(parsedMemberships[0].membershipA, 0.75);
+  approx(parsedMemberships[1].membershipB, 0.8);
+  const importedAgents = Model.initializeFromMemberships(parsedMemberships);
+  approx(importedAgents[1].x, 0.2);
+  approx(importedAgents[1].y, 0.8);
+  let rejectedEmptyMembership = false;
+  try { Model.parseMembershipCsv("id,A,B\n1,,0.5\n"); } catch (_error) { rejectedEmptyMembership = true; }
+  assert(rejectedEmptyMembership, "el lector CSV no debe convertir una pertenencia vacía en cero");
+
+  const opposite = Model.oppositePosition([0.8, 0.3]);
+  approx(opposite[0], 0.2);
+  approx(opposite[1], 0.7);
+  approx((0.8 + opposite[0]) / 2, 0.5);
+  approx((0.3 + opposite[1]) / 2, 0.5);
 
   const [dwFirst, dwSecond] = Model.deffuantPairUpdate([0, 0], [0.2, 0.2], 0.1);
   approx(dwFirst[0], 0.02);
@@ -184,7 +207,7 @@ function runVerification() {
   assert(eventResult.agents[0].x < 0.2, "un evento activo debe mover a un agente dentro de su alcance");
   approx(eventResult.agents[1].x, 0.8);
 
-  return { ok: true, tests: 31, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
+  return { ok: true, tests: 37, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
 }
 
 if (typeof module !== "undefined" && module.exports) {

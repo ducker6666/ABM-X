@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Laboratorio de opinión</title>
-  <link rel="stylesheet" href="styles.css?v=integrated-2" />
+  <link rel="stylesheet" href="styles.css?v=integrated-3" />
 </head>
 <body>
   <header class="site-header">
@@ -36,11 +36,30 @@
 
       <details class="control-group" open>
         <summary>Configuración básica</summary>
-        <label class="field">
-          <span>Personas simuladas <output data-output-for="nAgents">200</output></span>
-          <input id="nAgents" type="range" min="20" max="500" step="10" value="200" data-reset-model />
-          <small class="variable-help">N: cantidad de agentes. Aumentarla mejora el tamaño de la muestra simulada, pero no añade realismo por sí sola.</small>
+        <label class="field inline-field"><span>Datos iniciales</span>
+          <select id="populationSource">
+            <option value="synthetic">Población sintética A/B</option>
+            <option value="csv">Importar CSV con columnas A y B</option>
+          </select>
         </label>
+        <div id="syntheticPopulationFields">
+          <label class="field">
+            <span>Personas simuladas <output data-output-for="nAgents">200</output></span>
+            <input id="nAgents" type="range" min="20" max="1000" step="10" value="200" data-reset-model />
+            <small class="variable-help">Primero se genera A entre 0 y 1; después B=1−A y la posición inicial es (A,B).</small>
+          </label>
+          <label class="field inline-field"><span>Distribución de A</span>
+            <select id="scenario" data-reset-model>
+              <option value="uniform">Uniforme</option>
+              <option value="central">Concentrada en 0.5</option>
+              <option value="two_groups">Dos grupos opuestos</option>
+            </select>
+          </label>
+        </div>
+        <div id="csvPopulationFields" hidden>
+          <label class="file-field"><span>Archivo CSV</span><input id="membershipCsv" type="file" accept=".csv,text/csv" /></label>
+          <small class="variable-help" id="csvStatus">El archivo debe contener cabeceras llamadas A y B, con valores entre 0 y 1.</small>
+        </div>
         <label class="field">
           <span>Duración máxima <output data-output-for="maxSteps">300</output> rondas</span>
           <input id="maxSteps" type="range" min="10" max="1000" step="10" value="300" data-reset-model />
@@ -48,14 +67,6 @@
         </label>
         <label class="field inline-field"><span>Semilla reproducible</span><input id="seed" type="number" min="1" max="999999" value="123" data-reset-model /></label>
         <small class="variable-help">La misma semilla reproduce población, red, ruido y eventos aleatorios.</small>
-        <label class="field inline-field"><span>Distribución inicial</span>
-          <select id="scenario" data-reset-model>
-            <option value="uniform">Uniforme</option>
-            <option value="central">Concentrada en el centro</option>
-            <option value="two_groups">Dos grupos</option>
-          </select>
-        </label>
-        <small class="variable-help">Describe únicamente cómo empieza la población.</small>
         <label class="field">
           <span>Velocidad de pantalla <output data-output-for="speed">12</output> rondas/s</span>
           <input id="speed" type="range" min="1" max="60" step="1" value="12" />
@@ -65,59 +76,54 @@
 
       <details class="control-group" open>
         <summary>Polos ideológicos A y B</summary>
-        <p class="control-note"><strong>Intensidad 0–10:</strong> 0 no influye; 1 equivale al peso de una fuente fija; 5 equivale a cinco fuentes iguales. <strong>Área:</strong> cambia el radio ρ de influencia directa.</p>
+        <p class="control-note"><strong>Posiciones fijas:</strong> A=(1,0) significa pertenencia completa a A; B=(0,1), pertenencia completa a B. <strong>Intensidad y área usan 0–10.</strong></p>
 
         <section class="signal-card signal-card-a">
           <div class="signal-card-title"><span class="signal-label signal-a">Polo A</span><span>por ejemplo, izquierda</span></div>
           <label class="field"><span>Intensidad A <output data-output-for="signalAWeight">5</output>/10</span><input id="signalAWeight" type="range" min="0" max="10" step="1" value="5" data-reset-model /></label>
-          <label class="field"><span>Área A · radio ρ<sub>A</sub> <output data-output-for="signalAReach">0.25</output></span><input id="signalAReach" type="range" min="0.05" max="0.70" step="0.05" value="0.25" data-reset-model /></label>
-          <small class="variable-help">Sube ρ<sub>A</sub> para ampliar el círculo azul y alcanzar opiniones más alejadas.</small>
-          <div class="coordinate-pair">
-            <label class="field"><span>Posición horizontal x<sub>A</sub> <output data-output-for="signalAx">0.10</output></span><input id="signalAx" type="range" min="0" max="1" step="0.05" value="0.10" data-reset-model /></label>
-            <label class="field"><span>Posición vertical y<sub>A</sub> <output data-output-for="signalAy">0.90</output></span><input id="signalAy" type="range" min="0" max="1" step="0.05" value="0.90" data-reset-model /></label>
-          </div>
-          <label class="check-field"><input id="signalAPermanent" type="checkbox" checked data-schedule-toggle="A" data-reset-model /> A permanece durante toda la simulación</label>
-          <div class="schedule-fields" id="signalASchedule" hidden>
-            <label class="field"><span>Inicio A <output data-output-for="signalAStart">0</output></span><input id="signalAStart" type="range" min="0" max="1000" step="10" value="0" data-reset-model /></label>
-            <label class="field"><span>Duración A <output data-output-for="signalADuration">100</output></span><input id="signalADuration" type="range" min="10" max="1000" step="10" value="100" data-reset-model /></label>
-          </div>
+          <label class="field"><span>Área A <output data-output-for="signalAReach">2.5</output>/10</span><input id="signalAReach" type="range" min="0.5" max="10" step="0.5" value="2.5" data-reset-model /></label>
+          <small class="variable-help">Baja: círculo local. Alta: A alcanza agentes más alejados. En la fórmula, 2.5/10 se convierte en radio 0.25.</small>
         </section>
 
         <section class="signal-card signal-card-b">
           <div class="signal-card-title"><span class="signal-label signal-b">Polo B</span><span>por ejemplo, derecha</span></div>
           <label class="field"><span>Intensidad B <output data-output-for="signalBWeight">5</output>/10</span><input id="signalBWeight" type="range" min="0" max="10" step="1" value="5" data-reset-model /></label>
-          <label class="field"><span>Área B · radio ρ<sub>B</sub> <output data-output-for="signalBReach">0.25</output></span><input id="signalBReach" type="range" min="0.05" max="0.70" step="0.05" value="0.25" data-reset-model /></label>
-          <small class="variable-help">Sube ρ<sub>B</sub> para ampliar el círculo rojo y alcanzar opiniones más alejadas.</small>
-          <div class="coordinate-pair">
-            <label class="field"><span>Posición horizontal x<sub>B</sub> <output data-output-for="signalBx">0.90</output></span><input id="signalBx" type="range" min="0" max="1" step="0.05" value="0.90" data-reset-model /></label>
-            <label class="field"><span>Posición vertical y<sub>B</sub> <output data-output-for="signalBy">0.10</output></span><input id="signalBy" type="range" min="0" max="1" step="0.05" value="0.10" data-reset-model /></label>
-          </div>
-          <label class="check-field"><input id="signalBPermanent" type="checkbox" checked data-schedule-toggle="B" data-reset-model /> B permanece durante toda la simulación</label>
-          <div class="schedule-fields" id="signalBSchedule" hidden>
-            <label class="field"><span>Inicio B <output data-output-for="signalBStart">80</output></span><input id="signalBStart" type="range" min="0" max="1000" step="10" value="80" data-reset-model /></label>
-            <label class="field"><span>Duración B <output data-output-for="signalBDuration">100</output></span><input id="signalBDuration" type="range" min="10" max="1000" step="10" value="100" data-reset-model /></label>
-          </div>
+          <label class="field"><span>Área B <output data-output-for="signalBReach">2.5</output>/10</span><input id="signalBReach" type="range" min="0.5" max="10" step="0.5" value="2.5" data-reset-model /></label>
+          <small class="variable-help">Baja: círculo local. Alta: B alcanza agentes más alejados. En la fórmula, 2.5/10 se convierte en radio 0.25.</small>
         </section>
+        <p class="scale-key"><strong>Lectura rápida:</strong> intensidad alta = el polo pesa más; área alta = llega más lejos. A y B permanecen activos durante toda la simulación.</p>
       </details>
 
       <details class="control-group" open>
-        <summary>Eventos de prueba</summary>
-        <p class="control-note">Sirven para comprobar el motor. «Aleatorio» crea una posición reproducible; «contraevento» aparece en B. Para COVID se sustituirán por fechas, duración e intensidad observadas.</p>
-        <label class="field"><span>Intensidad del evento <output data-output-for="eventIntensity">5</output>/10</span><input id="eventIntensity" type="range" min="0" max="10" step="1" value="5" /></label>
-        <label class="field"><span>Área del evento · radio ρ<sub>E</sub> <output data-output-for="eventReach">0.25</output></span><input id="eventReach" type="range" min="0.05" max="0.70" step="0.05" value="0.25" /></label>
-        <label class="field"><span>Duración <output data-output-for="eventDuration">60</output> rondas</span><input id="eventDuration" type="range" min="10" max="300" step="10" value="60" /></label>
-        <div class="event-actions">
-          <button id="randomEventBtn">Añadir evento aleatorio</button>
-          <button id="counterEventBtn">Añadir contraevento en B</button>
+        <summary>Eventos y contraeventos</summary>
+        <p class="control-note">Cada evento crea siempre una respuesta exactamente enfrente: si E=(x,y), entonces C=(1−x,1−y). Ambos comparten inicio, intensidad, área y duración.</p>
+        <label class="field inline-field"><span>Modalidad</span>
+          <select id="eventMode">
+            <option value="random">Aleatoria reproducible</option>
+            <option value="manual">Manual · posición y tiempo</option>
+          </select>
+        </label>
+        <div id="randomEventFields" class="mode-explanation">El programa sortea posición, inicio, intensidad, área y duración con la semilla. El contraevento no se sortea: se calcula enfrente.</div>
+        <div id="manualEventFields" hidden>
+          <div class="coordinate-pair">
+            <label class="field inline-field"><span>Posición x (A)</span><input id="eventX" type="number" min="0" max="1" step="0.01" value="0.80" /></label>
+            <label class="field inline-field"><span>Posición y (B)</span><input id="eventY" type="number" min="0" max="1" step="0.01" value="0.30" /></label>
+          </div>
+          <label class="field inline-field"><span>Inicio, ronda t</span><input id="eventStart" type="number" min="0" max="1000" step="1" value="20" /></label>
+          <label class="field"><span>Intensidad <output data-output-for="eventIntensity">5</output>/10</span><input id="eventIntensity" type="range" min="0" max="10" step="1" value="5" /></label>
+          <label class="field"><span>Área <output data-output-for="eventReach">2.5</output>/10</span><input id="eventReach" type="range" min="0.5" max="10" step="0.5" value="2.5" /></label>
+          <label class="field"><span>Duración <output data-output-for="eventDuration">60</output> rondas</span><input id="eventDuration" type="range" min="1" max="300" step="1" value="60" /></label>
         </div>
+        <div class="event-actions"><button id="addEventPairBtn">Añadir evento + contraevento opuesto</button></div>
         <div class="event-log" id="eventLog" aria-live="polite">Todavía no se ha añadido ningún evento.</div>
       </details>
 
       <details class="control-group">
         <summary>Interacción social · avanzado</summary>
-        <label class="field"><span>Tolerancia entre personas ε <output data-output-for="epsilon">0.20</output></span><input id="epsilon" type="range" min="0.02" max="0.60" step="0.01" value="0.20" data-reset-model /><small class="variable-help">Distancia de opinión hasta la que domina la asimilación. No controla las áreas A y B.</small></label>
-        <label class="field"><span>Velocidad social η <output data-output-for="socialRate">0.06</output></span><input id="socialRate" type="range" min="0" max="0.30" step="0.01" value="0.06" data-reset-model /><small class="variable-help">Fracción del desplazamiento social aplicada en cada ronda.</small></label>
-        <label class="field"><span>Escala de homofilia B<sub>H</sub> <output data-output-for="homophilyScale">0.35</output></span><input id="homophilyScale" type="range" min="0.05" max="1" step="0.05" value="0.35" data-reset-model /><small class="variable-help">Valores pequeños hacen que la influencia caiga más deprisa con la distancia.</small></label>
+        <p class="scale-key"><strong>Regla común:</strong> las barras de fuerza, área y distancia usan 0–10. La página de fórmulas muestra su conversión interna.</p>
+        <label class="field"><span>Tolerancia entre personas <output data-output-for="epsilon">2.0</output>/10</span><input id="epsilon" type="range" min="0.2" max="10" step="0.1" value="2" data-reset-model /><small class="variable-help">Baja: solo se asimilan opiniones muy parecidas. Alta: la asimilación admite más distancia.</small></label>
+        <label class="field"><span>Fuerza social <output data-output-for="socialRate">6.0</output>/10</span><input id="socialRate" type="range" min="0" max="10" step="0.1" value="6" data-reset-model /><small class="variable-help">Baja: cambios lentos por ronda. Alta: se aplica una fracción mayor de la influencia calculada.</small></label>
+        <label class="field"><span>Alcance de homofilia <output data-output-for="homophilyScale">3.5</output>/10</span><input id="homophilyScale" type="range" min="0.5" max="10" step="0.5" value="3.5" data-reset-model /><small class="variable-help">Bajo: la influencia cae deprisa con la distancia. Alto: se conserva durante más distancia.</small></label>
         <label class="check-field"><input id="reactanceEnabled" type="checkbox" checked data-reset-model /> Permitir contraste ante desacuerdo grande</label>
         <label class="check-field"><input id="adaptiveCommitment" type="checkbox" checked data-reset-model /> Reducir el cambio en posiciones extremas</label>
         <label class="field"><span>Resistencia por extremidad s <output data-output-for="commitmentStrength">1.00</output></span><input id="commitmentStrength" type="range" min="0" max="3" step="0.10" value="1" data-reset-model /></label>
@@ -126,32 +132,33 @@
       <details class="control-group">
         <summary>Auditor y recentrado · avanzado</summary>
         <label class="check-field"><input id="auditorEnabled" type="checkbox" checked data-reset-model /> Permitir intervención</label>
-        <label class="field"><span>Umbral JDJ <output data-output-for="auditorThreshold">0.35</output></span><input id="auditorThreshold" type="range" min="0" max="1" step="0.05" value="0.35" data-reset-model /></label>
+        <label class="field"><span>Umbral JDJ <output data-output-for="auditorThreshold">35</output>%</span><input id="auditorThreshold" type="range" min="0" max="100" step="5" value="35" data-reset-model /></label>
         <label class="field"><span>Dispersión mínima <output data-output-for="auditorMinDispersion">0.02</output></span><input id="auditorMinDispersion" type="range" min="0" max="0.20" step="0.01" value="0.02" data-reset-model /></label>
-        <label class="field"><span>Fuerza de recentrado α <output data-output-for="centerStrength">0.02</output></span><input id="centerStrength" type="range" min="0" max="0.10" step="0.01" value="0.02" data-reset-model /></label>
-        <p class="control-note">JDJ solo mide. El recentrado es una intervención programada y queda identificado como tal.</p>
+        <label class="field"><span>Fuerza de recentrado <output data-output-for="centerStrength">2.0</output>/10</span><input id="centerStrength" type="range" min="0" max="10" step="0.5" value="2" data-reset-model /></label>
+        <p class="control-note">Umbral alto: el auditor interviene menos. Recentrado alto: cuando interviene, el paso hacia el centro es mayor. JDJ solo mide.</p>
       </details>
 
       <details class="control-group">
         <summary>Ruido y atención · avanzado</summary>
         <label class="check-field"><input id="noiseEnabled" type="checkbox" checked data-reset-model /> Ruido local</label>
-        <label class="field"><span>Probabilidad de ruido m <output data-output-for="noiseProbability">0.01</output></span><input id="noiseProbability" type="range" min="0" max="0.20" step="0.01" value="0.01" data-reset-model /></label>
-        <label class="field"><span>Tamaño máximo del salto γ <output data-output-for="noiseRadius">0.02</output></span><input id="noiseRadius" type="range" min="0" max="0.10" step="0.01" value="0.02" data-reset-model /></label>
-        <label class="field"><span>Proporción inmóvil <output data-output-for="immobileShare">0.05</output></span><input id="immobileShare" type="range" min="0" max="0.50" step="0.01" value="0.05" data-reset-model /></label>
+        <label class="field"><span>Frecuencia de ruido <output data-output-for="noiseProbability">1</output>%</span><input id="noiseProbability" type="range" min="0" max="20" step="1" value="1" data-reset-model /></label>
+        <label class="field"><span>Tamaño del salto <output data-output-for="noiseRadius">0.2</output>/10</span><input id="noiseRadius" type="range" min="0" max="2" step="0.1" value="0.2" data-reset-model /></label>
+        <label class="field"><span>Personas inmóviles <output data-output-for="immobileShare">5</output>%</span><input id="immobileShare" type="range" min="0" max="50" step="1" value="5" data-reset-model /></label>
         <label class="check-field"><input id="fatigueEnabled" type="checkbox" checked data-reset-model /> Pérdida de atención en eventos temporales</label>
-        <label class="field"><span>Decaimiento de atención λ <output data-output-for="fatigueDecay">0.01</output></span><input id="fatigueDecay" type="range" min="0" max="0.10" step="0.01" value="0.01" data-reset-model /></label>
+        <label class="field"><span>Pérdida de atención por ronda <output data-output-for="fatigueDecay">1</output>%</span><input id="fatigueDecay" type="range" min="0" max="10" step="1" value="1" data-reset-model /></label>
+        <p class="scale-key"><strong>Lectura rápida:</strong> más frecuencia = más agentes saltan al azar; mayor tamaño = saltos más amplios; más inmovilidad = más agentes no cambian; más pérdida = los eventos se apagan antes.</p>
       </details>
 
       <details class="control-group">
         <summary>Red social · avanzado</summary>
         <label class="field inline-field"><span>Contactos iniciales k</span><select id="networkDegree" data-reset-model><option>4</option><option>6</option><option selected>8</option><option>10</option><option>12</option></select></label>
-        <label class="field"><span>Reconexión β <output data-output-for="networkRewiring">0.10</output></span><input id="networkRewiring" type="range" min="0" max="1" step="0.05" value="0.10" data-reset-model /></label>
+        <label class="field"><span>Reconexión <output data-output-for="networkRewiring">10</output>%</span><input id="networkRewiring" type="range" min="0" max="100" step="5" value="10" data-reset-model /></label>
         <p class="control-note">Watts–Strogatz es una red sintética de comparación; para COVID podrá sustituirse por una red observada.</p>
       </details>
 
       <details class="control-group">
         <summary>Visualización</summary>
-        <label class="field"><span>Distancia para dibujar grupos δ <output data-output-for="clusterThreshold">0.05</output></span><input id="clusterThreshold" type="range" min="0.01" max="0.15" step="0.01" value="0.05" data-reset-model /></label>
+        <label class="field"><span>Distancia para dibujar grupos <output data-output-for="clusterThreshold">0.5</output>/10</span><input id="clusterThreshold" type="range" min="0.1" max="1.5" step="0.1" value="0.5" data-reset-model /></label>
         <label class="check-field"><input id="showNeighborhood" type="checkbox" checked data-redraw /> Mostrar tolerancia ε de la persona seleccionada</label>
         <label class="check-field"><input id="showClusterMass" type="checkbox" checked data-redraw /> Mostrar tamaño de los grupos</label>
         <label class="check-field"><input id="showTrails" type="checkbox" data-redraw /> Mostrar último desplazamiento</label>
@@ -176,7 +183,8 @@
             <span><i class="dot agent-dot"></i>personas</span>
             <span><i class="dot signal-a-dot"></i>polo A</span>
             <span><i class="dot signal-b-dot"></i>polo B</span>
-            <span><i class="dot event-dot"></i>evento temporal</span>
+            <span><i class="dot event-dot"></i>evento</span>
+            <span><i class="dot counter-dot"></i>contraevento opuesto</span>
             <span><i class="dash"></i>eje A–B</span>
           </div>
         </article>
@@ -185,8 +193,8 @@
           <article class="canvas-card"><canvas id="followersCanvas" width="520" height="250"></canvas></article>
           <article class="plain-card important-note">
             <p class="eyebrow">LECTURA CORRECTA</p>
-            <h3>A y B no son eventos si están marcados como permanentes.</h3>
-            <p>Pueden representar polos ideológicos persistentes. Los eventos temporales aparecen como círculos morados y muestran su inicio, duración e intensidad.</p>
+            <h3>A y B son polos permanentes; no son eventos.</h3>
+            <p>Representan los extremos (1,0) y (0,1) del contrato A/B. Los eventos temporales aparecen por pares opuestos y muestran su inicio, duración e intensidad.</p>
             <a href="formula.html">Ver fórmulas y ejemplos numéricos →</a>
           </article>
         </div>
@@ -211,7 +219,7 @@
     </section>
   </main>
 
-  <script src="model.js?v=integrated-2"></script>
-  <script src="app.js?v=integrated-2"></script>
+  <script src="model.js?v=integrated-3"></script>
+  <script src="app.js?v=integrated-3"></script>
 </body>
 </html>

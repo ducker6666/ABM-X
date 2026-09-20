@@ -49,11 +49,28 @@ El orden exacto es inmovilidad, posible ruido, red, polos/eventos, auditor,
 compromiso y recorte. La composición completa es una hipótesis del proyecto;
 no se presenta como una teoría publicada íntegramente.
 
-La interfaz presenta un único modelo. A y B pueden mantenerse permanentemente
-activos como polos ideológicos. Su intensidad está limitada a 0–10 y significa
-peso equivalente de fuentes fijas; sus radios `rho_A` y `rho_B` controlan los
-círculos de influencia directa. Los botones de evento aleatorio y contraevento
-son pruebas reproducibles del motor, no afirmaciones sobre sucesos reales.
+La interfaz presenta un único modelo. Las columnas de entrada `A` y `B` son
+grados de pertenencia y generan directamente la posición inicial
+`(x_i(0), y_i(0)) = (A_i, B_i)`. Los polos quedan fijados en `(1,0)` y `(0,1)`.
+La distancia euclídea se calcula después de colocar el punto; A y B no se
+reinterpretan como distancias.
+
+La población puede ser sintética —primero se sortea A, después se fija
+`B=1-A`— o importarse desde un CSV con cabeceras `A` y `B`. El archivo aportado
+`elecciones_23_X_grados_pertenencia.csv` fue auditado sin copiar su contenido:
+950 filas, valores en `[0,1]` y `A+B=1` salvo redondeo de coma flotante.
+
+La intensidad de polos y eventos usa 0–10 como peso equivalente. Área,
+tolerancia y homofilia también se muestran sobre 0–10 y se dividen por 10 para
+obtener la distancia interna. La fuerza social y el recentrado se dividen por
+100 para obtener una tasa por ronda. Probabilidades y proporciones se muestran
+como porcentajes.
+
+Cada evento se crea junto a un contraevento exactamente opuesto. Para un
+evento `E=(x,y)`, el contraevento es `C=(1-x,1-y)`. El modo aleatorio sortea de
+forma reproducible posición, inicio, intensidad, área y duración; el modo
+manual permite escribir `x`, `y` y la ronda de inicio. La simetría es una
+decisión experimental declarada, no una ley social.
 
 ## Código defendible
 

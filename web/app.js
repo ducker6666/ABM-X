@@ -16,6 +16,8 @@ const state = {
   lastMeanMove: 0,
   lastAudit: false,
   activeEvents: 0,
+  importedMemberships: null,
+  importedFileName: "",
 };
 
 const elements = {
@@ -27,8 +29,10 @@ const elements = {
   step: document.getElementById("stepBtn"),
   reset: document.getElementById("resetBtn"),
   export: document.getElementById("exportBtn"),
-  randomEvent: document.getElementById("randomEventBtn"),
-  counterEvent: document.getElementById("counterEventBtn"),
+  addEventPair: document.getElementById("addEventPairBtn"),
+  populationSource: document.getElementById("populationSource"),
+  membershipCsv: document.getElementById("membershipCsv"),
+  eventMode: document.getElementById("eventMode"),
   eventLog: document.getElementById("eventLog"),
   status: document.getElementById("runStatus"),
 };
@@ -45,49 +49,64 @@ function checkedValue(id) {
   return document.getElementById(id).checked;
 }
 
+function levelToUnit(id) {
+  // Escala visible 0--10 -> distancia interna 0--1.
+  return numberValue(id) / 10;
+}
+
+function levelToRate(id) {
+  // Escala visible 0--10 -> paso maximo 0--0.10 por ronda.
+  return numberValue(id) / 100;
+}
+
+function percentToUnit(id) {
+  return numberValue(id) / 100;
+}
+
 function config() {
   return {
     phase: "integrated",
-    epsilon: numberValue("epsilon"),
-    signalA: [numberValue("signalAx"), numberValue("signalAy")],
-    signalB: [numberValue("signalBx"), numberValue("signalBy")],
+    epsilon: levelToUnit("epsilon"),
+    // El contrato A/B fija los extremos: pertenencia completa a A o a B.
+    signalA: [1, 0],
+    signalB: [0, 1],
     signalAWeight: numberValue("signalAWeight"),
     signalBWeight: numberValue("signalBWeight"),
-    signalAReach: numberValue("signalAReach"),
-    signalBReach: numberValue("signalBReach"),
-    signalAPermanent: checkedValue("signalAPermanent"),
-    signalBPermanent: checkedValue("signalBPermanent"),
+    signalAReach: levelToUnit("signalAReach"),
+    signalBReach: levelToUnit("signalBReach"),
+    signalAPermanent: true,
+    signalBPermanent: true,
     // Constantes heredadas solo para que el validador común siga siendo
     // compatible con las pruebas de los modelos de control retirados de la UI.
     compromiseRate: 0.08,
     interactionsPerAgent: 0.5,
     anchorWeight: 0.85,
     networkDegree: numberValue("networkDegree"),
-    networkRewiring: numberValue("networkRewiring"),
-    signalAStart: numberValue("signalAStart"),
-    signalADuration: numberValue("signalADuration"),
-    signalBStart: numberValue("signalBStart"),
-    signalBDuration: numberValue("signalBDuration"),
-    socialRate: numberValue("socialRate"),
-    homophilyScale: numberValue("homophilyScale"),
+    networkRewiring: percentToUnit("networkRewiring"),
+    signalAStart: 0,
+    signalADuration: Number.MAX_SAFE_INTEGER,
+    signalBStart: 0,
+    signalBDuration: Number.MAX_SAFE_INTEGER,
+    socialRate: levelToRate("socialRate"),
+    homophilyScale: levelToUnit("homophilyScale"),
     reactanceEnabled: checkedValue("reactanceEnabled"),
     adaptiveCommitment: checkedValue("adaptiveCommitment"),
     commitmentStrength: numberValue("commitmentStrength"),
     auditorEnabled: checkedValue("auditorEnabled"),
-    auditorThreshold: numberValue("auditorThreshold"),
+    auditorThreshold: percentToUnit("auditorThreshold"),
     auditorMinDispersion: numberValue("auditorMinDispersion"),
-    centerStrength: numberValue("centerStrength"),
+    centerStrength: levelToRate("centerStrength"),
     noiseEnabled: checkedValue("noiseEnabled"),
-    noiseProbability: numberValue("noiseProbability"),
-    noiseRadius: numberValue("noiseRadius"),
-    immobileShare: numberValue("immobileShare"),
+    noiseProbability: percentToUnit("noiseProbability"),
+    noiseRadius: levelToUnit("noiseRadius"),
+    immobileShare: percentToUnit("immobileShare"),
     fatigueEnabled: checkedValue("fatigueEnabled"),
-    fatigueDecay: numberValue("fatigueDecay"),
+    fatigueDecay: percentToUnit("fatigueDecay"),
   };
 }
 
 function clusterThreshold() {
-  return numberValue("clusterThreshold");
+  return levelToUnit("clusterThreshold");
 }
 
 function updateControlOutputs() {
@@ -102,7 +121,12 @@ function updateControlOutputs() {
 function resetModel() {
   state.running = false;
   const c = config();
-  const nAgents = Math.round(numberValue("nAgents"));
+  const useCsv = elements.populationSource.value === "csv";
+  if (useCsv && !state.importedMemberships) {
+    setStatus("Selecciona un CSV con columnas A y B para iniciar.");
+    return;
+  }
+  const nAgents = useCsv ? state.importedMemberships.length : Math.round(numberValue("nAgents"));
   const seed = Math.round(numberValue("seed"));
   try {
     Model.validatePhasedConfig(c, nAgents);
@@ -119,17 +143,17 @@ function resetModel() {
   state.events = [];
   state.eventCounter = 0;
   state.random = Model.mulberry32(seed + 104729);
-  state.agents = Model.initialize(
-    nAgents,
-    seed,
-    document.getElementById("scenario").value,
-  );
+  state.agents = useCsv
+    ? Model.initializeFromMemberships(state.importedMemberships)
+    : Model.initialize(nAgents, seed, document.getElementById("scenario").value);
   state.agents = Model.assignImmobility(state.agents, c.immobileShare, seed + 65537);
   state.network = Model.buildSmallWorldNetwork(nAgents, c.networkDegree, c.networkRewiring, seed + 7919);
   state.history = [];
   recordMetrics();
   updateEventLog();
-  setStatus("Preparado: modelo integrado, t = 0.");
+  setStatus(useCsv
+    ? `Preparado: ${nAgents} agentes importados de ${state.importedFileName}.`
+    : "Preparado: población A/B sintética, t = 0.");
   draw();
 }
 
@@ -230,11 +254,11 @@ function drawOpinionSpace() {
   ctx.fillStyle = "#4c4841";
   ctx.font = "16px system-ui";
   ctx.textAlign = "center";
-  ctx.fillText("Dimensión actitudinal 1", 420, 816);
+  ctx.fillText("Grado de pertenencia A", 420, 816);
   ctx.save();
   ctx.translate(22, 420);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText("Dimensión actitudinal 2", 0, 0);
+  ctx.fillText("Grado de pertenencia B", 0, 0);
   ctx.restore();
 
   drawSelectedNetwork();
@@ -516,26 +540,55 @@ function updateStats() {
   for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
 }
 
-function addEvent(kind) {
+function randomEventSpecification() {
+  const maximum = Math.round(numberValue("maxSteps"));
+  if (state.t >= maximum) throw new Error("La simulación ya alcanzó su duración máxima");
+  const start = state.t + Math.floor(state.random() * (maximum - state.t));
+  const remaining = maximum - start;
+  return {
+    position: [state.random(), state.random()],
+    start,
+    intensity: 0.5 + Math.floor(state.random() * 20) / 2,
+    reach: (0.5 + Math.floor(state.random() * 20) / 2) / 10,
+    duration: 1 + Math.floor(state.random() * remaining),
+  };
+}
+
+function manualEventSpecification() {
+  const position = [numberValue("eventX"), numberValue("eventY")];
+  Model.oppositePosition(position); // valida el cuadrado [0,1]^2
+  const start = Math.round(numberValue("eventStart"));
   const intensity = numberValue("eventIntensity");
-  const reach = numberValue("eventReach");
+  const reach = levelToUnit("eventReach");
   const duration = Math.round(numberValue("eventDuration"));
+  const maximum = Math.round(numberValue("maxSteps"));
+  if (![start, intensity, reach, duration].every(Number.isFinite)
+      || start < 0 || start >= maximum || duration < 1
+      || intensity < 0 || intensity > 10 || reach <= 0 || reach > 1) {
+    throw new Error("Revisa inicio, duración, intensidad y área del evento");
+  }
+  return { position, start, intensity, reach, duration };
+}
+
+function addEventPair() {
+  let specification;
+  try {
+    specification = elements.eventMode.value === "random"
+      ? randomEventSpecification()
+      : manualEventSpecification();
+  } catch (error) {
+    setStatus(`Evento no válido: ${error.message}`);
+    return;
+  }
   state.eventCounter += 1;
-  const position = kind === "counter"
-    ? [...config().signalB]
-    : [state.random(), state.random()];
-  const prefix = kind === "counter" ? "C" : "E";
-  state.events.push({
-    label: `${prefix}${state.eventCounter}`,
-    kind,
-    position,
-    intensity,
-    reach,
-    start: state.t,
-    duration,
-  });
+  const counterPosition = Model.oppositePosition(specification.position);
+  state.events.push(
+    { label: `E${state.eventCounter}`, kind: "event", ...specification },
+    { label: `C${state.eventCounter}`, kind: "counter", ...specification, position: counterPosition },
+  );
   updateEventLog();
-  setStatus(`${kind === "counter" ? "Contraevento" : "Evento aleatorio"} añadido en t = ${state.t}.`);
+  const mode = elements.eventMode.value === "random" ? "aleatorio reproducible" : "manual";
+  setStatus(`Par ${state.eventCounter} añadido en modo ${mode}; el contraevento está exactamente enfrente.`);
   draw();
 }
 
@@ -548,22 +601,51 @@ function updateEventLog() {
   elements.eventLog.innerHTML = state.events.map(event => {
     const weight = Model.activeEventWeight(event, state.t, c.fatigueEnabled, c.fatigueDecay);
     const status = weight > 0 ? `activo · intensidad actual ${weight.toFixed(2)}/10` : (state.t < event.start ? "pendiente" : "finalizado");
-    return `<div><strong>${event.label}</strong> · t=${event.start}–${event.start + event.duration - 1} · ${status}</div>`;
+    const point = `(${event.position[0].toFixed(2)}, ${event.position[1].toFixed(2)})`;
+    return `<div><strong>${event.label}</strong> · posición ${point} · t=${event.start}–${event.start + event.duration - 1} · I=${event.intensity.toFixed(1)}/10 · área=${(event.reach * 10).toFixed(1)}/10 · ${status}</div>`;
   }).join("");
 }
 
-function updateScheduleVisibility() {
-  for (const pole of ["A", "B"]) {
-    const permanent = checkedValue(`signal${pole}Permanent`);
-    document.getElementById(`signal${pole}Schedule`).hidden = permanent;
+function updatePopulationVisibility() {
+  const useCsv = elements.populationSource.value === "csv";
+  document.getElementById("syntheticPopulationFields").hidden = useCsv;
+  document.getElementById("csvPopulationFields").hidden = !useCsv;
+}
+
+function updateEventModeVisibility() {
+  const manual = elements.eventMode.value === "manual";
+  document.getElementById("manualEventFields").hidden = !manual;
+  document.getElementById("randomEventFields").hidden = manual;
+}
+
+async function loadMembershipCsv() {
+  const file = elements.membershipCsv.files[0];
+  if (!file) return;
+  try {
+    const rows = Model.parseMembershipCsv(await file.text());
+    if (rows.length <= numberValue("networkDegree")) {
+      throw new Error("el archivo necesita más filas que el número de contactos de la red");
+    }
+    state.importedMemberships = rows;
+    state.importedFileName = file.name;
+    document.getElementById("csvStatus").textContent = `${rows.length} filas válidas. Se usará (x,y)=(A,B) sin alterar los valores.`;
+    resetModel();
+  } catch (error) {
+    state.importedMemberships = null;
+    state.importedFileName = "";
+    document.getElementById("csvStatus").textContent = `No se pudo cargar: ${error.message}`;
+    setStatus(`CSV no válido: ${error.message}`);
   }
 }
 
 function exportCsv() {
   const c = config();
-  const rows = ["agent,model,time,x,y,initial_x,initial_y,projection_A_B,immobile,auditor_active,active_events"];
+  const rows = ["agent,source_id,model,time,A,B,initial_A,initial_B,distance_to_A,distance_to_B,projection_A_B,immobile,auditor_active,active_events"];
   state.agents.forEach((agent, index) => {
-    rows.push(`${index + 1},${c.phase},${state.t},${agent.x},${agent.y},${agent.anchorX},${agent.anchorY},${Model.axisProjection(agent, c)},${Boolean(agent.immobile)},${state.lastAudit},${state.activeEvents}`);
+    const sourceId = String(agent.sourceId ?? "").replaceAll('"', '""');
+    const distanceA = Model.distance([agent.x, agent.y], c.signalA);
+    const distanceB = Model.distance([agent.x, agent.y], c.signalB);
+    rows.push(`${index + 1},"${sourceId}",${c.phase},${state.t},${agent.x},${agent.y},${agent.anchorX},${agent.anchorY},${distanceA},${distanceB},${Model.axisProjection(agent, c)},${Boolean(agent.immobile)},${state.lastAudit},${state.activeEvents}`);
   });
   const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
@@ -579,9 +661,6 @@ for (const input of document.querySelectorAll("input[type=range]")) {
 for (const input of document.querySelectorAll("[data-reset-model]")) {
   input.addEventListener("change", resetModel);
 }
-for (const input of document.querySelectorAll("[data-schedule-toggle]")) {
-  input.addEventListener("change", updateScheduleVisibility);
-}
 for (const input of document.querySelectorAll("[data-redraw]")) {
   input.addEventListener("change", draw);
 }
@@ -591,8 +670,10 @@ elements.pause.addEventListener("click", pause);
 elements.step.addEventListener("click", () => { state.running = false; executeStep(); setStatus(`Paso manual completado: t = ${state.t}.`); draw(); });
 elements.reset.addEventListener("click", resetModel);
 elements.export.addEventListener("click", exportCsv);
-elements.randomEvent.addEventListener("click", () => addEvent("random"));
-elements.counterEvent.addEventListener("click", () => addEvent("counter"));
+elements.addEventPair.addEventListener("click", addEventPair);
+elements.populationSource.addEventListener("change", () => { updatePopulationVisibility(); resetModel(); });
+elements.membershipCsv.addEventListener("change", loadMembershipCsv);
+elements.eventMode.addEventListener("change", updateEventModeVisibility);
 elements.mainCanvas.addEventListener("click", event => {
   const rect = elements.mainCanvas.getBoundingClientRect();
   const clickX = (event.clientX - rect.left) * elements.mainCanvas.width / rect.width;
@@ -608,6 +689,7 @@ elements.mainCanvas.addEventListener("click", event => {
 });
 
 updateControlOutputs();
-updateScheduleVisibility();
+updatePopulationVisibility();
+updateEventModeVisibility();
 resetModel();
 requestAnimationFrame(animate);

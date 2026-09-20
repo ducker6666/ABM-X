@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Fórmulas y ejemplos</title>
-  <link rel="stylesheet" href="styles.css?v=integrated-2" />
+  <link rel="stylesheet" href="styles.css?v=integrated-3" />
 </head>
 <body class="document-body">
   <header class="site-header">
@@ -21,19 +21,20 @@
     <aside class="document-index">
       <p class="eyebrow">CONTENIDO</p>
       <a href="#lectura">0. Cómo leer</a>
-      <a href="#distancia">1. Opinión y distancia</a>
-      <a href="#red">2. Red social</a>
-      <a href="#grupos">3. Grupos y reactancia</a>
-      <a href="#polos">4. Polos A y B</a>
-      <a href="#eventos">5. Eventos</a>
-      <a href="#radicalidad">6. Resistencia</a>
-      <a href="#ruido">7. Ruido e inmovilidad</a>
-      <a href="#jdj">8. JDJ paso a paso</a>
-      <a href="#auditor">9. Auditor</a>
-      <a href="#total">10. Ecuación completa</a>
-      <a href="#salidas">11. Resultados</a>
-      <a href="#codigo">12. Código</a>
-      <a href="#referencias">13. Referencias</a>
+      <a href="#entrada">1. Del CSV al punto</a>
+      <a href="#distancia">2. Distancia euclídea</a>
+      <a href="#red">3. Red social</a>
+      <a href="#grupos">4. Grupos y reactancia</a>
+      <a href="#polos">5. Polos A y B</a>
+      <a href="#eventos">6. Eventos opuestos</a>
+      <a href="#radicalidad">7. Resistencia</a>
+      <a href="#ruido">8. Ruido e inmovilidad</a>
+      <a href="#jdj">9. JDJ paso a paso</a>
+      <a href="#auditor">10. Auditor</a>
+      <a href="#total">11. Ecuación final</a>
+      <a href="#salidas">12. Resultados</a>
+      <a href="#codigo">13. Código</a>
+      <a href="#referencias">14. Referencias</a>
     </aside>
 
     <article class="document-content">
@@ -50,15 +51,33 @@
           <h2>Cómo leer esta página</h2>
           <p>Una fórmula publicada no demuestra que sus valores describan una población concreta. Los valores predeterminados solo permiten probar el programa. Los parámetros de COVID deberán proceder de tus datos o de un ajuste reproducible.</p>
           <div class="callout safe"><strong>Regla:</strong> «publicado» identifica un antecedente; «adaptación» identifica un cambio geométrico o técnico; «decisión» identifica una regla que evaluamos, pero no presentamos como ley social.</div>
+          <h3>Una sola escala visible, sin ocultar las unidades</h3>
+          <div class="formula-block"><span class="formula-line">distancia interna = nivel visible de área, tolerancia u homofilia ÷ 10</span><span class="formula-line">tasa por ronda = nivel visible de fuerza social o recentrado ÷ 100</span><span class="formula-line">probabilidad o proporción = porcentaje visible ÷ 100</span></div>
+          <div class="worked-example"><strong>Ejemplo:</strong> tolerancia 2/10 significa ε=0.20; fuerza social 6/10 significa η=0.06 por ronda; ruido 1% significa m=0.01. La escala visual está unificada, pero no se afirma que una distancia, un peso y una probabilidad sean la misma magnitud.</div>
+        </div>
+      </section>
+
+      <section id="entrada" class="doc-section">
+        <div class="section-number">1</div>
+        <div>
+          <span class="truth operational">Contrato de datos observado</span>
+          <h2>Cómo las columnas A y B se convierten en un punto</h2>
+          <p>En el archivo <code>elecciones_23_X_grados_pertenencia.csv</code>, A y B son grados de pertenencia entre 0 y 1. No son distancias. Por eso el programa no realiza una triangulación que añadiría información inexistente: copia ambos valores como coordenadas.</p>
+          <div class="formula-block"><span class="formula-line">posición inicial de la persona i: x<sub>i</sub>(0) = (A<sub>i</sub>, B<sub>i</sub>)</span><span class="formula-line">polo A: R<sub>A</sub>=(1,0) · polo B: R<sub>B</sub>=(0,1)</span></div>
+          <p>La auditoría del archivo encontró 950 filas válidas y A+B=1 en todas ellas, salvo el redondeo normal de coma flotante. También comprobó la relación exacta usada en el propio archivo:</p>
+          <div class="formula-block"><span class="formula-line">A = (pos + 7) ÷ 14</span><span class="formula-line">B = (7 − pos) ÷ 14 = 1 − A</span></div>
+          <div class="worked-example"><strong>Ejemplo real de la tabla, sin usar el texto del mensaje:</strong><ol class="numeric-steps"><li>Si pos=5, A=(5+7)/14=12/14=<strong>0.8571</strong>.</li><li>B=(7−5)/14=2/14=<strong>0.1429</strong>.</li><li>El agente se coloca en <strong>(0.8571, 0.1429)</strong>.</li><li>Distancia al polo A: √[(0.8571−1)²+(0.1429−0)²] = <strong>0.2020</strong>.</li><li>Distancia al polo B: √[(0.8571−0)²+(0.1429−1)²] = <strong>1.2122</strong>. Por tanto, está mucho más cerca de A.</li></ol></div>
+          <p><strong>Población sintética:</strong> sigue el mismo contrato. Primero sortea A, después fija B=1−A y finalmente crea el punto (A,B). Al importar un CSV, conserva exactamente sus A y B.</p>
+          <div class="callout warning"><strong>Límite identificable:</strong> como A+B=1, el archivo observado contiene una dimensión bipolar, aunque se dibuje en dos ejes. No se afirmará que aporta dos actitudes independientes.</div>
         </div>
       </section>
 
       <section id="distancia" class="doc-section">
-        <div class="section-number">1</div>
+        <div class="section-number">2</div>
         <div>
           <span class="truth published">Opinión vectorial</span>
           <h2>Opinión y distancia entre dos personas</h2>
-          <p>Cada persona tiene dos coordenadas entre 0 y 1. La primera corresponde al eje horizontal y la segunda al vertical.</p>
+          <p>Cada persona tiene dos coordenadas entre 0 y 1: x es su grado A e y es su grado B. La distancia euclídea mide la línea recta entre dos puntos.</p>
           <div class="formula-block">
             <span class="formula-line">x<sub>i</sub> = (x<sub>i1</sub>, x<sub>i2</sub>)</span>
             <span class="formula-line">d<sub>ij</sub> = √[(x<sub>j1</sub> − x<sub>i1</sub>)² + (x<sub>j2</sub> − x<sub>i2</sub>)²]</span>
@@ -71,7 +90,7 @@
       </section>
 
       <section id="red" class="doc-section">
-        <div class="section-number">2</div>
+        <div class="section-number">3</div>
         <div>
           <span class="truth published">Watts–Strogatz</span>
           <h2>Quién puede hablar con quién</h2>
@@ -85,7 +104,7 @@
       </section>
 
       <section id="grupos" class="doc-section">
-        <div class="section-number">3</div>
+        <div class="section-number">4</div>
         <div>
           <span class="truth published">Afinidad firmada</span>
           <span class="truth operational">Extensión 2D</span>
@@ -101,40 +120,43 @@
       </section>
 
       <section id="polos" class="doc-section">
-        <div class="section-number">4</div>
+        <div class="section-number">5</div>
         <div>
           <span class="truth published">Fuentes obstinadas</span>
           <span class="truth operational">Alcance separado</span>
           <h2>Polos permanentes A y B</h2>
-          <p>A y B pueden representar posiciones persistentes —por ejemplo, izquierda y derecha—. Cada polo tiene posición, intensidad y área de influencia propias.</p>
+          <p>A y B representan los extremos persistentes del mismo contrato de datos: R<sub>A</sub>=(1,0) y R<sub>B</sub>=(0,1). No se pueden mover desde la interfaz. Cada polo sí tiene intensidad y área de influencia propias.</p>
           <div class="formula-block"><span class="formula-line">P<sub>i</sub> = [Σ I<sub>k</sub> × 1(d<sub>ik</sub> ≤ ρ<sub>k</sub>) × (R<sub>k</sub> − x<sub>i</sub>)] ÷ [1 + Σ I<sub>k</sub> × 1(d<sub>ik</sub> ≤ ρ<sub>k</sub>)]</span></div>
           <ul class="symbol-list"><li><strong>R<sub>k</sub>:</strong> posición del polo A o B.</li><li><strong>I<sub>k</sub>:</strong> intensidad entre 0 y 10.</li><li><strong>ρ<sub>k</sub>:</strong> radio del círculo de influencia.</li><li><strong>1(condición):</strong> vale 1 si se cumple y 0 si no.</li></ul>
-          <div class="worked-example"><strong>Ejemplo numérico en un eje:</strong><ol class="numeric-steps"><li>Persona x = 0.20; polo R = 0.10; intensidad I = 5; radio ρ = 0.25.</li><li>La distancia 0.10 está dentro del radio 0.25, así que el polo influye.</li><li>Numerador: 5 × (0.10 − 0.20) = −0.50.</li><li>Denominador: 1 + 5 = 6.</li><li>P = −0.50/6 = −0.0833. Con η = 0.06, aporta 0.06 × −0.0833 = <strong>−0.005</strong> en esa ronda.</li></ol></div>
+          <div class="worked-example"><strong>Ejemplo numérico en dos ejes:</strong><ol class="numeric-steps"><li>Persona x=(0.80,0.20); polo A=(1,0); intensidad I=5; área 3/10, es decir, radio ρ=0.30.</li><li>Distancia a A: √[(0.80−1)²+(0.20−0)²]=0.2828. Está dentro de 0.30.</li><li>Vector hacia A: (1−0.80, 0−0.20)=(0.20,−0.20).</li><li>Numerador: 5×(0.20,−0.20)=(1,−1). Denominador: 1+5=6.</li><li>P=(0.1667,−0.1667). Con fuerza social 6/10, η=0.06 y aporta <strong>(0.0100,−0.0100)</strong> antes de las otras fuerzas.</li></ol></div>
           <p><strong>Qué significa intensidad 5:</strong> el polo tiene el mismo peso matemático que cinco fuentes fijas iguales. No significa cinco personas reales ni cinco noticias hasta que exista una calibración. El límite 10 es una escala de interfaz, no una constante científica.</p>
-          <p><strong>Cómo ampliar A o B:</strong> aumenta ρ<sub>A</sub> o ρ<sub>B</sub> en «Área A» o «Área B». El círculo dibujado cambia exactamente con ese valor.</p>
+          <p><strong>Cómo ampliar A o B:</strong> aumenta «Área A» o «Área B». Por ejemplo, 2.5/10 se convierte en ρ=0.25 y el círculo dibujado usa exactamente ese radio.</p>
           <p class="source-line">Antecedentes: Hegselmann y Krause (2015) sobre señales constantes; Glass y Glass (2021) sobre grupos obstinados competidores. Permitir ρ diferente para cada fuente es una decisión operativa declarada.</p>
         </div>
       </section>
 
       <section id="eventos" class="doc-section">
-        <div class="section-number">5</div>
+        <div class="section-number">6</div>
         <div>
           <span class="truth published">Decaimiento de atención</span>
           <span class="truth operational">Ventana observada</span>
           <h2>Eventos, contraeventos y pérdida de atención</h2>
-          <p>Un evento temporal utiliza la misma influencia que un polo, pero solo dentro de su intervalo. Si se activa la pérdida de atención, su intensidad disminuye gradualmente.</p>
+          <p>Un evento temporal utiliza la misma operación ponderada que un polo, pero solo dentro de su intervalo. Todo evento crea un contraevento simétrico al otro lado del centro.</p>
           <div class="formula-block"><span class="formula-line">si inicio ≤ t &lt; inicio + duración:</span><span class="formula-line">I<sub>E</sub>(t) = I<sub>E0</sub> × exp[−λ(t − inicio)]</span><span class="formula-line">fuera de ese intervalo: I<sub>E</sub>(t) = 0</span></div>
           <ul class="symbol-list"><li><strong>I<sub>E0</sub>:</strong> intensidad inicial, de 0 a 10.</li><li><strong>λ:</strong> velocidad de pérdida de atención.</li><li><strong>t:</strong> ronda actual.</li><li><strong>duración:</strong> rondas en las que existe el evento.</li></ul>
           <div class="worked-example"><strong>Ejemplo numérico:</strong> intensidad inicial 5, inicio t = 20, duración 60 y λ = 0.01. En t = 40 han pasado 20 rondas: 5 × exp(−0.01 × 20) = 5 × 0.819 = <strong>4.09</strong>. En t = 80 el evento termina y su intensidad pasa a <strong>0</strong>.</div>
-          <p><strong>Evento aleatorio:</strong> el botón elige una posición (x,y) uniforme entre 0 y 1 utilizando la semilla. Es una prueba de Monte Carlo del programa, no una teoría sobre cuándo ocurre una crisis.</p>
-          <div class="worked-example"><strong>Ejemplo numérico de prueba:</strong> si el generador produce x = 0.37 e y = 0.64, el evento aparece en (0.37, 0.64), con la intensidad, radio y duración elegidos en la interfaz.</div>
-          <p><strong>Contraevento:</strong> el botón lo sitúa explícitamente en B. No se afirma que todo evento produzca automáticamente una respuesta. En un estudio de COVID, cada acontecimiento y contraacontecimiento se introducirá con su fecha y datos observados.</p>
-          <p class="source-line">Decaimiento de atención: Schweitzer, Krivachy y Garcia (2020). Ventana, escala 0–10 y botones de prueba: decisiones operativas visibles.</p>
+          <h3>Por qué el contraevento queda enfrente</h3>
+          <div class="formula-block"><span class="formula-line">centro M=(0.5,0.5)</span><span class="formula-line">posición del contraevento C = 2M − E = (1−x<sub>E</sub>, 1−y<sub>E</sub>)</span></div>
+          <div class="worked-example"><strong>Ejemplo:</strong> si E=(0.80,0.30), entonces C=(1−0.80,1−0.30)=<strong>(0.20,0.70)</strong>. El punto medio entre ambos es (0.50,0.50), de modo que están exactamente enfrentados.</div>
+          <p><strong>Modo aleatorio reproducible:</strong> al pulsar el botón se sortean con la semilla la posición, el inicio entre la ronda actual y el final, la intensidad entre 0.5 y 10, el área entre 0.5/10 y 10/10 y una duración que termina dentro de la simulación. Es un escenario nulo de Monte Carlo, no una ley sobre crisis reales.</p>
+          <p><strong>Modo manual:</strong> el usuario escribe x, y y la ronda de inicio, y elige intensidad, área y duración. El contraevento se calcula; no se coloca a ojo. Para COVID, estos valores deberán venir de fechas e intensidades observadas.</p>
+          <p><strong>Supuesto que se prueba:</strong> evento y contraevento nacen con el mismo inicio, intensidad, área y duración. Esa simetría es una decisión experimental visible; no se presenta como comportamiento universal de los bandos.</p>
+          <p class="source-line">Decaimiento de atención: Schweitzer, Krivachy y Garcia (2020). Ventana, escala visible, sorteo y simetría del contraevento: decisiones operativas declaradas.</p>
         </div>
       </section>
 
       <section id="radicalidad" class="doc-section">
-        <div class="section-number">6</div>
+        <div class="section-number">7</div>
         <div>
           <span class="truth published">Compromiso por extremidad</span>
           <span class="truth operational">Extensión 2D</span>
@@ -148,7 +170,7 @@
       </section>
 
       <section id="ruido" class="doc-section">
-        <div class="section-number">7</div>
+        <div class="section-number">8</div>
         <div>
           <span class="truth published">Ruido local y obstinación</span>
           <h2>Ruido e inmovilidad</h2>
@@ -160,14 +182,14 @@
       </section>
 
       <section id="jdj" class="doc-section">
-        <div class="section-number">8</div>
+        <div class="section-number">9</div>
         <div>
           <span class="truth published">Operadores difusos</span>
           <span class="truth operational">Proyección 2D</span>
           <h2>JDJ explicado paso a paso</h2>
-          <p>JDJ necesita saber cuánto pertenece cada persona al lado A y al lado B. Primero se coloca cada punto sobre la línea A–B.</p>
+          <p>JDJ necesita saber cuánto pertenece cada persona al lado A y al lado B. Para estados que ya no cumplen A+B=1, primero proyecta el punto sobre la línea entre los polos.</p>
           <div class="formula-block"><span class="formula-line">s<sub>i</sub> = recortar{[(x<sub>i</sub> − R<sub>A</sub>) · (R<sub>B</sub> − R<sub>A</sub>)] ÷ ‖R<sub>B</sub> − R<sub>A</sub>‖², entre 0 y 1}</span><span class="formula-line">pertenencia a A: μ<sub>A</sub>(i) = 1 − s<sub>i</sub></span><span class="formula-line">pertenencia a B: μ<sub>B</sub>(i) = s<sub>i</sub></span></div>
-          <div class="worked-example"><strong>Ejemplo numérico de la proyección:</strong><ol class="numeric-steps"><li>A = (0,1), B = (1,0) y persona x = (0.25,0.75).</li><li>B − A = (1,−1); x − A = (0.25,−0.25).</li><li>Producto: 0.25×1 + (−0.25)×(−1) = 0.50.</li><li>Longitud al cuadrado de A–B: 1² + (−1)² = 2.</li><li>s = 0.50/2 = <strong>0.25</strong>. Su pertenencia es 0.75 a A y 0.25 a B.</li></ol></div>
+          <div class="worked-example"><strong>Ejemplo numérico de la proyección:</strong><ol class="numeric-steps"><li>A=(1,0), B=(0,1) y persona x=(0.75,0.25).</li><li>B−A=(−1,1); x−A=(−0.25,0.25).</li><li>Producto: (−0.25)×(−1)+0.25×1=0.50.</li><li>Longitud al cuadrado de A–B: (−1)²+1²=2.</li><li>s=0.50/2=<strong>0.25</strong>. Su pertenencia proyectada es 0.75 a A y 0.25 a B.</li></ol></div>
           <p>Después se comparan todas las parejas de personas:</p>
           <div class="formula-block"><span class="formula-line">JDJ = (2/N²) × suma sobre i y j del mayor entre:</span><span class="formula-line">μ<sub>A</sub>(i)×μ<sub>B</sub>(j) y μ<sub>B</sub>(i)×μ<sub>A</sub>(j)</span></div>
           <div class="worked-example"><strong>Ejemplo numérico de JDJ:</strong> cuatro personas: dos exactamente en A y dos exactamente en B. Hay 16 parejas ordenadas; 8 cruzan A–B y aportan 1. JDJ = (2/16) × 8 = <strong>1</strong>. Si las cuatro están en el centro, cada producto vale 0.25: JDJ = (2/16) × (16×0.25) = <strong>0.5</strong>.</div>
@@ -177,7 +199,7 @@
       </section>
 
       <section id="auditor" class="doc-section">
-        <div class="section-number">9</div>
+        <div class="section-number">10</div>
         <div>
           <span class="truth exploratory">Intervención explícita</span>
           <h2>Auditor y recentrado</h2>
@@ -189,18 +211,23 @@
       </section>
 
       <section id="total" class="doc-section">
-        <div class="section-number">10</div>
+        <div class="section-number">11</div>
         <div>
           <span class="truth operational">Composición del proyecto</span>
-          <h2>Todos los mecanismos en una actualización</h2>
-          <div class="formula-block"><span class="formula-line">nueva opinión = recortar[opinión actual + {η×(grupo + polos + eventos) + recentrado} ÷ resistencia]</span><span class="formula-line">x<sub>i</sub>(t+1) = clip[x<sub>i</sub>(t) + {η(G<sub>i</sub> + P<sub>i</sub> + E<sub>i</sub>) + C<sub>i</sub>} / k<sub>i</sub>]</span></div>
-          <div class="worked-example"><strong>Ejemplo numérico en una coordenada:</strong> influencia del grupo G = 0.03; polos P = −0.01; evento E = 0; recentrado C = −0.006; η = 0.06; resistencia k = 1.5.<ol class="numeric-steps"><li>Influencia social: 0.06 × (0.03 − 0.01) = 0.0012.</li><li>Se añade el recentrado: 0.0012 − 0.006 = −0.0048.</li><li>Se divide por la resistencia: −0.0048/1.5 = <strong>−0.0032</strong>.</li><li>Si la coordenada era 0.80, pasa a <strong>0.7968</strong>.</li></ol></div>
-          <p><strong>Orden exacto:</strong> inmovilidad → posible ruido → contactos → polos y eventos → auditor → resistencia → recorte al cuadrado. Sumar estas piezas es una hipótesis transparente del proyecto, no una teoría publicada como conjunto.</p>
+          <h2>La fórmula final que decide adónde va cada agente</h2>
+          <p>Primero se calcula un cambio vectorial Δ=(Δx,Δy). Después se suma a la posición actual. Esa suma es la razón exacta por la que (x,y) se convierte en (x<sub>1</sub>,y<sub>1</sub>).</p>
+          <div class="formula-block"><span class="formula-line">Δ<sub>i</sub> = {η × [G<sub>i</sub> + P<sub>i</sub> + E<sub>i</sub>] + C<sub>i</sub>} ÷ k<sub>i</sub></span><span class="formula-line">x<sub>i</sub>(t+1) = clip[x<sub>i</sub>(t) + Δ<sub>ix</sub>, entre 0 y 1]</span><span class="formula-line">y<sub>i</sub>(t+1) = clip[y<sub>i</sub>(t) + Δ<sub>iy</sub>, entre 0 y 1]</span></div>
+          <ul class="symbol-list"><li><strong>G:</strong> contactos de la red.</li><li><strong>P:</strong> polos permanentes A y B.</li><li><strong>E:</strong> eventos y contraeventos activos.</li><li><strong>C:</strong> recentrado del auditor, o cero.</li><li><strong>η:</strong> fracción social aplicada por ronda.</li><li><strong>k:</strong> resistencia; dividir por un valor mayor reduce el movimiento.</li></ul>
+          <h3>Las excepciones también forman parte de la fórmula</h3>
+          <div class="formula-block"><span class="formula-line">si el agente es inmóvil: posición nueva = posición actual</span><span class="formula-line">si ocurre ruido en esta ronda: posición nueva = clip[posición actual + salto aleatorio]</span><span class="formula-line">en otro caso: se aplica la suma Δ mostrada arriba</span></div>
+          <div class="worked-example"><strong>Ejemplo completo en x e y:</strong> posición actual (0.60,0.40); G=(0.03,−0.02); P=(0.04,−0.01); E=(−0.01,0.02); fuerza social 6/10, por tanto η=0.06; C=(−0.002,0.002); resistencia k=1.25.<ol class="numeric-steps"><li>Suma de influencias: G+P+E=(0.03+0.04−0.01, −0.02−0.01+0.02)=<strong>(0.06,−0.01)</strong>.</li><li>Aplicar η: 0.06×(0.06,−0.01)=<strong>(0.0036,−0.0006)</strong>.</li><li>Sumar recentrado: (0.0036,−0.0006)+(−0.002,0.002)=<strong>(0.0016,0.0014)</strong>.</li><li>Dividir por resistencia: Δ=(0.0016,0.0014)/1.25=<strong>(0.00128,0.00112)</strong>.</li><li>Sumar a la posición: (0.60,0.40)+Δ=<strong>(0.60128,0.40112)</strong>.</li><li>Ambas coordenadas ya están entre 0 y 1, por lo que el recorte no las modifica.</li></ol></div>
+          <p><strong>Por qué se suma:</strong> cada término es un desplazamiento dirigido. Un valor positivo aumenta la coordenada; uno negativo la reduce. Fuerzas opuestas se restan de forma natural porque una de ellas tiene signo negativo.</p>
+          <p><strong>Orden exacto del código:</strong> inmovilidad → posible ruido → contactos → polos → eventos → auditor → suma → resistencia → recorte. La composición es una hipótesis transparente del proyecto, no una teoría publicada como conjunto.</p>
         </div>
       </section>
 
       <section id="salidas" class="doc-section">
-        <div class="section-number">11</div>
+        <div class="section-number">12</div>
         <div>
           <span class="truth operational">Medidas descriptivas</span>
           <h2>Resultados que aparecen debajo del gráfico</h2>
@@ -217,15 +244,18 @@
       </section>
 
       <section id="codigo" class="doc-section">
-        <div class="section-number">12</div>
+        <div class="section-number">13</div>
         <div>
           <h2>Dónde está cada regla en el código</h2>
           <div class="table-wrap"><table><thead><tr><th>Regla</th><th>JavaScript</th><th>Python</th><th>Comprobación</th></tr></thead><tbody>
+            <tr><td>A/B → posición</td><td><code>positionFromMemberships</code></td><td><code>position_from_memberships</code></td><td>(6/7,1/7) se conserva</td></tr>
+            <tr><td>Importación CSV</td><td><code>parseMembershipCsv</code></td><td><code>load_membership_csv</code></td><td>comas y saltos entre comillas</td></tr>
             <tr><td>Distancia</td><td><code>distance</code></td><td><code>numpy.linalg.norm</code></td><td>triángulo 0.3–0.4–0.5</td></tr>
             <tr><td>Red</td><td><code>buildSmallWorldNetwork</code></td><td><code>phased_model</code></td><td>sin lazos y enlaces simétricos</td></tr>
             <tr><td>Atracción/reactancia</td><td><code>socialImpactCoefficient</code></td><td><code>social_impact_coefficient</code></td><td>positivo cerca, negativo lejos</td></tr>
             <tr><td>Polos y eventos</td><td><code>integratedStep</code></td><td><code>step</code></td><td>más intensidad, mayor efecto</td></tr>
             <tr><td>Atención</td><td><code>activeEventWeight</code></td><td><code>event_weight</code></td><td>cero fuera de la ventana</td></tr>
+            <tr><td>Contraevento</td><td><code>oppositePosition</code></td><td><code>opposite_position</code></td><td>punto medio exactamente (0.5,0.5)</td></tr>
             <tr><td>JDJ</td><td><code>jdjProductAxis</code></td><td><code>jdj_axis</code></td><td>división extrema = 1</td></tr>
             <tr><td>Auditor</td><td><code>integratedStep</code></td><td><code>step</code></td><td>requiere dos umbrales</td></tr>
           </tbody></table></div>
@@ -233,7 +263,7 @@
       </section>
 
       <section id="referencias" class="doc-section references-section">
-        <div class="section-number">13</div>
+        <div class="section-number">14</div>
         <div>
           <h2>Referencias primarias utilizadas</h2>
           <ul class="reference-list">

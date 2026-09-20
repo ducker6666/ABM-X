@@ -52,6 +52,115 @@
     return mean + standardDeviation * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
   }
 
+  function positionFromMemberships(membershipA, membershipB) {
+    /*
+     * Contrato de entrada: A y B son grados de pertenencia observados, no
+     * distancias. Por eso no se inventa una triangulacion: la posicion es
+     * exactamente (A,B). La distancia euclidea se calcula despues.
+     *
+     * Ejemplo del CSV inspeccionado: A=6/7 y B=1/7 -> (x,y)=(6/7,1/7).
+     */
+    if (![membershipA, membershipB].every(value => Number.isFinite(value) && value >= 0 && value <= 1)) {
+      throw new Error("A y B deben ser números entre 0 y 1");
+    }
+    return [membershipA, membershipB];
+  }
+
+  function agentFromMemberships(membershipA, membershipB, metadata = {}) {
+    const [x, y] = positionFromMemberships(membershipA, membershipB);
+    return {
+      ...metadata,
+      membershipA,
+      membershipB,
+      x,
+      y,
+      anchorX: x,
+      anchorY: y,
+      previousX: x,
+      previousY: y,
+    };
+  }
+
+  function parseCsvRows(text) {
+    // Lector RFC 4180 minimo: respeta comas y saltos de linea entre comillas.
+    const rows = [];
+    let row = [];
+    let field = "";
+    let quoted = false;
+    for (let i = 0; i < text.length; i += 1) {
+      const character = text[i];
+      if (quoted) {
+        if (character === '"' && text[i + 1] === '"') {
+          field += '"';
+          i += 1;
+        } else if (character === '"') {
+          quoted = false;
+        } else {
+          field += character;
+        }
+      } else if (character === '"') {
+        quoted = true;
+      } else if (character === ",") {
+        row.push(field);
+        field = "";
+      } else if (character === "\n") {
+        row.push(field.replace(/\r$/, ""));
+        if (row.some(value => value !== "")) rows.push(row);
+        row = [];
+        field = "";
+      } else {
+        field += character;
+      }
+    }
+    row.push(field.replace(/\r$/, ""));
+    if (row.some(value => value !== "")) rows.push(row);
+    if (quoted) throw new Error("CSV no válido: falta cerrar una comilla");
+    return rows;
+  }
+
+  function parseMembershipCsv(text) {
+    const rows = parseCsvRows(String(text).replace(/^\uFEFF/, ""));
+    if (rows.length < 2) throw new Error("El CSV debe contener cabecera y al menos una fila");
+    const headers = rows[0].map(value => value.trim().toLowerCase());
+    const indexA = headers.indexOf("a");
+    const indexB = headers.indexOf("b");
+    const indexId = headers.indexOf("id");
+    if (indexA < 0 || indexB < 0) throw new Error('El CSV necesita columnas llamadas "A" y "B"');
+    return rows.slice(1).map((values, index) => {
+      const rawA = values[indexA]?.trim();
+      const rawB = values[indexB]?.trim();
+      if (!rawA || !rawB) throw new Error(`Fila ${index + 2}: A y B no pueden estar vacíos`);
+      const membershipA = Number(rawA);
+      const membershipB = Number(rawB);
+      try {
+        positionFromMemberships(membershipA, membershipB);
+      } catch (error) {
+        throw new Error(`Fila ${index + 2}: ${error.message}`);
+      }
+      return {
+        membershipA,
+        membershipB,
+        sourceId: indexId >= 0 ? values[indexId] : String(index + 1),
+      };
+    });
+  }
+
+  function initializeFromMemberships(rows) {
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("No hay filas A/B para inicializar");
+    return rows.map(row => agentFromMemberships(row.membershipA, row.membershipB, {
+      sourceId: row.sourceId,
+    }));
+  }
+
+  function oppositePosition(position) {
+    /* Reflexion respecto a M=(0.5,0.5): C=2M-E=(1-x,1-y). */
+    if (!Array.isArray(position) || position.length !== 2) throw new Error("La posición debe tener dos coordenadas");
+    return position.map(value => {
+      if (!Number.isFinite(value) || value < 0 || value > 1) throw new Error("La posición debe pertenecer a [0,1]²");
+      return 1 - value;
+    });
+  }
+
   function validateConfig(config) {
     if (!Number.isFinite(config.epsilon) || config.epsilon < 0) {
       throw new Error("epsilon debe ser un número no negativo");
@@ -82,23 +191,21 @@
     const random = mulberry32(seed);
     const agents = [];
     for (let i = 0; i < nAgents; i += 1) {
-      let x;
-      let y;
+      let membershipA;
       if (scenario === "uniform") {
-        x = random();
-        y = random();
+        membershipA = random();
       } else if (scenario === "central") {
-        x = clamp(normal(random, 0.5, 0.10), 0, 1);
-        y = clamp(normal(random, 0.5, 0.10), 0, 1);
+        membershipA = clamp(normal(random, 0.5, 0.10), 0, 1);
       } else if (scenario === "two_groups") {
         const first = i < Math.floor(nAgents / 2);
-        x = clamp(normal(random, first ? 0.25 : 0.75, 0.09), 0, 1);
-        y = clamp(normal(random, first ? 0.75 : 0.25, 0.09), 0, 1);
+        membershipA = clamp(normal(random, first ? 0.75 : 0.25, 0.09), 0, 1);
       } else {
         throw new Error("escenario inicial desconocido");
       }
-      // anchorX/anchorY son x_i(0): la opinion inicial que usa FJ.
-      agents.push({ x, y, anchorX: x, anchorY: y, previousX: x, previousY: y });
+      // La población sintética usa el mismo contrato que el CSV: primero se
+      // generan A y B=1-A; después (x,y)=(A,B).
+      const membershipB = 1 - membershipA;
+      agents.push(agentFromMemberships(membershipA, membershipB));
     }
     return agents;
   }
@@ -381,6 +488,26 @@
     return agents.map(agent => ({ ...agent, immobile: random() < share }));
   }
 
+  function weightedSourceDisplacement(agent, sources) {
+    /*
+     * Media DeGroot con peso propio 1. Una fuente de intensidad w aporta
+     * w(target-agent); dividir por 1+sum(w) conserva el punto propio en la
+     * media y hace que una intensidad mayor produzca un paso mayor acotado.
+     */
+    let x = 0;
+    let y = 0;
+    let mass = 0;
+    for (const source of sources) {
+      const [position, weight, reach] = source;
+      if (weight > 0 && distance([agent.x, agent.y], position) <= reach) {
+        x += weight * (position[0] - agent.x);
+        y += weight * (position[1] - agent.y);
+        mass += weight;
+      }
+    }
+    return [x / (1 + mass), y / (1 + mass)];
+  }
+
   function integratedStep(agents, config, runtime) {
     /*
      * Composición auditable (no una teoría publicada como conjunto):
@@ -428,37 +555,31 @@
       // Una señal de intensidad m equivale al peso de m fuentes obstinadas
       // iguales dentro de su alcance rho. Los eventos temporales usan la misma
       // operación; cambia únicamente su ventana de actividad.
-      let poleX = 0;
-      let poleY = 0;
-      let poleMass = 0;
-      const sources = [
+      const poleSources = [
         [config.signalA, weightA, config.signalAReach ?? config.epsilon],
         [config.signalB, weightB, config.signalBReach ?? config.epsilon],
       ];
+      const eventSources = [];
       for (const event of runtime.events ?? []) {
-        sources.push([
+        eventSources.push([
           event.position,
           activeEventWeight(event, runtime.t, config.fatigueEnabled, config.fatigueDecay),
           event.reach,
         ]);
       }
-      for (const [position, weight, reach] of sources) {
-        if (weight > 0 && distance([agent.x, agent.y], position) <= reach) {
-          poleX += weight * (position[0] - agent.x);
-          poleY += weight * (position[1] - agent.y);
-          poleMass += weight;
-        }
-      }
-      poleX /= 1 + poleMass;
-      poleY /= 1 + poleMass;
+      const [poleX, poleY] = weightedSourceDisplacement(agent, poleSources);
+      const [eventX, eventY] = weightedSourceDisplacement(agent, eventSources);
 
       const commitment = config.adaptiveCommitment
         ? 1 + config.commitmentStrength * radicality(agent)
         : 1;
       const centerX = auditorActive ? config.centerStrength * (0.5 - agent.x) : 0;
       const centerY = auditorActive ? config.centerStrength * (0.5 - agent.y) : 0;
-      const deltaX = (config.socialRate * (peerX + poleX) + centerX) / commitment;
-      const deltaY = (config.socialRate * (peerY + poleY) + centerY) / commitment;
+      // Suma final por coordenada. El ruido y la inmovilidad se resuelven en
+      // las ramas anteriores; aqui actuan a la vez grupo, polos, eventos y
+      // recentrado, antes de dividir por la resistencia.
+      const deltaX = (config.socialRate * (peerX + poleX + eventX) + centerX) / commitment;
+      const deltaY = (config.socialRate * (peerY + poleY + eventY) + centerY) / commitment;
       return {
         ...agent,
         x: clamp(agent.x + deltaX, 0, 1),
@@ -578,6 +699,7 @@
     activeEventWeight,
     advance,
     assignImmobility,
+    agentFromMemberships,
     axisProjection,
     buildSmallWorldNetwork,
     boundedNoise,
@@ -594,6 +716,9 @@
     jdjProductAxis,
     meanDisplacement,
     mulberry32,
+    oppositePosition,
+    parseMembershipCsv,
+    positionFromMemberships,
     radicality,
     signalWeights,
     socialImpactCoefficient,
@@ -602,6 +727,8 @@
     uniqueOpinionCount,
     validateConfig,
     validatePhasedConfig,
+    weightedSourceDisplacement,
+    initializeFromMemberships,
   };
 
   globalScope.ABMXModel = api;

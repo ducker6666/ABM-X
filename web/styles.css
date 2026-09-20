@@ -99,6 +99,8 @@ button.wide { width: 100%; margin-top: 12px; }
 .control-group[open] summary::after { content: "−"; }
 .control-note { color: var(--muted); font-size: 11px; margin: 8px 0; }
 .variable-help { display: block; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.file-field { display: grid; gap: 7px; margin: 12px 0 6px; color: #4f4a43; font-size: 12px; }
+.file-field input { width: 100%; padding: 8px; border: 1px dashed #bdb7ad; border-radius: 6px; background: white; font-size: 10px; }
 .field { display: grid; gap: 6px; margin: 12px 0; font-size: 12px; }
 .field > span { display: flex; justify-content: space-between; color: #4f4a43; }
 .field output { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 750; }
@@ -118,6 +120,8 @@ button.wide { width: 100%; margin-top: 12px; }
 .schedule-fields { margin-top: 8px; padding-top: 2px; border-top: 1px dashed var(--line); }
 .schedule-fields[hidden] { display: none; }
 .event-actions { display: grid; grid-template-columns: 1fr; gap: 7px; }
+.mode-explanation, .scale-key { margin: 9px 0; padding: 9px 10px; border-radius: 6px; background: #eeeae2; color: #655f56; font-size: 10px; line-height: 1.5; }
+.scale-key { border-left: 3px solid #7d7569; }
 .event-log { margin-top: 10px; padding: 9px 10px; background: var(--white); border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .event-log div + div { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--line); }
 .workspace { padding: 30px clamp(20px, 3vw, 52px) 60px; overflow: hidden; }
@@ -140,6 +144,7 @@ canvas { display: block; max-width: 100%; height: auto; }
 .signal-a-dot { background: var(--a); }
 .signal-b-dot { background: var(--b); }
 .event-dot { background: var(--violet); }
+.counter-dot { background: #9b5f39; }
 .dash { width: 20px; border-top: 1px dashed var(--ink); }
 .important-note { padding: 20px; background: #f5f1e9; }
 .important-note h3 { font: 700 22px/1.2 Georgia, serif; margin: 0 0 8px; }
