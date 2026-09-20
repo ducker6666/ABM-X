@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Propuesta de Paper 1</title>
-  <link rel="stylesheet" href="styles.css?v=paper1-original-2d" />
+  <link rel="stylesheet" href="styles.css?v=phases-1-6" />
 </head>
 <body class="document-body">
   <header class="site-header">
@@ -112,10 +112,10 @@
       <span class="paper-kicker">LIMITACIONES</span>
       <h2>Lo que el jurado debería oír de nosotros antes de preguntarlo</h2>
       <ul>
-        <li>No existe red social: cualquier agente puede considerar a cualquier otro si su opinión está cerca.</li>
+        <li>En el Paper 1 no existe red social: cualquier agente puede considerar a cualquier otro si su opinión está cerca. La Fase 4 posterior sí la incorpora.</li>
         <li>Las dos dimensiones no tienen significado empírico hasta asignarlas y medirlas con datos.</li>
-        <li>Las señales son constantes; las campañas reales cambian en el tiempo.</li>
-        <li>Los agentes son homogéneos en ε y no tienen memoria, emoción ni estrategia.</li>
+        <li>En el Paper 1 las señales son constantes. La Fase 5 permite intervalos, pero todavía exige fechas observadas.</li>
+        <li>Los agentes del Paper 1 son homogéneos en ε y no tienen memoria, emoción ni estrategia. El anclaje FJ de fases posteriores solo representa apego a la opinión inicial.</li>
         <li>El JDJ proyectado pierde información perpendicular al eje A–B.</li>
         <li>Una simulación muestra consecuencias de supuestos; no demuestra que esos supuestos sean verdaderos.</li>
       </ul>
@@ -130,33 +130,49 @@
 
     <section class="paper-section roadmap-section">
       <span class="paper-kicker">DESPUÉS DEL PAPER 1</span>
-      <h2>Tres propuestas para la segunda fase</h2>
+      <h2>Los módulos siguientes ya están programados; aún no son resultados</h2>
       <div class="proposal-grid">
         <article class="recommended">
-          <span>Recomendada</span>
-          <h3>A. Señales temporales y eventos observables</h3>
-          <p>Sustituir señales siempre activas por una serie temporal documentada. Cada evento tendría inicio, final e intensidad medible. Es la continuación más natural, pero exige justificar la función temporal y, preferiblemente, usar datos.</p>
+          <span>Paper 2 recomendado</span>
+          <h3>Contactos graduales y anclaje</h3>
+          <p>Comparar el control HK con Deffuant–Weisbuch y Friedkin–Johnsen. La pregunta sería qué mecanismo explica mejor la persistencia del desacuerdo sin recurrir a ruido o repulsión ad hoc. El simulador ya separa ambos modelos.</p>
         </article>
         <article>
-          <span>Alternativa</span>
-          <h3>B. Red social explícita</h3>
-          <p>Separar “estar conectado” de “tener una opinión cercana”. Permite estudiar cámaras de eco, pero añade topología y requiere elegir o estimar una red defendible.</p>
+          <span>Paper 3 posible</span>
+          <h3>Red y señales temporales</h3>
+          <p>Separar conexión social y proximidad ideológica, y vincular las ventanas de señal a campañas o acontecimientos fechados. El código usa una red sintética para demostrar el mecanismo; un paper exigirá justificarla o sustituirla por una red observada.</p>
         </article>
         <article>
-          <span>Alternativa</span>
-          <h3>C. Confianza heterogénea o adaptativa</h3>
-          <p>Permitir que ε varíe entre personas o con el tiempo usando formulaciones publicadas. Es útil, pero debe añadirse sola para identificar su efecto.</p>
+          <span>Eje de tesis</span>
+          <h3>Calibración y validación empírica</h3>
+          <p>Elegir un dominio social, definir las dos dimensiones con instrumentos medibles y comparar predicciones fuera de muestra. La tubería acepta un panel real, pero permanece vacía para no fabricar evidencia.</p>
         </article>
       </div>
-      <p><strong>Secuencia de tesis sugerida:</strong> Paper 1, mecanismo base reproducible; Paper 2, una extensión temporal o de red; Paper 3, calibración/validación empírica; tesis, integración comparada. El impacto social dependerá sobre todo del último paso, no de hacer el simulador más ornamentado.</p>
+      <p><strong>Secuencia de tesis sugerida:</strong> Paper 1, mecanismo base reproducible; Paper 2, persistencia mediante interacción parcial o anclaje; Paper 3, red y tiempo con observaciones; tesis, comparación y validación empírica. Que el software permita todas las fases no autoriza a mezclarlas en el primer artículo.</p>
+    </section>
+
+    <section class="paper-section">
+      <span class="paper-kicker">FASES IMPLEMENTADAS</span>
+      <h2>Qué puede demostrar hoy el laboratorio</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Fase</th><th>Pregunta</th><th>Estado defendible</th></tr></thead>
+        <tbody>
+          <tr><td>1 · HK</td><td>¿Qué produce el promedio simultáneo?</td><td>Control implementado y verificable; puede colapsar a una coordenada.</td></tr>
+          <tr><td>2 · DW</td><td>¿Qué cambia con encuentros parciales?</td><td>Implementado; requiere análisis de sensibilidad a μ y frecuencia de contacto.</td></tr>
+          <tr><td>3 · FJ</td><td>¿Qué cambia al conservar la opinión inicial?</td><td>Implementado como composición declarada con confianza acotada.</td></tr>
+          <tr><td>4 · Red</td><td>¿Qué cambia si no todos pueden hablar?</td><td>Implementado con Watts–Strogatz sintética; no representa una red observada.</td></tr>
+          <tr><td>5 · Tiempo</td><td>¿Qué cambia si una señal tiene fechas?</td><td>Implementado con intervalos on/off; fechas aún no empíricas.</td></tr>
+          <tr><td>6 · Datos</td><td>¿Qué configuración se aproxima a observaciones?</td><td>Código de calibración listo; imposible completar honestamente sin panel y definición del dominio.</td></tr>
+        </tbody>
+      </table></div>
     </section>
 
     <section class="paper-section final-card">
       <h2>Estado honesto del trabajo</h2>
       <div class="status-matrix">
         <div><b>Definido</b><span>mecanismo, ecuación, variables, métricas y limitaciones</span></div>
-        <div><b>Implementado</b><span>motor Python y web equivalentes, simulador y pruebas unitarias</span></div>
-        <div><b>Pendiente</b><span>revisión sistemática cerrada, preregistro, experimento completo y resultados</span></div>
+        <div><b>Implementado</b><span>fases 1–5 en Python y web; tubería de calibración de la fase 6; pruebas unitarias</span></div>
+        <div><b>Pendiente</b><span>dominio empírico, datos reales, revisión sistemática cerrada, preregistro y resultados</span></div>
         <div><b>Prohibido afirmar</b><span>novedad absoluta, validación social o resultados aún no calculados</span></div>
       </div>
     </section>

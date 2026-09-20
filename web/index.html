@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ABM X · Paper 1 · Simulador</title>
-  <link rel="stylesheet" href="styles.css?v=paper1-original-2d" />
+  <title>ABM X · Laboratorio por fases</title>
+  <link rel="stylesheet" href="styles.css?v=phases-1-6" />
 </head>
 <body>
   <header class="site-header">
@@ -14,15 +14,15 @@
       <a href="formula.html"><b>2</b> Fórmulas</a>
       <a href="paper.html"><b>3</b> Paper</a>
     </nav>
-    <span class="version-pill">Paper 1 · modelo base</span>
+    <span class="version-pill">Fases 1–6 · trazables</span>
   </header>
 
   <main class="simulator-shell">
     <aside class="control-panel">
       <section class="control-intro">
-        <p class="eyebrow">CAPA ACTIVA</p>
-        <h1>Dos señales que compiten en un espacio de opinión 2D</h1>
-        <p>Modelo HK bidimensional, distancia euclídea y dos señales constantes. Solo esos mecanismos cambian a los agentes.</p>
+        <p class="eyebrow">MODELO ACTIVO</p>
+        <h1>Opiniones 2D, comparadas por fases</h1>
+        <p>El control HK sigue disponible. Por defecto se usa anclaje inicial y red social para evitar un consenso instantáneo artificial.</p>
         <div class="status-line"><span class="status-dot"></span><span id="runStatus">Preparado</span></div>
       </section>
 
@@ -35,6 +35,15 @@
 
       <details class="control-group" open>
         <summary>Experimento</summary>
+        <label class="field inline-field"><span>Fase / modelo</span>
+          <select id="phase" data-reset-model>
+            <option value="hk">1 · HK, control base</option>
+            <option value="dw">2 · Deffuant, contactos graduales</option>
+            <option value="fj">3 · FJ, anclaje inicial</option>
+            <option value="network" selected>4 · FJ + red social</option>
+            <option value="temporal">5 · Red + señales temporales</option>
+          </select>
+        </label>
         <label class="field">
           <span>Agentes <output data-output-for="nAgents">200</output></span>
           <input id="nAgents" type="range" min="20" max="500" step="10" value="200" data-reset-model />
@@ -58,7 +67,7 @@
       </details>
 
       <details class="control-group" open>
-        <summary>Capa 1 · confianza acotada</summary>
+        <summary>Parámetro común · confianza acotada</summary>
         <p class="control-note">ε es la distancia máxima para escuchar. No es una fuerza.</p>
         <label class="field">
           <span>Tolerancia ε <output data-output-for="epsilon">0.20</output></span>
@@ -67,8 +76,8 @@
       </details>
 
       <details class="control-group" open>
-        <summary>Capa 2 · señales constantes</summary>
-        <p class="control-note">El peso equivale al número de voces obstinadas o a la reputación de un líder.</p>
+        <summary>Señales externas A y B</summary>
+        <p class="control-note">En fases 1–4 son constantes. En la fase 5 solo actúan dentro de sus intervalos.</p>
         <div class="signal-label signal-a">Señal A</div>
         <label class="field"><span>Peso A <output data-output-for="signalAWeight">5</output></span><input id="signalAWeight" type="range" min="0" max="30" step="1" value="5" data-reset-model /></label>
         <div class="coordinate-pair">
@@ -84,6 +93,37 @@
       </details>
 
       <details class="control-group">
+        <summary>Fase 2 · contactos graduales DW</summary>
+        <p class="control-note">Solo se usa al seleccionar Fase 2. μ es la fracción recorrida en cada encuentro aceptado.</p>
+        <label class="field"><span>Compromiso μ <output data-output-for="compromiseRate">0.08</output></span><input id="compromiseRate" type="range" min="0.01" max="0.50" step="0.01" value="0.08" data-reset-model /></label>
+        <label class="field"><span>Contactos por agente/ronda <output data-output-for="interactionsPerAgent">0.50</output></span><input id="interactionsPerAgent" type="range" min="0.10" max="2.00" step="0.10" value="0.50" data-reset-model /></label>
+      </details>
+
+      <details class="control-group" open>
+        <summary>Fases 3–5 · anclaje inicial FJ</summary>
+        <p class="control-note">g es el peso conservado de la opinión inicial. g=0 elimina el ancla; g=1 impide cambiar.</p>
+        <label class="field"><span>Peso del ancla g <output data-output-for="anchorWeight">0.85</output></span><input id="anchorWeight" type="range" min="0" max="1" step="0.01" value="0.85" data-reset-model /></label>
+      </details>
+
+      <details class="control-group" open>
+        <summary>Fases 4–5 · red social</summary>
+        <p class="control-note">Red sintética Watts–Strogatz: una demostración reproducible, no datos de una red real.</p>
+        <label class="field inline-field"><span>Grado inicial k</span>
+          <select id="networkDegree" data-reset-model><option>4</option><option>6</option><option selected>8</option><option>10</option><option>12</option></select>
+        </label>
+        <label class="field"><span>Reconexión β <output data-output-for="networkRewiring">0.10</output></span><input id="networkRewiring" type="range" min="0" max="1" step="0.05" value="0.10" data-reset-model /></label>
+      </details>
+
+      <details class="control-group">
+        <summary>Fase 5 · intervalos temporales</summary>
+        <p class="control-note">Indicadores encendido/apagado. No se introduce una curva de fatiga inventada.</p>
+        <label class="field"><span>Inicio A <output data-output-for="signalAStart">20</output></span><input id="signalAStart" type="range" min="0" max="300" step="5" value="20" data-reset-model /></label>
+        <label class="field"><span>Duración A <output data-output-for="signalADuration">80</output></span><input id="signalADuration" type="range" min="0" max="300" step="5" value="80" data-reset-model /></label>
+        <label class="field"><span>Inicio B <output data-output-for="signalBStart">80</output></span><input id="signalBStart" type="range" min="0" max="300" step="5" value="80" data-reset-model /></label>
+        <label class="field"><span>Duración B <output data-output-for="signalBDuration">80</output></span><input id="signalBDuration" type="range" min="0" max="300" step="5" value="80" data-reset-model /></label>
+      </details>
+
+      <details class="control-group">
         <summary>Diagnóstico y visualización</summary>
         <label class="field"><span>Umbral descriptivo de cluster <output data-output-for="clusterThreshold">0.05</output></span><input id="clusterThreshold" type="range" min="0.01" max="0.15" step="0.01" value="0.05" data-reset-model /></label>
         <label class="check-field"><input id="showNeighborhood" type="checkbox" checked data-redraw /> Mostrar vecindad ε del agente <span id="selectedAgentLabel">1</span></label>
@@ -95,12 +135,12 @@
     <section class="workspace">
       <div class="workspace-heading">
         <div>
-          <p class="eyebrow">SIMULACIÓN INTERACTIVA</p>
-          <h2>Opiniones en dos dimensiones</h2>
-          <p>Cada punto es una opinión, no una posición física. Las señales A y B permanecen fijas.</p>
+          <p class="eyebrow">SIMULACIÓN INTERACTIVA · <span id="phaseLabel">FASE 4</span></p>
+          <h2 id="phaseTitle">Anclaje inicial sobre una red social</h2>
+          <p id="phaseDescription">Cada punto escucha únicamente a contactos conectados y cercanos en opinión.</p>
         </div>
-        <div class="scope-badges">
-          <span>Euclídea</span><span>Síncrona</span><span>Sin red</span><span>Sin ruido</span>
+        <div class="scope-badges" id="scopeBadges">
+          <span>Euclídea</span><span>Síncrona</span><span>Con red</span><span>Con anclaje</span>
         </div>
       </div>
 
@@ -119,8 +159,8 @@
           <article class="canvas-card"><canvas id="followersCanvas" width="520" height="250"></canvas></article>
           <article class="plain-card important-note">
             <p class="eyebrow">LECTURA CORRECTA</p>
-            <h3>El color y las métricas describen; no empujan.</h3>
-            <p>La única regla de movimiento es el promedio de vecinos y señales dentro de ε. Los clusters, la dispersión y el JDJ se calculan después.</p>
+            <h3 id="readingTitle">La red limita quién puede influir.</h3>
+            <p id="readingText">El anclaje conserva parte de la opinión inicial. Los clusters, el color y el JDJ solo describen: no empujan a nadie.</p>
             <a href="formula.html">Ver cada fórmula y su fuente →</a>
           </article>
         </div>
@@ -135,17 +175,19 @@
         <div><span>Seguidores B</span><strong id="followerBStat">0</strong></div>
         <div><span>RMSD a A</span><strong id="rmsdAStat">0</strong></div>
         <div><span>RMSD a B</span><strong id="rmsdBStat">0</strong></div>
+        <div><span>Movimiento medio</span><strong id="movementStat">0</strong><small>por ronda</small></div>
+        <div><span>Posiciones únicas</span><strong id="uniqueStat">0</strong><small>precisión 10⁻⁶</small></div>
       </section>
 
       <section class="removed-strip">
-        <strong>Fuera del Paper 1:</strong>
-        gravedad de clusters · rebote al centro · eventos aleatorios · fatiga · reactancia · ruido · tolerancia adaptativa.
-        <span>No se borran como ideas históricas; se excluyen del modelo científico activo.</span>
+        <strong>Contrato científico:</strong>
+        cada selección ejecuta una formulación explícita. No se usan gravedad de clusters, rebote, fatiga, reactancia ni fuerzas de atracción inventadas.
+        <span>La Fase 6 (calibración) está preparada en Python, pero solo puede completarse con un panel empírico real.</span>
       </section>
     </section>
   </main>
 
-  <script src="model.js?v=paper1-original-2d"></script>
-  <script src="app.js?v=paper1-original-2d"></script>
+  <script src="model.js?v=phases-1-6"></script>
+  <script src="app.js?v=phases-1-6"></script>
 </body>
 </html>

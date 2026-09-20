@@ -9,6 +9,52 @@ const state = {
   lastFrame: 0,
   accumulator: 0,
   history: [],
+  random: null,
+  network: null,
+  lastMeanMove: 0,
+};
+
+const PHASE_INFO = {
+  hk: {
+    label: "FASE 1 · CONTROL",
+    title: "HK: promedio simultáneo de toda la vecindad",
+    description: "Es el control teórico. Puede producir un único punto porque todos los agentes conectados calculan exactamente el mismo promedio.",
+    badges: ["Euclídea", "Síncrona", "Todos los cercanos", "Sin anclaje"],
+    readingTitle: "Que aparezca un solo punto no es un error de dibujo.",
+    readingText: "En HK, varios agentes pueden ocupar exactamente la misma coordenada. El lienzo superpone sus círculos y parecen uno solo.",
+  },
+  dw: {
+    label: "FASE 2 · CONTACTOS",
+    title: "Deffuant–Weisbuch: encuentros parciales y aleatorios",
+    description: "Solo una muestra de parejas se encuentra por ronda y cada contacto recorre una fracción μ de la distancia.",
+    badges: ["Euclídea", "Parejas", "Compromiso parcial", "Estocástica"],
+    readingTitle: "La velocidad ahora tiene una interpretación explícita.",
+    readingText: "μ controla cuánto cambia una persona por encuentro y el número de contactos controla cuántas oportunidades de cambio hay por ronda.",
+  },
+  fj: {
+    label: "FASE 3 · ANCLAJE",
+    title: "Friedkin–Johnsen: memoria de la opinión inicial",
+    description: "Cada agente conserva el peso g de su posición inicial y asigna 1−g al promedio social aceptado.",
+    badges: ["Euclídea", "Síncrona", "Todos los cercanos", "Con anclaje"],
+    readingTitle: "El desacuerdo puede persistir sin añadir ruido.",
+    readingText: "Las anclas iniciales diferentes impiden que el consenso exacto sea automático. La combinación con confianza acotada está declarada como adaptación.",
+  },
+  network: {
+    label: "FASE 4 · RED",
+    title: "Anclaje inicial sobre una red social",
+    description: "Cada punto escucha únicamente a contactos conectados y cercanos en opinión. Esta es la vista predeterminada más lenta.",
+    badges: ["Euclídea", "Síncrona", "Red sintética", "Con anclaje"],
+    readingTitle: "La red limita quién puede influir.",
+    readingText: "El anclaje conserva parte de la opinión inicial. Los clusters, el color y el JDJ solo describen: no empujan a nadie.",
+  },
+  temporal: {
+    label: "FASE 5 · TIEMPO",
+    title: "Red y señales activas en intervalos observables",
+    description: "La red y el anclaje se mantienen; cada señal se enciende y apaga en el intervalo declarado.",
+    badges: ["Euclídea", "Red sintética", "Con anclaje", "Señales temporales"],
+    readingTitle: "La señal no decae mediante una curva inventada.",
+    readingText: "Su intensidad es constante mientras está activa y cero fuera del intervalo. Los tiempos deberán vincularse a eventos reales en una aplicación empírica.",
+  },
 };
 
 const elements = {
@@ -33,11 +79,21 @@ function numberValue(id) {
 
 function config() {
   return {
+    phase: document.getElementById("phase").value,
     epsilon: numberValue("epsilon"),
     signalA: [numberValue("signalAx"), numberValue("signalAy")],
     signalB: [numberValue("signalBx"), numberValue("signalBy")],
     signalAWeight: numberValue("signalAWeight"),
     signalBWeight: numberValue("signalBWeight"),
+    compromiseRate: numberValue("compromiseRate"),
+    interactionsPerAgent: numberValue("interactionsPerAgent"),
+    anchorWeight: numberValue("anchorWeight"),
+    networkDegree: numberValue("networkDegree"),
+    networkRewiring: numberValue("networkRewiring"),
+    signalAStart: numberValue("signalAStart"),
+    signalADuration: numberValue("signalADuration"),
+    signalBStart: numberValue("signalBStart"),
+    signalBDuration: numberValue("signalBDuration"),
   };
 }
 
@@ -56,8 +112,11 @@ function updateControlOutputs() {
 
 function resetModel() {
   state.running = false;
+  const c = config();
+  const nAgents = Math.round(numberValue("nAgents"));
+  const seed = Math.round(numberValue("seed"));
   try {
-    Model.validateConfig(config());
+    Model.validatePhasedConfig(c, nAgents);
   } catch (error) {
     setStatus(`Configuración no válida: ${error.message}`);
     return;
@@ -65,14 +124,20 @@ function resetModel() {
   state.t = 0;
   state.selected = 0;
   state.accumulator = 0;
+  state.lastMeanMove = 0;
+  state.random = Model.mulberry32(seed + 104729);
   state.agents = Model.initialize(
-    Math.round(numberValue("nAgents")),
-    Math.round(numberValue("seed")),
+    nAgents,
+    seed,
     document.getElementById("scenario").value,
   );
+  state.network = ["network", "temporal"].includes(c.phase)
+    ? Model.buildSmallWorldNetwork(nAgents, c.networkDegree, c.networkRewiring, seed + 7919)
+    : null;
   state.history = [];
   recordMetrics();
-  setStatus("Preparado: la simulación está en t = 0.");
+  updatePhaseCopy();
+  setStatus(`Preparado: ${PHASE_INFO[c.phase].label.toLowerCase()}, t = 0.`);
   draw();
 }
 
@@ -88,20 +153,43 @@ function executeStep() {
     setStatus("Finalizado: se alcanzó el número máximo de iteraciones.");
     return;
   }
-  state.agents = Model.step(state.agents, config());
+  const result = Model.advance(state.agents, config(), {
+    random: state.random,
+    network: state.network,
+    t: state.t,
+  });
+  state.agents = result.agents;
+  state.lastMeanMove = result.meanMove;
   state.t += 1;
   recordMetrics();
 }
 
 function recordMetrics() {
   const summary = Model.summarize(state.agents, config(), clusterThreshold());
-  state.history.push({ t: state.t, ...summary });
+  state.history.push({
+    t: state.t,
+    ...summary,
+    meanMove: state.lastMeanMove,
+    uniqueOpinions: Model.uniqueOpinionCount(state.agents),
+  });
   if (state.history.length > 1200) state.history.shift();
 }
 
 function start() {
   state.running = true;
-  setStatus("En ejecución. Todas las posiciones se actualizan de forma síncrona.");
+  const phase = config().phase;
+  const timing = phase === "dw" ? "encuentros aleatorios parciales" : "actualización síncrona";
+  setStatus(`En ejecución: ${PHASE_INFO[phase].label.toLowerCase()}, ${timing}.`);
+}
+
+function updatePhaseCopy() {
+  const info = PHASE_INFO[config().phase];
+  document.getElementById("phaseLabel").textContent = info.label;
+  document.getElementById("phaseTitle").textContent = info.title;
+  document.getElementById("phaseDescription").textContent = info.description;
+  document.getElementById("readingTitle").textContent = info.readingTitle;
+  document.getElementById("readingText").textContent = info.readingText;
+  document.getElementById("scopeBadges").innerHTML = info.badges.map(text => `<span>${text}</span>`).join("");
 }
 
 function pause() {
@@ -165,9 +253,11 @@ function drawOpinionSpace() {
   ctx.fillText("Dimensión actitudinal 2", 0, 0);
   ctx.restore();
 
+  drawSelectedNetwork();
   drawAxis(c);
-  drawSignal(c.signalA, c.signalAWeight, "A", "#176b87", c.epsilon);
-  drawSignal(c.signalB, c.signalBWeight, "B", "#c45134", c.epsilon);
+  const [activeA, activeB] = Model.signalWeights(c, state.t);
+  drawSignal(c.signalA, activeA, "A", "#176b87", c.epsilon, activeA > 0);
+  drawSignal(c.signalB, activeB, "B", "#c45134", c.epsilon, activeB > 0);
 
   if (document.getElementById("showTrails").checked) {
     ctx.strokeStyle = "rgba(43,41,37,.22)";
@@ -219,7 +309,24 @@ function drawOpinionSpace() {
   ctx.fillText(`t = ${state.t}`, 106, 689);
   ctx.font = "14px system-ui";
   ctx.fillText(`clusters = ${latest.clusters}  ·  dispersión = ${latest.dispersion.toFixed(3)}`, 106, 716);
-  ctx.fillText(`JDJ exploratorio = ${latest.jdj.toFixed(3)}`, 106, 739);
+  ctx.fillText(`movimiento medio = ${latest.meanMove.toFixed(4)}`, 106, 739);
+}
+
+function drawSelectedNetwork() {
+  if (!state.network || !document.getElementById("showNeighborhood").checked) return;
+  const selected = state.agents[state.selected];
+  if (!selected) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(49, 93, 105, .26)";
+  ctx.lineWidth = 1.4;
+  for (const neighborIndex of state.network[state.selected]) {
+    const neighbor = state.agents[neighborIndex];
+    ctx.beginPath();
+    ctx.moveTo(sx(selected.x), sy(selected.y));
+    ctx.lineTo(sx(neighbor.x), sy(neighbor.y));
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawAxis(c) {
@@ -234,13 +341,13 @@ function drawAxis(c) {
   ctx.restore();
 }
 
-function drawSignal(point, weight, label, color, epsilon) {
+function drawSignal(point, weight, label, color, epsilon, active) {
   const x = sx(point[0]);
   const y = sy(point[1]);
   ctx.save();
   ctx.fillStyle = color.replace(")", ", .06)").replace("rgb", "rgba");
   ctx.strokeStyle = color;
-  ctx.globalAlpha = 0.24;
+  ctx.globalAlpha = active ? 0.24 : 0.06;
   ctx.setLineDash([6, 6]);
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -249,6 +356,7 @@ function drawSignal(point, weight, label, color, epsilon) {
   ctx.stroke();
   ctx.restore();
 
+  ctx.globalAlpha = active ? 1 : 0.28;
   ctx.fillStyle = color;
   ctx.strokeStyle = "white";
   ctx.lineWidth = 3;
@@ -263,7 +371,9 @@ function drawSignal(point, weight, label, color, epsilon) {
   ctx.fillStyle = "#2a2723";
   ctx.font = "600 13px system-ui";
   const offset = point[0] < 0.5 ? 70 : -70;
-  ctx.fillText(`Señal ${label} · peso ${weight}`, x + offset, y - 20);
+  const temporalState = config().phase === "temporal" ? (active ? "activa" : "apagada") : "constante";
+  ctx.fillText(`Señal ${label} · ${temporalState} · peso ${weight}`, x + offset, y - 20);
+  ctx.globalAlpha = 1;
 }
 
 function mixColor(first, second, ratio, alpha) {
@@ -344,20 +454,22 @@ function updateStats() {
     followerBStat: latest.followersB,
     rmsdAStat: latest.rmsdA.toFixed(3),
     rmsdBStat: latest.rmsdB.toFixed(3),
+    movementStat: latest.meanMove.toFixed(5),
+    uniqueStat: latest.uniqueOpinions,
   };
   for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
 }
 
 function exportCsv() {
   const c = config();
-  const rows = ["agent,x,y,projection_A_B"];
+  const rows = ["agent,phase,time,x,y,initial_x,initial_y,projection_A_B"];
   state.agents.forEach((agent, index) => {
-    rows.push(`${index + 1},${agent.x},${agent.y},${Model.axisProjection(agent, c)}`);
+    rows.push(`${index + 1},${c.phase},${state.t},${agent.x},${agent.y},${agent.anchorX},${agent.anchorY},${Model.axisProjection(agent, c)}`);
   });
   const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `paper1_seed-${Math.round(numberValue("seed"))}_t-${state.t}.csv`;
+  link.download = `abmx_${c.phase}_seed-${Math.round(numberValue("seed"))}_t-${state.t}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
 }

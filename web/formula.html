@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM X · Fórmulas defendibles</title>
-  <link rel="stylesheet" href="styles.css?v=paper1-original-2d" />
+  <link rel="stylesheet" href="styles.css?v=phases-1-6" />
   <script>
     window.MathJax = { tex: { inlineMath: [["\\(", "\\)"], ["$", "$"]], displayMath: [["\\[", "\\]"]] }, svg: { fontCache: "global" } };
   </script>
@@ -28,21 +28,27 @@
       <a href="#estado">1. Estado</a>
       <a href="#distancia">2. Distancia</a>
       <a href="#hk">3. Confianza acotada</a>
-      <a href="#senales">4. Señales constantes</a>
+      <a href="#senales">4. Señales del control</a>
       <a href="#sincronia">5. Sincronía</a>
       <a href="#salidas">6. Medidas de salida</a>
       <a href="#jdj">7. JDJ exploratorio</a>
       <a href="#ejemplo">8. Ejemplo completo</a>
-      <a href="#codigo">9. Fórmula ↔ código</a>
-      <a href="#excluido">10. Qué se excluyó</a>
-      <a href="#referencias">11. Referencias</a>
+      <a href="#colapso">9. Por qué queda un punto</a>
+      <a href="#dw">10. Fase 2 · DW</a>
+      <a href="#fj">11. Fase 3 · FJ</a>
+      <a href="#red">12. Fase 4 · red</a>
+      <a href="#temporal">13. Fase 5 · tiempo</a>
+      <a href="#calibracion">14. Fase 6 · datos</a>
+      <a href="#codigo">15. Fórmula ↔ código</a>
+      <a href="#excluido">16. Qué se excluyó</a>
+      <a href="#referencias">17. Referencias</a>
     </aside>
 
     <article class="document-content">
       <div class="document-hero">
         <p class="eyebrow">PÁGINA 2 · DEFINICIÓN TÉCNICA</p>
-        <h1>Una ecuación activa, explicada por capas</h1>
-        <p class="lead">Aquí se documenta exactamente lo que ejecutan <code>web/model.js</code> y <code>src/paper1_model.py</code>. Nada de esta página se presenta como teoría nueva sin indicarlo.</p>
+        <h1>Cada fase, su ecuación y su límite</h1>
+        <p class="lead">Aquí se documenta exactamente lo que ejecutan <code>web/model.js</code>, <code>src/paper1_model.py</code> y <code>src/phased_model.py</code>. Una combinación propia se etiqueta como adaptación y nunca como teoría publicada íntegramente.</p>
         <div class="truth-legend">
           <span class="truth published">Publicado</span>
           <span class="truth operational">Decisión operativa</span>
@@ -55,7 +61,7 @@
         <div>
           <h2>Contrato científico</h2>
           <div class="callout safe"><strong>Regla:</strong> una fórmula solo entra en la dinámica si tiene un antecedente identificable y si el código reproduce esa formulación. Una adaptación se etiqueta como adaptación; una medida descriptiva no se disfraza de mecanismo causal.</div>
-          <p>El Paper 1 usa únicamente confianza acotada bidimensional y dos señales constantes. Las hipótesis antiguas sin suficiente fundamento no se ejecutan.</p>
+          <p>El Paper 1 debe usar únicamente la Fase 1 como modelo confirmatorio. Las Fases 2–5 son módulos separados para comparaciones y trabajos posteriores. La Fase 6 es un procedimiento de ajuste que no puede producir conclusiones sin datos reales.</p>
         </div>
       </section>
 
@@ -114,7 +120,7 @@
         <div>
           <span class="truth published">Publicado</span>
           <span class="truth operational">Combinación 2D declarada</span>
-          <h2>Capa 2 · dos señales constantes</h2>
+          <h2>Paper 1 · dos señales constantes</h2>
           <p>Las señales \(R_A\) y \(R_B\) no cambian de opinión. Solo son oídas por \(i\) si caen dentro del mismo límite \(\varepsilon\):</p>
           \[
             I_{iA}(t)=\mathbf 1\!\left[\lVert x_i(t)-R_A\rVert_2\le\varepsilon\right],\qquad
@@ -217,8 +223,117 @@ opiniones = new</code></pre>
         </div>
       </section>
 
-      <section id="codigo" class="doc-section">
+      <section id="colapso" class="doc-section">
         <div class="section-number">9</div>
+        <div>
+          <span class="truth published">Consecuencia de HK</span>
+          <h2>Por qué muchos puntos terminan pareciendo uno</h2>
+          <p>Si dos agentes oyen exactamente al mismo conjunto de vecinos y señales, el numerador y el denominador de su promedio son idénticos. Por tanto, reciben exactamente la misma coordenada en la siguiente ronda. El lienzo dibuja todos los círculos, pero quedan superpuestos.</p>
+          \[
+            \mathcal N_i(t)=\mathcal N_j(t)\quad\Longrightarrow\quad x_i(t+1)=x_j(t+1).
+          \]
+          <div class="worked-example"><strong>Ejemplo:</strong> dos opiniones \(0.2\) y \(0.4\) se escuchan mutuamente y no hay más voces. Ambas calculan \((0.2+0.4)/2=0.3\). Hay dos personas, pero una sola posición visible.</div>
+          <div class="child-box"><strong>Para 10 años:</strong> dos fichas pueden colocarse una encima de otra. No desapareció una ficha; solo no puedes verla debajo de la otra.</div>
+          <p>Esto no significa que una sociedad real deba colapsar así. Significa que HK es un control deliberadamente simple. Las fases siguientes permiten contactos parciales, memoria y conexiones limitadas sin introducir repulsiones inventadas.</p>
+        </div>
+      </section>
+
+      <section id="dw" class="doc-section">
+        <div class="section-number">10</div>
+        <div>
+          <span class="truth published">Publicado</span>
+          <span class="truth operational">Extensión vectorial y muestreo declarado</span>
+          <h2>Fase 2 · Deffuant–Weisbuch: cambiar poco a poco</h2>
+          <p>En cada ronda se toma una muestra de parejas. Solo una pareja compatible cambia y cada miembro recorre la fracción \(\mu\) de la distancia hacia el otro:</p>
+          \[
+          \begin{aligned}
+          x_i(t+1)&=x_i(t)+\mu[x_j(t)-x_i(t)],\\
+          x_j(t+1)&=x_j(t)+\mu[x_i(t)-x_j(t)],
+          \end{aligned}
+          \qquad \lVert x_i-x_j\rVert_2\le\varepsilon,\quad 0\lt\mu\le\tfrac12.
+          \]
+          <div class="worked-example"><strong>Ejemplo:</strong> con opiniones \(0\) y \(0.2\), y \(\mu=0.1\), pasan a \(0.02\) y \(0.18\). No saltan al promedio \(0.1\).</div>
+          <div class="child-box"><strong>Para 10 años:</strong> dos personas conversan. Cada una da solo un pasito hacia la otra, no cambia toda su idea de golpe.</div>
+          <p>El artículo original formula el mecanismo en una dimensión; aquí se aplica la misma operación a las dos coordenadas. Las señales se tratan como interlocutores obstinados: pueden ser seleccionadas, pero no se mueven. Su peso equivale a repetirlas en el conjunto del que se sortea el contacto. Esta regla de muestreo es una adaptación explícita y debe analizarse por separado.</p>
+          <p class="source-line">Base: Deffuant, Neau, Amblard y Weisbuch (2000).</p>
+        </div>
+      </section>
+
+      <section id="fj" class="doc-section">
+        <div class="section-number">11</div>
+        <div>
+          <span class="truth published">Núcleo FJ publicado</span>
+          <span class="truth operational">Composición con confianza acotada</span>
+          <h2>Fase 3 · Friedkin–Johnsen: conservar la opinión inicial</h2>
+          <p>El modelo FJ conserva una parte de la posición inicial \(x_i(0)\). En el simulador, el blanco social \(T_i(t)\) es el promedio de confianza acotada ya definido:</p>
+          \[
+            x_i(t+1)=g\,x_i(0)+(1-g)\,T_i(t),\qquad 0\le g\le1.
+          \]
+          <p>\(g=0\) elimina el anclaje. \(g=1\) conserva por completo la posición inicial. Con \(g=0.85\), el ancla pesa 85 % y el blanco social 15 % en cada actualización.</p>
+          <div class="worked-example"><strong>Ejemplo:</strong> si el ancla es \(0.2\), el promedio social es \(0.6\) y \(g=0.75\), la nueva opinión es \(0.75(0.2)+0.25(0.6)=0.3\).</div>
+          <div class="child-box"><strong>Para 10 años:</strong> escuchas al grupo, pero llevas una cuerda elástica atada a tu primera idea.</div>
+          <p>FJ y confianza acotada tienen antecedentes publicados. Usar el promedio acotado como \(T_i\) es la composición concreta de este proyecto; no se atribuye literalmente a Friedkin y Johnsen.</p>
+          <p class="source-line">Base: Friedkin y Johnsen (1990); formulación matricial también descrita por Hegselmann y Krause (2002).</p>
+        </div>
+      </section>
+
+      <section id="red" class="doc-section">
+        <div class="section-number">12</div>
+        <div>
+          <span class="truth published">Mecanismos publicados</span>
+          <span class="truth operational">Red sintética de demostración</span>
+          <h2>Fase 4 · escuchar solo a contactos de una red</h2>
+          <p>La vecindad de opinión se cruza con la red social \(G=(V,E)\):</p>
+          \[
+            \mathcal N_i^G(t)=\{i\}\cup
+            \{j:(i,j)\in E\ \land\ \lVert x_j(t)-x_i(t)\rVert_2\le\varepsilon\}.
+          \]
+          <p>El simulador usa \(T_i(t)\) calculado sobre \(\mathcal N_i^G(t)\) y después aplica el anclaje FJ. Así, una persona necesita estar conectada <em>y</em> ser suficientemente próxima en opinión para influir.</p>
+          <div class="child-box"><strong>Para 10 años:</strong> no puedes hablar con todos los alumnos de la ciudad. Primero miras quién está en tu lista de contactos y luego a quién estás dispuesto a escuchar.</div>
+          <p>Para demostrar el mecanismo se genera una red de mundo pequeño Watts–Strogatz con grado \(k\) y probabilidad de reconexión \(\beta\). Esa red es sintética; no se llama “red social real”. En un estudio empírico debe sustituirse o justificarse con datos.</p>
+          <p class="source-line">Base de red: Watts y Strogatz (1998). Confianza acotada sobre redes: Meng, Van Gorder y Porter (2018).</p>
+        </div>
+      </section>
+
+      <section id="temporal" class="doc-section">
+        <div class="section-number">13</div>
+        <div>
+          <span class="truth published">Entradas exógenas variables</span>
+          <span class="truth operational">Intervalo rectangular declarado</span>
+          <h2>Fase 5 · señales activas solo durante un intervalo</h2>
+          <p>El peso base \(m_k\) de cada señal se multiplica por un indicador verificable:</p>
+          \[
+            m_k(t)=m_k\,\mathbf 1[s_k\le t\lt s_k+d_k].
+          \]
+          <p>\(s_k\) es el inicio y \(d_k\) la duración. Dentro del intervalo la señal conserva su peso; fuera vale cero.</p>
+          <div class="worked-example"><strong>Ejemplo:</strong> si A empieza en \(t=20\) y dura 80 rondas, actúa desde \(t=20\) hasta \(t=99\). En \(t=100\) está apagada.</div>
+          <div class="child-box"><strong>Para 10 años:</strong> es como una luz con temporizador: encendida durante un tiempo y apagada después.</div>
+          <p>La literatura estudia entradas exógenas dependientes del tiempo, pero esta ventana rectangular concreta es una decisión operacional, no una ley de fatiga. En una aplicación, inicio y final deben proceder de fechas de campaña, emisión o evento observadas.</p>
+          <p class="source-line">Antecedente para entradas exógenas variables: Mirtabatabaei, Jia y Bullo (2012). La adaptación discreta al ABM está declarada.</p>
+        </div>
+      </section>
+
+      <section id="calibracion" class="doc-section">
+        <div class="section-number">14</div>
+        <div>
+          <span class="truth operational">Procedimiento reproducible</span>
+          <h2>Fase 6 · calibrar con observaciones, sin inventarlas</h2>
+          <p>El programa acepta un panel con <code>agent_id,time,x,y</code>. La primera ola fija posiciones iniciales; la última se reserva como objetivo de comparación. Para personas observadas en ambos momentos calcula:</p>
+          \[
+            RMSE=\sqrt{\frac1N\sum_i\lVert x_i^{sim}-x_i^{obs}\rVert_2^2}.
+          \]
+          <p>También compara las distribuciones mediante distancia de variación total entre histogramas 2D normalizados:</p>
+          \[
+            TVD=\frac12\sum_b|p_b^{sim}-p_b^{obs}|.
+          \]
+          <p>Menor es mejor en ambas medidas. El número de celdas del histograma es una decisión operacional y debe someterse a sensibilidad. Seleccionar parámetros con esos mismos datos es <strong>ajuste dentro de muestra</strong>, no validación.</p>
+          <div class="callout warning"><strong>Estado actual:</strong> el código y la plantilla existen, pero no hay un conjunto de datos elegido. Por eso no se informa ningún parámetro “realista” ni resultado empírico. Para validar harán falta datos separados o validación temporal fuera de muestra.</div>
+          <p class="source-line">Antecedente metodológico: Gestefeld y Lorenz (2023), calibración de un modelo de dinámica de opinión a distribuciones y transiciones empíricas.</p>
+        </div>
+      </section>
+
+      <section id="codigo" class="doc-section">
+        <div class="section-number">15</div>
         <div>
           <h2>Mapa fórmula ↔ código ↔ prueba</h2>
           <div class="table-wrap"><table>
@@ -229,14 +344,19 @@ opiniones = new</code></pre>
               <tr><td>Proyección A–B</td><td><code>axisProjection</code></td><td><code>axis_projection</code></td><td>A=0, centro=0.5, B=1</td></tr>
               <tr><td>JDJ-Pro</td><td><code>jdjProductAxis</code></td><td><code>jdj_product_axis</code></td><td>extremos 50/50 = 1</td></tr>
               <tr><td>Clusters descriptivos</td><td><code>connectedComponents</code></td><td><code>connected_components</code></td><td>caso de dos grupos</td></tr>
+              <tr><td>Contacto parcial DW</td><td><code>deffuantPairUpdate</code></td><td><code>deffuant_pair_update</code></td><td>0 y 0.2 → 0.02 y 0.18</td></tr>
+              <tr><td>Anclaje FJ</td><td><code>friedkinJohnsenStep</code></td><td><code>friedkin_johnsen_step</code></td><td>g=1 conserva el ancla</td></tr>
+              <tr><td>Red de mundo pequeño</td><td><code>buildSmallWorldNetwork</code></td><td><code>build_small_world_network</code></td><td>sin lazos y aristas simétricas</td></tr>
+              <tr><td>Intervalo temporal</td><td><code>activeInterval</code></td><td><code>active_interval</code></td><td>inicio incluido, final excluido</td></tr>
+              <tr><td>Calibración</td><td>no se ejecuta en el navegador</td><td><code>calibration.py</code></td><td>RMSE=0 si observado=simulado</td></tr>
             </tbody>
           </table></div>
-          <p>Las pruebas Python están en <code>tests/test_paper1_model.py</code>. Las pruebas JavaScript se ejecutan con <code>node web/verification.js</code>.</p>
+          <p>Las pruebas Python están en <code>tests/test_paper1_model.py</code>, <code>tests/test_phased_model.py</code> y <code>tests/test_calibration.py</code>. Las pruebas JavaScript se ejecutan con <code>node web/verification.js</code>.</p>
         </div>
       </section>
 
       <section id="excluido" class="doc-section">
-        <div class="section-number">10</div>
+        <div class="section-number">16</div>
         <div>
           <h2>Mecanismos retirados del Paper 1</h2>
           <div class="table-wrap"><table>
@@ -244,16 +364,17 @@ opiniones = new</code></pre>
             <tbody>
               <tr><td>Gravedad y masa de clusters</td><td>Retirado</td><td>Convertía un resultado en una fuerza causal sin calibración.</td></tr>
               <tr><td>Rebote automático al centro</td><td>Retirado</td><td>El índice accionaba una intervención inventada dentro del modelo.</td></tr>
-              <tr><td>Eventos, fatiga y contraeventos</td><td>Pospuesto</td><td>Necesita una segunda formulación y literatura específica.</td></tr>
+              <tr><td>Fatiga y contraeventos automáticos</td><td>Retirados</td><td>La fase temporal usa intervalos declarados, no una curva psicológica inventada.</td></tr>
               <tr><td>Tolerancia adaptativa</td><td>Pospuesta</td><td>Existe literatura, pero añadirla ahora impide aislar el efecto de las señales.</td></tr>
-              <tr><td>Ruido, anclaje, inmovilidad</td><td>Pospuestos</td><td>Tienen antecedentes separados; mezclarlos no permite saber qué explica el resultado.</td></tr>
+              <tr><td>Ruido e inmovilidad ad hoc</td><td>Retirados</td><td>No hacen falta para crear separación y no están calibrados.</td></tr>
+              <tr><td>Anclaje inicial</td><td>Fase 3 separada</td><td>Se usa la formulación FJ y nunca se mezcla ocultamente con el control del Paper 1.</td></tr>
             </tbody>
           </table></div>
         </div>
       </section>
 
       <section id="referencias" class="doc-section references-section">
-        <div class="section-number">11</div>
+        <div class="section-number">17</div>
         <div>
           <h2>Referencias primarias</h2>
           <ul class="reference-list">
@@ -262,6 +383,12 @@ opiniones = new</code></pre>
             <li>Hegselmann, R. & Krause, U. (2015). <a href="https://doi.org/10.3934/nhm.2015.10.477">Opinion Dynamics under the Influence of Radical Groups, Charismatic Leaders, and Other Constant Signals</a>. <i>Networks and Heterogeneous Media, 10</i>(3), 477–509.</li>
             <li>Glass, C. A. & Glass, D. H. (2021). <a href="https://doi.org/10.1007/s10614-020-10049-7">Social Influence of Competing Groups and Leaders in Opinion Dynamics</a>. <i>Computational Economics, 58</i>, 799–823.</li>
             <li>Guevara, J. A., Gómez, D., Robles, J. M. & Montero, J. (2020). <a href="https://doi.org/10.1007/978-3-030-50143-3_40">Measuring Polarization: A Fuzzy Set Theoretical Approach</a>. En <i>IPMU 2020</i>, 510–522.</li>
+            <li>Deffuant, G., Neau, D., Amblard, F. & Weisbuch, G. (2000). <a href="https://doi.org/10.1142/S0219525900000078">Mixing Beliefs among Interacting Agents</a>. <i>Advances in Complex Systems, 3</i>, 87–98.</li>
+            <li>Friedkin, N. E. & Johnsen, E. C. (1990). <a href="https://doi.org/10.1080/0022250X.1990.9990069">Social Influence and Opinions</a>. <i>The Journal of Mathematical Sociology, 15</i>, 193–206.</li>
+            <li>Watts, D. J. & Strogatz, S. H. (1998). <a href="https://doi.org/10.1038/30918">Collective dynamics of ‘small-world’ networks</a>. <i>Nature, 393</i>, 440–442.</li>
+            <li>Meng, X. F., Van Gorder, R. A. & Porter, M. A. (2018). <a href="https://doi.org/10.1103/PhysRevE.97.022312">Opinion formation and distribution in a bounded-confidence model on various networks</a>. <i>Physical Review E, 97</i>, 022312.</li>
+            <li>Mirtabatabaei, A., Jia, P. & Bullo, F. (2012). <a href="https://doi.org/10.3182/20120914-2-US-4030.00059">Eulerian Opinion Dynamics with Bounded Confidence and Exogenous Inputs</a>. <i>IFAC Proceedings Volumes, 45</i>(26), 270–275.</li>
+            <li>Gestefeld, M. & Lorenz, J. (2023). <a href="https://doi.org/10.18564/jasss.5204">Calibrating an Opinion Dynamics Model to Empirical Opinion Distributions and Transitions</a>. <i>JASSS, 26</i>(4), 9.</li>
           </ul>
         </div>
       </section>

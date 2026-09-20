@@ -10,6 +10,11 @@
 - Casos límite JDJ.
 - Componentes conexas conocidas.
 - Semilla reproducible en la web.
+- Contacto parcial DW con resultado manual.
+- Anclaje FJ en g=1 y persistencia de diferencias.
+- Red Watts–Strogatz sin lazos y no dirigida.
+- Intervalos temporales con inicio incluido y final excluido.
+- RMSE y TVD con casos conocidos.
 
 Comandos:
 
@@ -42,3 +47,19 @@ Requiere:
 - estudiar identificabilidad y modelos alternativos.
 
 Hasta completar este nivel, la simulación es un experimento teórico reproducible, no una predicción de una sociedad concreta.
+
+### Tubería disponible
+
+`experiments/calibrate_phases.py` exige un CSV `agent_id,time,x,y`, al menos dos olas y coordenadas en `[0,1]`. Compara la última ola mediante RMSE individual y TVD de histogramas. No imputa ausencias ni genera observaciones.
+
+Antes de usarla hay que fijar por escrito:
+
+1. significado y validez de las dos escalas;
+2. transformación de respuestas a `[0,1]`;
+3. correspondencia entre intervalo real y número de rondas;
+4. parámetros permitidos y rejilla antes de ver el test;
+5. división entrenamiento/validación o validación temporal;
+6. modelos alternativos y criterio de selección;
+7. sensibilidad al número de bins de TVD.
+
+Un mínimo de RMSE/TVD en los datos de ajuste no constituye una validación causal.

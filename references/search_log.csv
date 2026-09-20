@@ -42,3 +42,8 @@ query,base,date,results,reviewed,included,exclusion_criterion
 "Social Influence of Competing Groups and Leaders in Opinion Dynamics",web search,2026-09-20,10,3,1,"publisher DOI and author manuscript metadata verified"
 "Measuring Polarization A Fuzzy Set Theoretical Approach JDJ",web search,2026-09-20,10,3,1,"open full text and DOI metadata verified"
 "Hegselmann Krause constant signals strength epsilon",web search,2026-09-20,10,2,1,"primary DOI/source used for exact mechanism"
+"Friedkin Johnsen opinion dynamics initial opinion formula",web search,2026-09-20,10,3,2,"original article and HK primary review/formulation checked"
+"Deffuant Weisbuch mixing beliefs pairwise compromise mu",web search,2026-09-20,10,2,1,"primary DOI and bibliographic metadata checked"
+"bounded confidence network Watts Strogatz opinion formation",web search,2026-09-20,10,3,2,"primary Nature and Physical Review E articles included"
+"bounded confidence exogenous inputs time varying",web search,2026-09-20,10,2,1,"primary IFAC paper and author manuscript checked"
+"calibrating opinion dynamics empirical distributions transitions",web search,2026-09-20,10,2,1,"open JASSS primary article included"

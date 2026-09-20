@@ -74,4 +74,6 @@ La proyección y el factor de normalización son decisiones declaradas del proye
 
 ## 7. Fuera del modelo activo
 
-No hay fuerzas, gravedad de clusters, eventos, fatiga, contraeventos, rebote al centro, ruido, anclaje, inmovilidad ni tolerancia adaptativa.
+En el Paper 1 no hay fuerzas, gravedad de clusters, eventos, fatiga, contraeventos, rebote al centro, ruido, anclaje, inmovilidad ni tolerancia adaptativa.
+
+El anclaje FJ, los contactos DW, la red y los intervalos temporales existen como modelos posteriores seleccionables, no como ingredientes ocultos del Paper 1. Sus fórmulas, fuentes y adaptaciones se documentan en `docs/realism_layers.md` y `web/formula.html`.

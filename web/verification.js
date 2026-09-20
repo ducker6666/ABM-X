@@ -73,7 +73,41 @@ function runVerification() {
   const second = Model.initialize(5, 123, "uniform");
   assert(JSON.stringify(first) === JSON.stringify(second), "la semilla debe reproducir la inicialización");
 
-  return { ok: true, tests: 11, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
+  const [dwFirst, dwSecond] = Model.deffuantPairUpdate([0, 0], [0.2, 0.2], 0.1);
+  approx(dwFirst[0], 0.02);
+  approx(dwSecond[0], 0.18);
+
+  const phasedConfig = {
+    ...axisConfig,
+    phase: "fj",
+    epsilon: 2,
+    anchorWeight: 0.9,
+    compromiseRate: 0.1,
+    interactionsPerAgent: 0.5,
+    networkDegree: 2,
+    networkRewiring: 0.1,
+    signalAStart: 2,
+    signalADuration: 3,
+    signalBStart: 4,
+    signalBDuration: 2,
+  };
+  const anchored = Model.friedkinJohnsenStep([
+    { x: 0, y: 0, anchorX: 0, anchorY: 0 },
+    { x: 1, y: 1, anchorX: 1, anchorY: 1 },
+  ], phasedConfig, null, 0);
+  assert(anchored[0].x < anchored[1].x, "el anclaje FJ debe conservar diferencias iniciales");
+
+  assert(Model.activeInterval(2, 2, 3) === 1, "el inicio del intervalo es inclusivo");
+  assert(Model.activeInterval(5, 2, 3) === 0, "el final del intervalo es exclusivo");
+
+  const network = Model.buildSmallWorldNetwork(12, 4, 0.1, 123);
+  assert(network.every((neighbors, i) => !neighbors.has(i)), "la red no debe contener lazos");
+  assert(network.every((neighbors, i) => [...neighbors].every(j => network[j].has(i))), "la red debe ser no dirigida");
+
+  assert(Model.uniqueOpinionCount([{ x: 0.1, y: 0.2 }, { x: 0.1, y: 0.2 }]) === 1,
+    "dos posiciones idénticas forman una sola posición numérica");
+
+  return { ok: true, tests: 18, publishedExample: example[0], jdjSplit: 1, jdjCenter: 0.5 };
 }
 
 if (typeof module !== "undefined" && module.exports) {
