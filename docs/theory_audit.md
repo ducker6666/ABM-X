@@ -1,5 +1,11 @@
 # Auditoría del simulador original — 20 septiembre 2026
 
+Actualización posterior: ver `research_readiness.md`. Las fórmulas Unicode se
+han sustituido por MathML generado desde LaTeX; sigue sin haber dependencias de
+red durante el uso. El eje temporal del historial y el recorte gráfico de JDJ
+superior a 1 se han corregido. Las limitaciones históricas anotadas abajo sobre
+ese eje ya no describen la versión actual.
+
 ## Alcance
 
 La implementación auditada es `web/app.js`. Se mantiene la interfaz original,

@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "scripts": {
+    "math": "node scripts/render_math.cjs",
+    "test": "node web/verification.js"
+  },
+  "devDependencies": { "katex": "0.18.7" }
+}

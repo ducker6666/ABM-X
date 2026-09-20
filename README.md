@@ -1,5 +1,18 @@
 # ABM X
 
+## Revisión de interfaz y preparación científica
+
+Las fórmulas se presentan con tipografía matemática y ejemplos por pasos.
+La web funciona sin dependencias de red; solo para regenerar la documentación:
+`npm ci && npm run math`. Su fuente LaTeX está en `web/equations.cjs`.
+La regeneración usa Node ≥22.12; abrir el simulador no requiere Node.
+`node scripts/render_math.cjs --check` detecta documentación renderizada obsoleta.
+Los controles continuos tienen paso 0.01 y avisan de cambios pendientes de reinicio.
+
+Consulta la [evaluación para artículo y tesis](docs/research_readiness.md).
+`node experiments/web_sensitivity.cjs` reproduce el diagnóstico local de 78
+ejecuciones. No constituye validación empírica ni sensibilidad global.
+
 ## Simulador original: documentación vigente
 
 La web conserva su formato original. Consulta [Teoría](web/formula.html) para

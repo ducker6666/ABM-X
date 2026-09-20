@@ -56,7 +56,9 @@ const state = {
   model: null,
   lastTimestamp: 0,
   accumulator: 0,
+  pendingReset: false,
 };
+const RESET_PARAMS = new Set(['nAgents','seed','epsilonMean','epsilonHeterogeneity','alpha','mu','lambda']);
 
 const mainCanvas = document.getElementById("mainCanvas");
 const polCanvas = document.getElementById("polCanvas");
@@ -86,22 +88,30 @@ function buildControls() {
     groups[p.group].push(p);
   }
   for (const [group, params] of Object.entries(groups)) {
-    const section = document.createElement("section");
+    const section = document.createElement("details");
     section.className = "control-section";
-    section.innerHTML = `<h2>${group}</h2>`;
+    section.open = ['Estructura','Micro: tolerancia e inmovilidad','Polos permanentes'].includes(group);
+    section.innerHTML = `<summary>${group}</summary>`;
     for (const p of params) {
       const row = document.createElement("label");
       row.className = "control-row";
       if (p.kind === "count") {
         row.innerHTML = `<span>${p.label}</span><output>${p.value}</output><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}" />`;
       } else {
-        row.innerHTML = `<span>${p.label}</span><output>${p.value.toFixed(1)}</output><input type="range" min="0" max="1" step="0.1" value="${p.value}" list="scaleTicks" />`;
+        row.innerHTML = `<span>${p.label}</span><output>${p.value.toFixed(2)}</output><input type="range" min="0" max="1" step="0.01" value="${p.value}" list="scaleTicks" />`;
       }
       const input = row.querySelector("input");
+      input.setAttribute('aria-label', p.label);
+      input.id = p.id;
+      input.title = RESET_PARAMS.has(p.id) ? 'Requiere Reiniciar para regenerar los agentes.' : 'Se aplica en vivo; los eventos existentes conservan sus atributos.';
       const out = row.querySelector("output");
       input.addEventListener("input", () => {
-        out.textContent = p.kind === "count" ? input.value : Number(input.value).toFixed(1);
+        out.textContent = p.kind === "count" ? input.value : Number(input.value).toFixed(2);
+        if (RESET_PARAMS.has(p.id)) state.pendingReset = true;
         updateConfig();
+        document.getElementById('configNotice').textContent = state.pendingReset
+          ? 'Hay cambios de población pendientes: pulsa Reiniciar para aplicarlos.'
+          : 'Cambio aplicado. Los eventos ya creados conservan sus atributos.';
       });
       section.appendChild(row);
       state.controls.set(p.id, { param: p, input });
@@ -210,6 +220,8 @@ function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 function hypot(x, y) { return Math.sqrt(x * x + y * y); }
 
 function resetModel() {
+  state.pendingReset = false;
+  document.getElementById('configNotice').textContent = 'Población regenerada. Controles continuos: flechas del teclado = ±0.01.';
   const c = cfg();
   state.rng = mulberry32(c.seed);
   const agents = [];
@@ -866,6 +878,9 @@ function selectAgentFromCanvas(event) {
   }
   updateConfig();
 }
+// Cada historial incluye t=0 y guarda hasta 900 muestras consecutivas.
+// Ej.: en t=1000, las 900 muestras empiezan en 101, no en 0.
+function historyStart(t, length) { return Math.max(0, t - Math.max(0, length - 1)); }
 function drawLineChart(c, values, xLabel, yLabel, color, options = {}) {
   c.fillStyle = "#fff"; c.fillRect(0, 0, c.canvas.width, c.canvas.height);
   const clean = values.filter(v => Number.isFinite(v));
@@ -873,15 +888,16 @@ function drawLineChart(c, values, xLabel, yLabel, color, options = {}) {
   const rawMax = clean.length ? Math.max(...clean) : 1;
   const mean = clean.length ? clean.reduce((s, v) => s + v, 0) / clean.length : 0;
   const sd = clean.length ? Math.sqrt(clean.reduce((s, v) => s + (v - mean) ** 2, 0) / clean.length) : 0;
-  let yMin = 0, yMax = 1, zoomed = false;
+  const upper = Math.max(1, rawMax);
+  let yMin = 0, yMax = upper, zoomed = false;
   if (options.autoZoom && clean.length > 2 && rawMax - rawMin < 0.20) {
     const pad = Math.max(0.015, (rawMax - rawMin) * 0.35, sd * 1.25);
-    yMin = clamp(rawMin - pad, 0, 1);
-    yMax = clamp(rawMax + pad, 0, 1);
+    yMin = clamp(rawMin - pad, 0, upper);
+    yMax = clamp(rawMax + pad, 0, upper);
     if (yMax - yMin < 0.06) {
       const mid = (yMin + yMax) / 2;
-      yMin = clamp(mid - 0.03, 0, 1);
-      yMax = clamp(mid + 0.03, 0, 1);
+      yMin = clamp(mid - 0.03, 0, upper);
+      yMax = clamp(mid + 0.03, 0, upper);
     }
     zoomed = true;
   }
@@ -894,10 +910,11 @@ function drawLineChart(c, values, xLabel, yLabel, color, options = {}) {
   }
   c.strokeStyle = "#eee"; c.fillStyle = "#555"; c.font = "11px Arial";
   const tMax = state.model ? state.model.t : values.length;
+  const tMin = historyStart(tMax, values.length);
   for (let i = 0; i <= 5; i++) {
     const x = 55 + i * 107;
     c.beginPath(); c.moveTo(x, 35); c.lineTo(x, 260); c.stroke();
-    c.fillText(String(Math.round(tMax * i / 5)), x - 8, 276);
+    c.fillText(String(Math.round(tMin + (tMax - tMin) * i / 5)), x - 8, 276);
   }
   c.strokeStyle = "#333"; c.strokeRect(55, 35, 535, 225);
   c.fillStyle = "#111"; c.font = "16px Arial"; c.fillText(xLabel, 285, 292); c.save(); c.translate(18, 220); c.rotate(-Math.PI / 2); c.fillText(yLabel, 0, 0); c.restore();
@@ -926,10 +943,11 @@ function drawForces() {
     forceCtx.fillText((max * i / 5).toFixed(2), 22, y + 4);
   }
   const tMax = state.model ? state.model.t : vals.length;
+  const tMin = historyStart(tMax, vals.length);
   for (let i = 0; i <= 5; i++) {
     const x = 55 + i * 107;
     forceCtx.beginPath(); forceCtx.moveTo(x, 30); forceCtx.lineTo(x, 230); forceCtx.stroke();
-    forceCtx.fillText(String(Math.round(tMax * i / 5)), x - 8, 244);
+    forceCtx.fillText(String(Math.round(tMin + (tMax - tMin) * i / 5)), x - 8, 244);
   }
   keys.forEach(([k, color], idx) => {
     forceCtx.strokeStyle = color; forceCtx.lineWidth = 2; forceCtx.beginPath();

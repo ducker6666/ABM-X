@@ -7,7 +7,7 @@ const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8');
 const context = vm.createContext({document: {getElementById: () => ({getContext: () => ({})})}});
 vm.runInContext(source.split('document.getElementById("startBtn").addEventListener')[0] +
-  '\nglobalThis.engine={state,PARAMS,cfg,mulberry32,poleForce,poleDistanceMembership,jdjFromFrequencyTable,eventAmp,maybeEvents,detectClusters,step};', context);
+  '\nglobalThis.engine={state,PARAMS,cfg,mulberry32,poleForce,poleDistanceMembership,jdjFromFrequencyTable,eventAmp,maybeEvents,detectClusters,step,historyStart,drawLineChart};', context);
 const e = context.engine;
 for (const p of e.PARAMS) e.state.controls.set(p.id, {input: {value: String(p.value)}});
 const defaults = e.cfg();
@@ -110,5 +110,80 @@ test('Límites: desplazamiento máximo y cuadrado',()=>{
 test('Ruido reproducible incluso con inmovilidad',()=>{
   const run=()=>{const m=setup([agent(.5,.5,{alpha:1})],{noise:1});e.step();return [m.agents[0].x,m.agents[0].y];};
   const first=run(); assert.deepEqual(run(),first); assert.notEqual(first[0],.5);
+});
+test('Sensibilidad suave: μ=0.60 → 0.61 cambia el movimiento exacto',()=>{
+  const run=mu=>{const m=setup([agent(.4,.5,{mu}),agent(.6,.5)]);e.step();return m.agents[0].x-.4;};
+  near(run(.6),.009); near(run(.61),.00915);
+});
+test('Umbral estricto: igualdad no activa movimiento',()=>{
+  const m=setup([agent(.25,.5,{alpha:.25}),agent(.5,.5)]);e.step();near(m.agents[0].x,.25);
+});
+test('Tolerancia: salto por entrada de vecino, no suavizado oculto',()=>{
+  const run=eps=>{const m=setup([agent(.25,.5,{eps0:eps}),agent(.5,.5)]);e.step();return m.agents[0].x;};
+  near(run(.249),.25);near(run(.25),.26875);
+});
+test('Ruido: misma semilla y doble amplitud, doble perturbación',()=>{
+  const run=noise=>{const m=setup([agent(.5,.5)],{noise});e.step();return m.agents[0].x-.5;};
+  near(run(.2),2*run(.1));
+});
+test('Polos: barrido de fuerza y radio contra ecuación independiente',()=>{
+  for (const strength of [0,.01,.49,.5,.51,1]) for (const radius of [.02,.3,.31,1]) {
+    const c={...defaults,poleStrength:strength,poleRadius:radius};
+    const a=agent(.35,.55), actual=e.poleForce(a,c);
+    const dA=(a.x-c.poleA[0])**2+(a.y-c.poleA[1])**2;
+    const dB=(a.x-c.poleB[0])**2+(a.y-c.poleB[1])**2;
+    const wA=1/(1+Math.exp((1+6*strength)*(dA-dB)/(2*radius**2)));
+    const gain=strength*(.35+.65*Math.abs(2*wA-1));
+    near(actual.wA,wA);near(actual.x,gain*(wA*c.poleA[0]+(1-wA)*c.poleB[0]-a.x));
+  }
+});
+test('Evento: fuerza neta del ejemplo de reactancia',()=>{
+  const m=setup([agent(.4,.5)]);
+  m.events=[{x:.6,y:.5,start:0,duration:50,strength:.8,radius:.4,reactance:.2,decay:0}];
+  e.step();
+  const net=(.8*.2-.2)*Math.exp(-.2*.2/(2*.4*.4));
+  near(m.agents[0].x,.4+.075*net);
+});
+test('Masa: fuerza externa y autoatracción se ejecutan como documentadas',()=>{
+  // Dos agentes coincidentes forman un grupo de masa 2/3; el tercero es externo.
+  const m=setup([agent(.6,.5,{eps0:.01}),agent(.6,.5,{eps0:.01}),agent(.4,.5,{eps0:.01})],
+    {clusterMinSize:2,clusterDetectRadius:.02,clusterMassExponent:1,clusterStrength:.1,clusterGravityRadius:.6});
+  e.step();
+  const force=.1*(2/3)*Math.exp(-.2*.2/(2*.6*.6))*.2/(.2*.2+.128*.128);
+  near(m.agents[2].x,.4+.075*force); near(m.agents[0].x,.6);
+});
+test('Tolerancia con masa: ε=ε0(1-cr*r)(1-cm*M)',()=>{
+  const m=setup([agent(.75,.75,{eps0:.3}),agent(.75,.75,{eps0:.3})],
+    {clusterMinSize:2,clusterDetectRadius:.02,clusterMassExponent:1,radicalToleranceLoss:.4,massToleranceLoss:.2});
+  e.step();near(m.agents[0].eps,.3*.8*.8);
+});
+test('Eje temporal: ventana real de 900 muestras',()=>{
+  assert.equal(e.historyStart(0,1),0);assert.equal(e.historyStart(899,900),0);
+  assert.equal(e.historyStart(1000,900),101);
+});
+test('Suma completa: vecinos + polos + masa + evento + centro + anclaje',()=>{
+  const m=setup([agent(.6,.5,{anchorX:.55,lambda:.1,mu:.6}),agent(.62,.5)],
+    {poleStrength:.2,poleRadius:.5,clusterStrength:.1,clusterSelfAttraction:.4,clusterPoleCoupling:.3,
+      clusterMinSize:2,clusterDetectRadius:.05,clusterMassExponent:1,clusterGravityRadius:.6,
+      auditThreshold:0,auditBalanceThreshold:0,auditPatience:1,centerRebound:.1});
+  m.events=[{x:.3,y:.5,start:0,duration:10,strength:.1,radius:.4,reactance:.02,decay:0}];
+  // Evaluación independiente de las ecuaciones publicadas en la página.
+  const pole=(x,y)=>{
+    const w=1/(1+Math.exp(2.2*(((x-1)**2+y*y)-(x*x+(y-1)**2))/(2*.5**2)));
+    const gain=.2*(.35+.65*Math.abs(2*w-1));return [gain*(w-x),gain*(1-w-y)];
+  };
+  const p=pole(.6,.5), pc=pole(.61,.5);
+  const mass=.4*.1*Math.exp(-(.01**2)/(2*.6**2))*.01/(.01**2+.128**2);
+  const event=Math.exp(-(.3**2)/(2*.4**2))*(-.1*.3+.02);
+  const fx=.02+p[0]+.3*pc[0]+mass+event-.01-.005;
+  const fy=p[1]+.3*pc[1];
+  e.step(); near(m.agents[0].x,.6+.075*.6*fx);near(m.agents[0].y,.5+.075*.6*fy);
+});
+test('Gráfico JDJ: valores mayores que 1 no se recortan al dibujar',()=>{
+  const labels=[];
+  const canvas=new Proxy({canvas:{width:620,height:300},fillText:(t)=>labels.push(t)},
+    {get:(o,k)=>k in o?o[k]:()=>{}});
+  setup([]);e.drawLineChart(canvas,[2,2,2],'t','JDJ','#000',{autoZoom:true});
+  assert.ok(labels.includes('2.00'));
 });
 console.log(`${passed} pruebas del motor web superadas.`);
